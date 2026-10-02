@@ -150,6 +150,9 @@ PESQUISAS_2026_SCHEMA = (
         "amostra",
         "registro_tse",
         "metodo_coleta",
+        "cenario",
+        "base",
+        "verificado_em",
     ]
     + CANDIDATOS_EDITAL
     + ["brancos_nulos", "indecisos", "fonte_url"]

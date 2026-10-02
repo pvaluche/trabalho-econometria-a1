@@ -21,6 +21,8 @@ from src.arredondamento import maiores_restos
 from src.config import (
     CANDIDATOS_EDITAL,
     PARTIDOS_EDITAL,
+    PESQUISAS_2026_PATH,
+    PESQUISAS_2026_SCHEMA,
     PROCESSED_DIR,
     verificar_sanidade_2022,
 )
@@ -499,3 +501,46 @@ class TestValidacaoXLSX:
         res = validar_xlsx(p)
         assert not res["valido"]
         assert any("Total" in e for e in res["erros"])
+
+
+# ============================================================
+# 10. Validacao do arquivo manual pesquisas_2026.csv
+# ============================================================
+
+
+class TestPesquisas2026Manual:
+    def test_arquivo_existe_e_possui_linhas(self):
+        assert PESQUISAS_2026_PATH.exists()
+        df = pd.read_csv(PESQUISAS_2026_PATH)
+        assert len(df) >= 5
+
+    def test_colunas_obrigatorias_presentes(self):
+        df = pd.read_csv(PESQUISAS_2026_PATH)
+        for col in PESQUISAS_2026_SCHEMA:
+            assert col in df.columns, f"Coluna obrigatoria ausente: {col}"
+
+    def test_soma_intencoes_por_linha(self):
+        """
+        Soma dos candidatos detalhados + brancos/nulos + indecisos
+        deve estar entre 97.0 e 101.5% por linha.
+        """
+        df = pd.read_csv(PESQUISAS_2026_PATH)
+        for idx, row in df.iterrows():
+            cand_vals = [row[c] for c in CANDIDATOS_EDITAL if pd.notna(row[c])]
+            bn = row["brancos_nulos"] if pd.notna(row["brancos_nulos"]) else 0.0
+            ind = row["indecisos"] if pd.notna(row["indecisos"]) else 0.0
+            soma = sum(cand_vals) + bn + ind
+            assert 97.0 <= soma <= 101.5, (
+                f"Linha {idx} ({row['instituto']}) tem soma={soma:.1f} fora de [97, 101.5]"
+            )
+
+    def test_candidatos_nao_divulgados_sao_nan(self):
+        """
+        Candidatos que nao foram divulgados individualmente pelo instituto
+        devem ser NaN (vazio), nao 0.0.
+        """
+        df = pd.read_csv(PESQUISAS_2026_PATH)
+        atlas = df[df["instituto"] == "AtlasIntel"]
+        if not atlas.empty:
+            assert pd.isna(atlas.iloc[0]["Clariana Barão"])
+            assert pd.isna(atlas.iloc[0]["Edmilson Costa"])

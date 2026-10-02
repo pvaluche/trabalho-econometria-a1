@@ -34,8 +34,22 @@ Este documento registra todas as decisoes tomadas ao longo do projeto de previsa
 
 ## 2026-10-02: Situacao de Leonardo Avalanche (PRTB) e Candidaturas 2026
 
-- **Decisao:** Confirmar a lista de 12 candidatos do edital FGV EPGE como a lista oficial para normalizacao de votos validos. Leonardo Avalanche (PRTB) consta com situacao `#NE` (nao homologado/deferido) no arquivo oficial do TSE e fora da lista do edital; portanto, seus eventuais registros nao entram no denominador de validos da entrega final.
+- **Decisao:** Confirmar a lista de 12 candidatos do edital FGV EPGE como a lista oficial para a previsao e normalizacao de votos validos. No arquivo oficial `consulta_cand_2026.zip` do TSE, o campo `DS_SITUACAO_CANDIDATURA` consta literalmente como `#NE`, codigo tecnico do TSE que indica campo sem informacao (e nao "nao enquadrado"), enquanto `DS_DETALHE_SITUACAO_CAND` esta vazio.
+- **Ressalva importante registrada:** Caso Leonardo Avalanche venha a constar na urna eletronica e receber votos validos apurados pelo TSE, a soma dos votos validos dos 12 candidatos do edital sera estritamente inferior a 100,0% no resultado real oficial. Para a entrega do Desafio da FGV EPGE, os votos validos sao normalizados para somar exatamente 100,0% entre os 12 candidatos previstos no edital.
+
+---
+
+## 2026-10-02: Tratamento de Datas de Pesquisas Historicas (Backtest 2006-2022)
+
+- **Decisao:** Para pesquisas eleitorais historicas extraidas de tabelas da Wikipedia ou repositorios que informam apenas o periodo de coleta (datas de inicio e fim de campo), adotar a `data_fim_campo` como proxy da data de divulgacao quando a data exata de publicacao nao estiver disponivel.
 - **Alternativas consideradas:**
-  1. Incluir Leonardo Avalanche como 13o candidato com divisao proporcional.
-  2. Desconsiderar sem registro formal.
-- **Motivo:** O edital do Desafio da FGV EPGE fixa taxativamente os 12 candidatos para a Aba 1 da planilha de entrega. A consulta ao TSE confirma que a candidatura nao esta ativa/deferida.
+  1. Estimar uma defasagem fixa de 1 ou 2 dias apos o fim do campo.
+  2. Descartar pesquisas que nao apresentem a data de divulgacao explicitamente separada do campo.
+- **Motivo:** A utilizacao da data final de campo e a abordagem mais conservadora e reprodutivel para filtros temporais, garantindo que pesquisas cujos dados de campo se encerraram apos a vespera sejam rigorosamente excluidas do backtest.
+
+---
+
+## 2026-10-02: Politica de Integridade do Controle de Versao Git
+
+- **Decisao:** Proibido o uso de `git push --force` na branch `main`. Atualizacoes forcadas sao restritas exclusivamente a movimentacao de tags de checkpoint (`git tag -f <tag> && git push -f origin <tag>`).
+- **Motivo:** Preservar a integridade linear do historico do repositorio no GitHub, evitando sobrescrita acidental de commits.
