@@ -183,9 +183,9 @@ modelagem eleições/
 
 | # | Conteúdo | Status |
 |---|---|---|
-| **0 - Entendimento** | `docs/ENTENDIMENTO.md` + módulos base + testes | ✅ Revisado |
-| **1 - Base TSE** | Totais nacionais 2006-2022, sanidade 2022 (Lula 48,43% / Bolsonaro 43,20% / Abstenção 20,95%) | ⏳ Pendente |
-| **2 - Pesquisas + Pré-registro** | Base histórica padronizada, `pesquisas_2026.csv`, `PRE_REGISTRO.md` | ⏳ Pendente |
+| **0 - Entendimento** | `docs/ENTENDIMENTO.md` + módulos base + testes | ✅ Aprovado pelo Claude |
+| **1 - Base TSE** | Totais nacionais 2006-2022, sanidade 2022 (Lula 48,43% / Bolsonaro 43,20% / Abstenção 20,95%), Parquet limpos, Leonardo Avalanche verificado | ✅ Concluído |
+| **2 - Pesquisas + Pré-registro** | Base histórica padronizada, `pesquisas_2026.csv`, `PRE_REGISTRO.md` | ⏳ Próximo |
 | **3 - Backtest** | MAE por modelo e eleição (LOEO + expanding window), ablation, modelo escolhido | ⏳ Pendente |
 | **4 - Entrega final** | Previsão 2026, XLSX validado, interface, rascunho do PDF | ⏳ Pendente |
 
@@ -197,7 +197,7 @@ Cada checkpoint é auditado de forma independente antes de avançar.
 
 - Apenas 5 eleições históricas disponíveis: janela muito estreita para modelos complexos.
 - House effects estimados com shrinkage para zero em institutos com histórico limitado.
-- Padrão de subestimação do candidato bolsonarista (2018: -6 p.p.; 2022: -7 p.p.) é tratado como viés comum da eleição — difícil de corrigir sem overfitting ao regime mais recente.
+- Padrão de subestimação do candidato bolsonarista (2018: -6 p.p.; 2022: -7 p.p.) é tratado como viés comum da eleição: difícil de corrigir sem overfitting ao regime mais recente.
 - Voto útil e decisão tardia do eleitor: efeito documentado mas não modelável de forma validável.
 - Candidatos nanicos (menos de 1% nas pesquisas): alto ruído relativo; prior histórico do TSE mitiga o risco de prever zero.
 

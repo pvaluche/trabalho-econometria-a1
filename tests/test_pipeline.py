@@ -28,7 +28,7 @@ from src.conversao import converter_para_votos_validos
 from src.filtros import DIAS_ELEICAO, VESPERAS, filtrar_por_vespera
 from src.metricas import calcular_mae
 from src.pesquisas import agregar_institutos
-from src.tse import calcular_denominadores
+from src.tse import calcular_denominadores, calcular_votos_validos_candidatos
 
 
 # ============================================================
@@ -353,31 +353,40 @@ class TestSanidade2022:
 
 # ============================================================
 # 8. Integracao: sanidade 2022 lendo data/processed
-#    (skipif se o arquivo nao existir -- dados ainda nao baixados)
+#    (executa diretamente lendo os parquets gerados no Checkpoint 1)
 # ============================================================
 
-_PARQUET_2022 = PROCESSED_DIR / "detalhe_votacao_2022.parquet"
+_PARQUET_DETALHE_2022 = PROCESSED_DIR / "detalhe_votacao_2022.parquet"
+_PARQUET_CANDIDATO_2022 = PROCESSED_DIR / "votacao_candidato_2022.parquet"
 
 
 @pytest.mark.skipif(
-    not _PARQUET_2022.exists(),
-    reason="data/processed/detalhe_votacao_2022.parquet nao existe (Checkpoint 1 pendente)",
+    not (_PARQUET_DETALHE_2022.exists() and _PARQUET_CANDIDATO_2022.exists()),
+    reason="Arquivos parquet de 2022 nao existem em data/processed/",
 )
 def test_integracao_sanidade_2022_do_parquet():
     """
-    Teste de integracao: le o parquet processado do TSE 2022,
-    calcula denominadores e verifica sanidade.
-    Executa apenas apos o Checkpoint 1.
+    Teste de integracao: le os parquets processados do TSE 2022.
+    - Percentuais de votos validos dos candidatos vem de votacao_candidato_2022.parquet
+      via calcular_votos_validos_candidatos (sem .get silencioso).
+    - Abstencao vem de detalhe_votacao_2022.parquet via calcular_denominadores.
     """
-    import pandas as pd
+    df_detalhe = pd.read_parquet(_PARQUET_DETALHE_2022)
+    df_candidato = pd.read_parquet(_PARQUET_CANDIDATO_2022)
 
-    df = pd.read_parquet(_PARQUET_2022)
-    res_denominadores = calcular_denominadores(df)
+    res_denominadores = calcular_denominadores(df_detalhe)
+    res_candidatos = calcular_votos_validos_candidatos(df_candidato)
+
+    # Acesso direto sem .get silencioso: lanca KeyError se o candidato nao estiver presente
+    lula_pct = res_candidatos["LULA"]
+    bolsonaro_pct = res_candidatos["JAIR BOLSONARO"]
+    abstencao_pct = res_denominadores["abstencao_pct"]
+
     assert verificar_sanidade_2022({
-        "Luiz Inácio Lula da Silva": res_denominadores.get("lula_pct", 0.0),
-        "Jair Messias Bolsonaro": res_denominadores.get("bolsonaro_pct", 0.0),
-        "abstencao_pct": res_denominadores["abstencao_pct"],
-    })
+        "Luiz Inácio Lula da Silva": lula_pct,
+        "Jair Messias Bolsonaro": bolsonaro_pct,
+        "abstencao_pct": abstencao_pct,
+    }) is True
 
 
 # ============================================================
