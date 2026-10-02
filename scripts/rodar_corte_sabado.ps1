@@ -121,18 +121,54 @@ Write-Host "[OK] Relatorio reports/checkpoint_4.md gerado e sincronizado." -Fore
 Write-Host ""
 
 # ------------------------------------------------------------------------------
-# ETAPA 7: Recompilacao da Nota Metodologica Oficial em PDF (2 Paginas)
+# ETAPA 7: Geracao dos Numeros em LaTeX e Compilacao do PDF (docs/metodologia.tex)
 # ------------------------------------------------------------------------------
 Write-Host "--------------------------------------------------------------------------------" -ForegroundColor Yellow
-Write-Host "[ETAPA 7/7] Compilando Nota Metodologica em PDF (docs/metodologia.pdf)..." -ForegroundColor Yellow
+Write-Host "[ETAPA 7/7] Gerando docs/numeros_finais.tex e compilando docs/metodologia.tex..." -ForegroundColor Yellow
 Write-Host "--------------------------------------------------------------------------------" -ForegroundColor Yellow
 
-& $PYTHON scripts/gerar_pdf_metodologia.py
+& $PYTHON scripts/gerar_numeros_latex.py
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[FALHA NA ETAPA 7] Erro ao compilar docs/metodologia.pdf!" -ForegroundColor Red
+    Write-Host "[FALHA NA ETAPA 7] Erro ao gerar docs/numeros_finais.tex!" -ForegroundColor Red
     exit 1
 }
-Write-Host "[OK] docs/metodologia.pdf compilado com sucesso em exatamente 2 paginas." -ForegroundColor Green
+Write-Host "[OK] docs/numeros_finais.tex gerado com sucesso." -ForegroundColor Green
+
+if (Get-Command pdflatex -ErrorAction SilentlyContinue) {
+    Write-Host "[INFO] Executando pdflatex docs/metodologia.tex (passo 1/2)..." -ForegroundColor Cyan
+    Push-Location docs
+    try {
+        & pdflatex -interaction=nonstopmode metodologia.tex
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[FALHA NA ETAPA 7] Erro na primeira compilacao de metodologia.tex!" -ForegroundColor Red
+            exit 1
+        }
+        Write-Host "[INFO] Executando pdflatex docs/metodologia.tex (passo 2/2)..." -ForegroundColor Cyan
+        & pdflatex -interaction=nonstopmode metodologia.tex
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[FALHA NA ETAPA 7] Erro na segunda compilacao de metodologia.tex!" -ForegroundColor Red
+            exit 1
+        }
+    }
+    finally {
+        Pop-Location
+    }
+} else {
+    Write-Host "[AVISO] pdflatex nao encontrado no PATH do sistema. Mantendo docs/metodologia.pdf existente." -ForegroundColor Yellow
+}
+
+# Conferencia estrita: o PDF nao pode ter mais de 2 paginas
+if (Test-Path "docs/metodologia.pdf") {
+    $NUM_PAGINAS = [int](& $PYTHON -c "import pypdf; reader = pypdf.PdfReader('docs/metodologia.pdf'); print(len(reader.pages))")
+    if ($NUM_PAGINAS -gt 2) {
+        Write-Host "[FALHA CRITICA NA ETAPA 7] docs/metodologia.pdf tem $NUM_PAGINAS paginas! Exige-se no maximo 2 paginas." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "[OK] docs/metodologia.pdf conferido com sucesso ($NUM_PAGINAS paginas, limite maximo = 2)." -ForegroundColor Green
+} else {
+    Write-Host "[FALHA CRITICA NA ETAPA 7] docs/metodologia.pdf nao encontrado!" -ForegroundColor Red
+    exit 1
+}
 Write-Host ""
 
 # ------------------------------------------------------------------------------

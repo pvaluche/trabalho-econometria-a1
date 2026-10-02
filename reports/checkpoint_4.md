@@ -1,7 +1,7 @@
 # Relatorio de Auditoria: Checkpoint 4 (Corte Oficial de Sabado e Entrega Final)
 **Desafio de Estatistica e Econometria: FGV EPGE (Eleicoes Presidenciais 2026)**  
 **Grupo:** Joao Pedro Valuche, Arthur Caron Lyra, Lethicia Manfioletti Possamai  
-**Data da Execucao:** 02/10/2026 19:43:47 UTC  
+**Data da Execucao:** 02/10/2026 21:24:41 UTC  
 **Horario Limite de Corte:** Sabado 03/10/2026 as 20h00 (-03:00)  
 **Tag de Congelamento do Modelo:** `modelo-congelado` (codigo e hiperparametros inalterados)  
 

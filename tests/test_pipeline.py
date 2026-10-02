@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
+import re
 
 import numpy as np
 import openpyxl
@@ -28,7 +29,9 @@ from src.backtest import (
 from src.entrega import gerar_planilha_entrega
 from src.config import (
     CANDIDATOS_EDITAL,
+    DOCS_DIR,
     MANIFEST_PATH,
+    OUTPUTS_DIR,
     PARTIDOS_EDITAL,
     PESQUISAS_2026_PATH,
     PESQUISAS_2026_SCHEMA,
@@ -519,6 +522,77 @@ class TestValidacaoXLSX:
         res = validar_xlsx(p)
         assert not res["valido"]
         assert any("Total" in e for e in res["erros"])
+
+    def test_valores_numeros_finais_latex_coincidem_com_xlsx(self):
+        """
+        Garante que os valores em docs/numeros_finais.tex sao identicos
+        aos da Aba 1 (Candidatos) e Aba 2 (Adicionais) de outputs/previsao_2026.xlsx.
+        """
+        xlsx_path = OUTPUTS_DIR / "previsao_2026.xlsx"
+        tex_path = DOCS_DIR / "numeros_finais.tex"
+        assert xlsx_path.exists(), "outputs/previsao_2026.xlsx deve existir"
+        assert tex_path.exists(), "docs/numeros_finais.tex deve existir"
+
+        wb = openpyxl.load_workbook(xlsx_path, data_only=True)
+        ws1 = wb["Candidatos"]
+        ws2 = wb["Adicionais"]
+
+        # Le Aba 1
+        cands_xlsx = {}
+        for row in ws1.iter_rows(min_row=2, values_only=True):
+            nome = str(row[0] or "").strip()
+            if nome and nome.lower() != "total":
+                cands_xlsx[nome] = round(float(row[2]), 1)
+
+        # Le Aba 2
+        aba2_xlsx = {}
+        for row in ws2.iter_rows(min_row=2, values_only=True):
+            item = str(row[0] or "").strip()
+            if item:
+                aba2_xlsx[item.lower()] = round(float(row[1]), 1)
+
+        # Parse macros de docs/numeros_finais.tex
+        tex_content = tex_path.read_text(encoding="utf-8")
+        macros = {}
+        for match in re.finditer(r"\\newcommand\{\\([a-zA-Z0-9]+)\}\{([^}]+)\}", tex_content):
+            macros[match.group(1)] = match.group(2).strip()
+
+        # Mapeamento oficial dos candidatos
+        mapa_cands = {
+            "Luiz Inácio Lula da Silva": "pLula",
+            "Flávio Bolsonaro": "pFlavio",
+            "Augusto Cury": "pCury",
+            "Ronaldo Caiado": "pCaiado",
+            "Renan Santos": "pRenan",
+            "Romeu Zema": "pZema",
+            "Samara Martins": "pSamara",
+            "Clariana Barão": "pClariana",
+            "Edmilson Costa": "pEdmilson",
+            "Hertz Dias": "pHertz",
+            "Rui Costa Pimenta": "pRui",
+            "Wilson Grassi": "pWilson",
+        }
+
+        # Confere cada candidato da Aba 1
+        for cand, macro in mapa_cands.items():
+            assert macro in macros, f"Macro \\{macro} nao encontrada em numeros_finais.tex"
+            val_tex = float(macros[macro].replace(",", "."))
+            val_xlsx = cands_xlsx[cand]
+            assert val_tex == val_xlsx, f"Divergencia em {cand}: tex={val_tex} vs xlsx={val_xlsx}"
+
+        # Confere Aba 2
+        p_abst_tex = float(macros["pAbst"].replace(",", "."))
+        p_brancos_tex = float(macros["pBrancos"].replace(",", "."))
+        p_nulos_tex = float(macros["pNulos"].replace(",", "."))
+
+        p_abst_xlsx = next(v for k, v in aba2_xlsx.items() if "abst" in k)
+        p_brancos_xlsx = next(v for k, v in aba2_xlsx.items() if "branco" in k)
+        p_nulos_xlsx = next(v for k, v in aba2_xlsx.items() if "nulo" in k)
+
+        assert p_abst_tex == p_abst_xlsx, f"Abstencao diverge: tex={p_abst_tex} vs xlsx={p_abst_xlsx}"
+        assert p_brancos_tex == p_brancos_xlsx, f"Brancos diverge: tex={p_brancos_tex} vs xlsx={p_brancos_xlsx}"
+        assert p_nulos_tex == p_nulos_xlsx, f"Nulos diverge: tex={p_nulos_tex} vs xlsx={p_nulos_xlsx}"
+
 
 
 # ============================================================
