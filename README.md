@@ -9,7 +9,7 @@
 
 ## O que é o projeto
 
-Este repositório contém o modelo econométrico quantitativo desenvolvido para o Desafio de Estatística e Econometria da FGV EPGE (2026), cujo objetivo é prever os percentuais de votos válidos para os 12 candidatos oficiais do edital e os agregados eleitorais (abstenção sobre o eleitorado apto, votos brancos sobre o comparecimento e votos nulos sobre o comparecimento) no 1º turno da Eleição Presidencial de 2026. A partir de microdados históricos do Tribunal Superior Eleitoral (2006 a 2022) e de pesquisas eleitorais registradas no PesqEle/TSE, o pipeline combina agregação causal de pesquisas por recência exponencial (modelo M1 com meia-vida calibrada em 7 dias), ajuste de viés comum sistemático, regularização com prior histórico para candidaturas de baixa intensidade amostral, fechamento proporcional estrito a 100,0% pelo método dos maiores restos (Hamilton) e modelagem de agregados via série temporal, tudo ancorado em um protocolo rígido de pré-registro com validação temporal prospectiva (expanding window) para evitar sobreajuste.
+Este repositório contém o modelo desenvolvido para o Desafio de Estatística e Econometria da FGV EPGE (2026): previsão dos votos válidos dos 12 candidatos do 1º turno presidencial e de abstenção, votos brancos e votos nulos. Comparamos quatro modelos de agregação de pesquisas (média simples, ponderação por recência e amostra, correção de house effect e regressão Ridge) em validação temporal expanding window nas eleições de 2014, 2018 e 2022, com regras de decisão fixadas em pré-registro antes do backtest. O modelo final é a média simples da última pesquisa de cada instituto (M0), acrescida de correção do viés comum histórico das pesquisas e de ajuste de voto útil, com fechamento em 100,0% pelo método dos maiores restos. Abstenção, brancos e nulos são previstos por tendência linear (abstenção) e persistência (brancos e nulos), escolhidos pela mesma regra.
 
 ---
 
@@ -51,8 +51,8 @@ powershell -ExecutionPolicy Bypass -File scripts/rodar_corte_sabado.ps1
 Em ambientes sem PowerShell, cada etapa pode ser executada individualmente via Python:
 
 ```bash
-# 1. Gera a previsão oficial e a planilha XLSX
-python src/export.py
+# 1. Executa o backtest oficial e gera a planilha XLSX oficial
+python scripts/executar_backtest_oficial.py
 
 # 2. Sincroniza os números finais para o relatório
 python scripts/gerar_numeros_latex.py
@@ -84,11 +84,10 @@ O repositório está organizado em torno dos quatro pilares metodológicos do pr
 
 ### 2. Backtest
 - `src/backtest.py`: Motor econométrico de validação temporal por janelas crescentes (expanding window em 2014, 2018 e 2022), leave-one-election-out (LOEO) e cálculo de erros-padrão das diferenças empíricas de MAE.
-- `notebooks/`: Cadernos interativos de análise descritiva, diagnósticos de viés institucional (house effects) e simulações.
 - `reports/checkpoint_3.md`: Relatório completo com a tabela de seleção dos modelos candidatos de votos válidos e dos métodos para abstenção, brancos e nulos.
 
 ### 3. Testes
-- `tests/test_pipeline.py`: Suíte de testes com cobertura para validação de formato do edital, integridade SHA-256 dos dados brutos, preservação de monotonicidade do algoritmo de Hamilton, invariância temporal dos filtros causais e verificação de conformidade do PDF de 2 páginas.
+- `tests/test_pipeline.py`: Suíte de testes automatizados que valida a conversão para votos válidos, o algoritmo de maiores restos, o cálculo do MAE oficial, os denominadores eleitorais, a agregação de pesquisas por instituto, a sanidade dos dados de 2022, a conformidade da planilha XLSX, a integridade das pesquisas manuais de 2026 e históricas, a sanidade das vésperas do Datafolha, os priors de nanicos e incumbência governista, o backtest histórico e o formato de 2 páginas do PDF de metodologia.
 - `tests/test_sanity.py`: Teste de sanidade do ambiente de execução e dependências instaladas.
 
 ### 4. Entrega
