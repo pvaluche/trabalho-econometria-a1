@@ -323,6 +323,40 @@ Para comprovar a eliminacao de qualquer divergencia entre as tabelas e as metric
 - **2022:** MAE M0 tabela = 0,8345 p.p. | MAE Oficial tabela = 0,5827 p.p.
 - **Consistencia:** Em todas as configuracoes e anos, o desvio entre a media dos erros da tabela e o MAE do rodape e estritamente zero ($< 0,0001$), superando a tolerancia exigida de 0,001.
 
+### Execucao do Novo Teste de Consistencia Interna
+```
+PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> .venv\Scripts\python -m pytest tests/test_pipeline.py -k test_consistencia_mae_vs_tabela_candidato_a_candidato -v
+============================= test session starts =============================
+collected 84 items / 83 deselected / 1 selected
+
+tests/test_pipeline.py::TestBacktestHistorico::test_consistencia_mae_vs_tabela_candidato_a_candidato PASSED [100%]
+
+====================== 1 passed, 83 deselected in 5.12s =======================
+```
+
+### Execucao Completa da Suite de Testes (`pytest -v`)
+```
+PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> .venv\Scripts\python -m pytest -v
+============================= test session starts =============================
+collected 84 items
+
+tests/test_pipeline.py::TestConversaoVotosValidos::test_soma_igual_a_100 PASSED [  1%]
+...
+tests/test_pipeline.py::TestBacktestHistorico::test_consistencia_mae_vs_tabela_candidato_a_candidato PASSED [ 98%]
+tests/test_sanity.py::test_sanity PASSED                                 [100%]
+
+============================= 84 passed in 7.23s ==============================
+```
+
+### Historico Recente de Auditoria (`git log --oneline -5`)
+```
+0012c07 fix(checkpoint-3): reconciliacao matematica do M0 2022, script unico de tabelas e teste de consistencia
+4459e3a feat(interface): visual de terminal IA com linhas finas, scanline sutil, dados.js e zero numeros no html
+9d41bcd feat: revisao oficial do checkpoint 3 com urna completa, interface terminal e 8 itens auditados
+dd5d98e feat: interface interativa: comparador de modelos, backtest por eleicao e dados.json
+47cf3d5 docs: registra git log atualizado no relatorio do checkpoint 3
+```
+
 ---
 
 ## 13. Conclusoes, Governanca do Git e Proximos Passos
