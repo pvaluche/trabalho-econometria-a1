@@ -349,14 +349,14 @@ PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> .venv\
 
 ### c) `git log --oneline -8` (Histórico de Auditoria)
 ```
+d6bad4f feat: checkpoint 3: backtest historico oficial, ablations e previsao preliminar 2026
 170a3a4 fix: emenda 3 ao pre-registro: house effect relativo, priors de nanicos via tse e protocolo sequencial
+73befd7 docs: reformula README com integrantes do grupo, acentos e alinhamento metodologico
+831fe96 docs: atualiza git log no relatorio do checkpoint 2 revisao 3
 f06c1e5 fix: emenda 2 ao pre-registro, ajuste tracking vox populi 2010 e reversao poderdata
 b49ba8f docs: registra git log no relatorio do checkpoint 2 revisao 2
 affd344 fix: correcoes da auditoria do checkpoint 2: transcricao estrita, emenda 1 no pre-registro, sanidade das vesperas e contratantes
 af5774b docs: registra git log no relatorio do checkpoint 2
-7c42ff0 feat: checkpoint 2: pesquisas historicas 2006-2022 compiladas e pre-registro congelado
-81f59b1 fix: correcoes da auditoria do checkpoint 1 rodada 2 -- transcricao verificada, protocolo realtime, outros_agregado e datafolha final
-f208e5e docs: registra git log no relatorio do checkpoint 1
 ```
 
 ---
