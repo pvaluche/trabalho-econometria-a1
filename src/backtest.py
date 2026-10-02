@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
 
-from src.config import CANDIDATOS_EDITAL, PROCESSED_DIR
+from src.config import CANDIDATOS_EDITAL, PARTIDOS_EDITAL, PROCESSED_DIR
 from src.filtros import VESPERAS
 from src.incumbencia import obter_incumbencia
 from src.nanicos import calcular_priors_nanicos_tse
@@ -600,20 +600,7 @@ HISTORICO_PARTIDOS: dict[int, dict[str, str]] = {
         "Vera Lúcia": "PSTU",
         "Constituinte Eymael": "DC",
     },
-    2026: {
-        "Luiz Inácio Lula da Silva": "PT",
-        "Flávio Bolsonaro": "PL",
-        "Ciro Gomes": "PDT",
-        "Romeu Zema": "NOVO",
-        "Ronaldo Caiado": "UNIÃO",
-        "Simone Tebet": "MDB",
-        "Clariana Barão": "DC",
-        "Edmilson Costa": "PCB",
-        "Hertz Dias": "PSTU",
-        "Rui Costa Pimenta": "PCO",
-        "Samara Martins": "UP",
-        "Wilson Grassi": "Democrata",
-    },
+    2026: dict(PARTIDOS_EDITAL),
 }
 
 
