@@ -734,7 +734,7 @@ class TestPesquisasHistoricas:
         for i in range(len(datas_vp) - 1):
             dias_diff = (datas_vp[i + 1] - datas_vp[i]).days
             assert dias_diff >= 4, (
-                f"Sobreposicao no Vox Populi 2010: rodada {datas_vp[i]} e {datas_vp[i+1]} com apenas {dias_diff} dias de diferenca"
+                f"Sobreposicao no Vox Populi 2010: rodada {datas_vp[i]} e {datas_vp[i + 1]} com apenas {dias_diff} dias de diferenca"
             )
 
 
@@ -924,3 +924,56 @@ class TestBacktestHistorico:
         adj_w0 = aplicar_ajuste_priors_nanicos(preds_2026, 2026, w=0.0)
         assert abs(adj_w0["Clariana Barão"] - 0.2) < 1e-4
         assert abs(adj_w0["Wilson Grassi"] - 0.2) < 1e-4
+
+    def test_consistencia_mae_vs_tabela_candidato_a_candidato(self):
+        """
+        Auditoria Checkpoint 3 (Rodada 3): Para cada eleicao (2014, 2018, 2022) e configuracao
+        (M0 e Modelo Oficial), o MAE reportado no relatorio coincide com a media dos desvios
+        absolutos (|erro|) da tabela candidato a candidato com tolerancia menor que 0.001.
+        """
+        import re
+        from src.config import REPORTS_DIR
+
+        relatorio_path = REPORTS_DIR / "checkpoint_3.md"
+        assert relatorio_path.exists(), "checkpoint_3.md deve existir"
+        texto = relatorio_path.read_text(encoding="utf-8")
+
+        for ano in [2014, 2018, 2022]:
+            padrao = rf"### Eleicao {ano} \(\$K=\d+\$ Candidatos\)(.*?)(?=### Eleicao|\n---|\Z)"
+            match = re.search(padrao, texto, re.DOTALL)
+            assert match is not None, f"Secao da eleicao {ano} deve existir no relatorio"
+            bloco = match.group(1)
+
+            linhas = [linha.strip() for linha in bloco.strip().splitlines() if linha.startswith("|")]
+            assert len(linhas) >= 4, f"Tabela de {ano} deve conter cabecalho e candidatos"
+
+            linhas_cands = [
+                linha for linha in linhas[2:] if "MAE da Eleição" not in linha and "MAE da Eleicao" not in linha
+            ]
+            linha_rodape = [
+                linha for linha in linhas[2:] if "MAE da Eleição" in linha or "MAE da Eleicao" in linha
+            ]
+            assert len(linha_rodape) == 1, f"Tabela de {ano} deve conter exatamente 1 linha de rodape com MAE"
+
+            erros_m0 = []
+            erros_ofic = []
+            for linha in linhas_cands:
+                partes = [p.strip() for p in linha.split("|")[1:-1]]
+                err_m0_str = partes[3].replace("%", "").replace(",", ".").replace("+", "")
+                err_ofic_str = partes[5].replace("%", "").replace(",", ".").replace("+", "")
+                erros_m0.append(abs(float(err_m0_str)))
+                erros_ofic.append(abs(float(err_ofic_str)))
+
+            partes_rodape = [p.strip() for p in linha_rodape[0].split("|")[1:-1]]
+            mae_m0_rep = float(partes_rodape[3].replace("**", "").replace(",", "."))
+            mae_ofic_rep = float(partes_rodape[5].replace("**", "").replace(",", "."))
+
+            media_erros_m0 = float(np.mean(erros_m0))
+            media_erros_ofic = float(np.mean(erros_ofic))
+
+            assert abs(mae_m0_rep - media_erros_m0) < 0.001, (
+                f"Ano {ano} M0: MAE reportado ({mae_m0_rep}) difere da media da tabela ({media_erros_m0:.4f})"
+            )
+            assert abs(mae_ofic_rep - media_erros_ofic) < 0.001, (
+                f"Ano {ano} Oficial: MAE reportado ({mae_ofic_rep}) difere da media da tabela ({media_erros_ofic:.4f})"
+            )

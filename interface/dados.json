@@ -6,8 +6,8 @@
       "Arthur Caron Lyra",
       "Lethicia Manfioletti Possamai"
     ],
-    "commit": "a44b0a3",
-    "gerado_em": "2026-10-02T15:43:45-03:00",
+    "commit": "4459e3a",
+    "gerado_em": "2026-10-02T16:19:29-03:00",
     "status": "PRELIMINAR (aguardando pesquisas de véspera de sábado 03/10 às 20h)",
     "aviso_governanca": "Ferramenta de decisão do grupo. Nenhuma configuração é a oficial até a criação da tag modelo-congelado.",
     "total_pesquisas_2026": 6,
@@ -990,10 +990,10 @@
         "erro_margem_stats": {
           "por_ano": {
             "2014": 5.72,
-            "2018": 3.58,
+            "2018": 3.4,
             "2022": 4.32
           },
-          "media": 4.54,
+          "media": 4.48,
           "p80": 5.16,
           "max": 5.72
         },
@@ -1003,26 +1003,26 @@
       "backtest_expanding": {
         "erros": {
           "2014": 0.9245,
-          "2018": 1.3855,
-          "2022": 0.5819
+          "2018": 1.3886,
+          "2022": 0.5749
         },
-        "mae_medio": 0.964,
-        "se": 0.2328
+        "mae_medio": 0.9627,
+        "se": 0.2357
       },
       "backtest_loeo": {
         "erros": {
-          "2006": 1.3923,
-          "2010": 2.1393,
-          "2014": 0.8784,
-          "2018": 1.2182,
-          "2022": 0.5819
+          "2006": 1.3714,
+          "2010": 1.9649,
+          "2014": 0.8617,
+          "2018": 1.2229,
+          "2022": 0.5749
         },
-        "mae_medio": 1.242,
-        "se": 0.2642
+        "mae_medio": 1.1992,
+        "se": 0.2367
       },
       "regra_decisao": {
-        "delta_vs_m0": -0.2568,
-        "se_delta": 0.0856,
+        "delta_vs_m0": -0.2581,
+        "se_delta": 0.0864,
         "status": "Análise de Sensibilidade",
         "justificativa": "Prior teve ganho nulo no histórico (delta=0), por isso w=0 no oficial; mantido aqui para avaliar sensibilidade a zero espúrio."
       }

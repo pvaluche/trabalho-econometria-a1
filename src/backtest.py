@@ -538,24 +538,165 @@ def aplicar_ajuste_voto_util(
     return renormalizar_votos(adj)
 
 
+HISTORICO_PARTIDOS: dict[int, dict[str, str]] = {
+    2006: {
+        "Luiz Inácio Lula da Silva": "PT",
+        "Geraldo Alckmin": "PSDB",
+        "Heloísa Helena": "PSOL",
+        "Cristovam Buarque": "PDT",
+        "Ana Maria Rangel": "PRP",
+        "José Maria Eymael": "PSDC",
+        "Luciano Bivar": "PSL",
+    },
+    2010: {
+        "Dilma Rousseff": "PT",
+        "José Serra": "PSDB",
+        "Marina Silva": "PV",
+        "Plínio de Arruda Sampaio": "PSOL",
+        "José Maria Eymael": "PSDC",
+        "Zé Maria": "PSTU",
+        "Levy Fidelix": "PRTB",
+        "Ivan Pinheiro": "PCB",
+        "Rui Costa Pimenta": "PCO",
+    },
+    2014: {
+        "Dilma Rousseff": "PT",
+        "Aécio Neves": "PSDB",
+        "Marina Silva": "PSB",
+        "Luciana Genro": "PSOL",
+        "Pastor Everaldo": "PSC",
+        "Eduardo Jorge": "PV",
+        "Levy Fidelix": "PRTB",
+        "Zé Maria": "PSTU",
+        "José Maria Eymael": "PSDC",
+        "Mauro Iasi": "PCB",
+        "Rui Costa Pimenta": "PCO",
+    },
+    2018: {
+        "Jair Bolsonaro": "PSL",
+        "Fernando Haddad": "PT",
+        "Ciro Gomes": "PDT",
+        "Geraldo Alckmin": "PSDB",
+        "João Amoêdo": "NOVO",
+        "Cabo Daciolo": "PATRI",
+        "Henrique Meirelles": "MDB",
+        "Marina Silva": "REDE",
+        "Alvaro Dias": "PODE",
+        "Guilherme Boulos": "PSOL",
+        "Vera Lúcia": "PSTU",
+        "José Maria Eymael": "DC",
+        "João Goulart Filho": "PPL",
+    },
+    2022: {
+        "Luiz Inácio Lula da Silva": "PT",
+        "Jair Bolsonaro": "PL",
+        "Simone Tebet": "MDB",
+        "Ciro Gomes": "PDT",
+        "Soraya Thronicke": "UNIÃO",
+        "Felipe D'Avila": "NOVO",
+        "Padre Kelmon": "PTB",
+        "Léo Péricles": "UP",
+        "Sofia Manzano": "PCB",
+        "Vera Lúcia": "PSTU",
+        "Constituinte Eymael": "DC",
+    },
+    2026: {
+        "Luiz Inácio Lula da Silva": "PT",
+        "Flávio Bolsonaro": "PL",
+        "Ciro Gomes": "PDT",
+        "Romeu Zema": "NOVO",
+        "Ronaldo Caiado": "UNIÃO",
+        "Simone Tebet": "MDB",
+        "Clariana Barão": "DC",
+        "Edmilson Costa": "PCB",
+        "Hertz Dias": "PSTU",
+        "Rui Costa Pimenta": "PCO",
+        "Samara Martins": "UP",
+        "Wilson Grassi": "Democrata",
+    },
+}
+
+
+def calcular_prior_partido_treino(eleicoes_treino: list[int], partido: str) -> float:
+    """
+    Calcula a mediana da porcentagem de votos validos para a legenda do partido
+    utilizando estritamente as eleicoes de treino t-1.
+    """
+    if not eleicoes_treino:
+        return 0.05
+    dfs = []
+    for ano in eleicoes_treino:
+        f = PROCESSED_DIR / f"votacao_candidato_{ano}.parquet"
+        if f.exists():
+            df = pd.read_parquet(f)
+            df["ANO_ELEICAO"] = ano
+            dfs.append(df)
+    if not dfs:
+        return 0.05
+    all_df = pd.concat(dfs, ignore_index=True)
+    pres = all_df[(all_df["NR_TURNO"] == 1) & (all_df["DS_CARGO"].str.upper() == "PRESIDENTE")]
+    totais_ano = pres.groupby("ANO_ELEICAO")["QT_VOTOS_NOMINAIS"].sum()
+    cand_ano = (
+        pres.groupby(["ANO_ELEICAO", "SG_PARTIDO", "NM_URNA_CANDIDATO"])["QT_VOTOS_NOMINAIS"]
+        .sum()
+        .reset_index()
+    )
+    cand_ano["TOTAL_ANO"] = cand_ano["ANO_ELEICAO"].map(totais_ano)
+    cand_ano["PCT_VALIDOS"] = (cand_ano["QT_VOTOS_NOMINAIS"] / cand_ano["TOTAL_ANO"]) * 100.0
+
+    partidos_busca = [partido]
+    if partido in ["DC", "PSDC"]:
+        partidos_busca = ["PSDC", "DC"]
+    sub = cand_ano[cand_ano["SG_PARTIDO"].isin(partidos_busca)]
+    if len(sub) > 0:
+        return float(sub["PCT_VALIDOS"].median())
+
+    # Fallback: mediana dos candidatos com < 0.5%
+    sub_05 = cand_ano[cand_ano["PCT_VALIDOS"] < 0.5]
+    if len(sub_05) > 0:
+        return float(sub_05["PCT_VALIDOS"].median())
+    return 0.05
+
+
 def aplicar_ajuste_priors_nanicos(
     base_preds: dict[str, float],
     eleicao: int,
     w: float = 0.5,
+    eleicoes_treino: list[int] | None = None,
 ) -> dict[str, float]:
     """
     Ajuste 3: Combinacao convexa de intencoes de candidatos nanicos com prior do TSE.
+    Em 2026: aplica sobre os nanicos do edital usando a serie historica consolidada.
+    No historico: aplica sobre candidatos nanicos (intencao < 0.2% nas pesquisas) usando
+    a mediana da legenda nas eleicoes de treino t-1.
     """
-    if eleicao != 2026:
-        # Nas eleicoes historicas, as pesquisas nao divulgaram nanicos individualmente
+    if w <= 0.0:
         return base_preds
 
-    priors = calcular_priors_nanicos_tse()
     adj = dict(base_preds)
 
-    for c in priors:
-        if c in adj:
-            adj[c] = (1.0 - w) * adj[c] + w * priors[c]
+    if eleicao == 2026:
+        priors = calcular_priors_nanicos_tse()
+        for c, pr in priors.items():
+            if c in adj:
+                adj[c] = (1.0 - w) * adj[c] + w * pr
+        return renormalizar_votos(adj)
+
+    # Historico (2006 a 2022)
+    if eleicoes_treino is None:
+        treinos = {
+            2014: [2006, 2010],
+            2018: [2006, 2010, 2014],
+            2022: [2006, 2010, 2014, 2018],
+        }
+        eleicoes_treino = treinos.get(eleicao, [2006, 2010])
+
+    partidos_ano = HISTORICO_PARTIDOS.get(eleicao, {})
+    for c, val in base_preds.items():
+        if val < 0.2:
+            ptdo = partidos_ano.get(c, "")
+            pr = calcular_prior_partido_treino(eleicoes_treino, ptdo)
+            adj[c] = (1.0 - w) * val + w * pr
 
     return renormalizar_votos(adj)
 
