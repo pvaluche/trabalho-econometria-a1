@@ -257,4 +257,11 @@ tests/test_pipeline.py::TestPesquisas2026Manual::test_candidatos_nao_divulgados_
 ```
 
 ### Git Log (`git log --oneline -5`)
-*(Sera preenchido com o hash apos o commit)*
+
+```text
+67f5662 fix: revisao 2 do checkpoint 1 -- fontes de pesquisas_2026 verificadas, pesqele validado, candidatos consulta_cand listados
+54348b3 docs: atualiza reports/checkpoint_1.md com git log oficial
+e98bfa4 feat: checkpoint 1 -- base TSE 2006-2022 processada em parquet, sanidade 2022 validada e pesquisas 2026 preenchidas
+de65167 docs: atualiza reports/checkpoint_0.md com saidas completas da auditoria
+22461d5 test: testes chamam src -- metricas, filtros, tse, pesquisas, validar_entrega importados de src/
+```
