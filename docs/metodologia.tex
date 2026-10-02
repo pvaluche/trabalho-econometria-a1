@@ -1,9 +1,9 @@
 \documentclass[10pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[brazil]{babel}
+\IfFileExists{brazil.ldf}{\usepackage[brazil]{babel}}{}
 \usepackage{charter}
-\usepackage[a4paper,top=1.5cm,bottom=1.6cm,left=1.7cm,right=1.7cm,footskip=0.8cm]{geometry}
+\usepackage[a4paper,top=1.35cm,bottom=1.45cm,left=1.55cm,right=1.55cm,footskip=0.7cm]{geometry}
 \usepackage{microtype}
 \usepackage{amsmath}
 \usepackage{booktabs}
@@ -13,6 +13,11 @@
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{xstring}
 
 \input{numeros_finais.tex}
 
@@ -20,12 +25,12 @@
 \definecolor{cinza}{HTML}{555555}
 
 \titleformat{\section}{\normalfont\bfseries\color{azul}}{\thesection.}{0.5em}{}
-\titlespacing*{\section}{0pt}{5pt}{1pt}
+\titlespacing*{\section}{0pt}{4pt}{1pt}
 \setlist{nosep,leftmargin=1.2em,topsep=1pt}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{3pt}
-\renewcommand{\arraystretch}{1.05}
-\setlength{\tabcolsep}{4pt}
+\setlength{\parskip}{2.5pt}
+\renewcommand{\arraystretch}{1.03}
+\setlength{\tabcolsep}{3.5pt}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -35,6 +40,20 @@
 
 \newcommand{\pp}{\,p.p.}
 
+% Bloco StrSubstitute para pgfplots
+\StrSubstitute{\pFlavio}{,}{.}[\pFlavioDot]
+\StrSubstitute{\pLula}{,}{.}[\pLulaDot]
+\StrSubstitute{\pCury}{,}{.}[\pCuryDot]
+\StrSubstitute{\pCaiado}{,}{.}[\pCaiadoDot]
+\StrSubstitute{\pRenan}{,}{.}[\pRenanDot]
+\StrSubstitute{\pZema}{,}{.}[\pZemaDot]
+\StrSubstitute{\mFlavio}{,}{.}[\mFlavioDot]
+\StrSubstitute{\mLula}{,}{.}[\mLulaDot]
+\StrSubstitute{\mCury}{,}{.}[\mCuryDot]
+\StrSubstitute{\mCaiado}{,}{.}[\mCaiadoDot]
+\StrSubstitute{\mRenan}{,}{.}[\mRenanDot]
+\StrSubstitute{\mZema}{,}{.}[\mZemaDot]
+
 \begin{document}
 
 {\large\bfseries\color{azul} Previsão do 1º turno presidencial de 2026: nota metodológica}\\[2pt]
@@ -42,30 +61,89 @@
 \colorbox{azul!8}{\parbox{\dimexpr\linewidth-2\fboxsep}{\small
 \textbf{Horário de corte dos dados: sábado, 03/10/2026, às 20h00 (horário de Brasília).} Nenhuma pesquisa divulgada após esse horário entrou na previsão. Status destes números: \statusprevisao.}}
 
-\vspace{2pt}
-\textbf{Ideia central.} O edital avalia a distância à distribuição completa dos votos, não o acerto do vencedor. Por isso escolhemos o modelo pelo erro absoluto médio (MAE) sobre \emph{todos} os candidatos da urna em eleições passadas, com regras fixadas por escrito antes de ver qualquer resultado (pré-registro metodológico com três emendas datadas, todas anteriores ao backtest).
+\vspace{1pt}
 
-\section{Dados}
-\begin{itemize}
-\item \textbf{Resultados oficiais (TSE, 2006 a 2022):} votação por candidato e detalhe da apuração do Portal de Dados Abertos, agregados ao nível nacional. Conferência: em 2022 o pipeline reproduz Lula 48,43\%, Bolsonaro 43,20\% e abstenção 20,95\%.
-\item \textbf{Pesquisas históricas:} 109 pesquisas nacionais estimuladas de 1º turno divulgadas nos 21 dias anteriores a cada eleição (Wikipédia, com a revisão exata de cada página registrada, e arquivo do UOL para 2006). O tracking diário do Vox Populi em 2010 foi reduzido a rodadas sem sobreposição de amostra; Ibope e Ipec formam uma série única.
-\item \textbf{Pesquisas de 2026:} \npesquisas{} rodadas com registro conferido no PesqEle/TSE: \listapesquisas. Cada número foi transcrito da página original salva, com teste automático que confere o valor junto ao nome do candidato.
-\end{itemize}
-Todos os arquivos têm URL, data de download e hash SHA-256 em um manifesto.
+\section{Objetivo}
+Projetamos a distribuição de votos válidos para os doze candidatos a presidente da República e os percentuais de abstenção, votos brancos e votos nulos no primeiro turno da eleição presidencial de 2026. Avaliamos o desempenho dos modelos por meio do erro absoluto médio (MAE) calculado sobre todos os candidatos da cédula eleitoral. Optamos por incluir todas as candidaturas porque distorções em concorrentes menores alteram a soma total dos votos e desvios pontuais em qualquer candidato geram o mesmo impacto na precisão da estimativa.
 
-\section{Tratamento das pesquisas}
-\begin{itemize}
-\item \textbf{Votos válidos:} brancos, nulos e indecisos são excluídos e os 12 candidatos do edital renormalizados a 100\% (indecisos distribuídos na proporção dos decididos). Candidato sem número divulgado conta como ausente, não como zero.
-\item \textbf{Amostra, data e instituto:} testamos pesos por recência e por $\sqrt{N}$ (M1) e correção do viés de cada instituto (\emph{house effect}, M2), estimado por bloco político (PT, principal adversário, demais) em relação à média dos institutos na mesma eleição e encolhido por $n_j/(n_j+k)$. Nenhum dos dois superou a média simples no backtest, então cada instituto entra com peso igual pela sua última pesquisa.
-\item \textbf{Arredondamento:} método dos maiores restos, garantindo soma exata de 100,0\%.
-\end{itemize}
+\section{Dados e pipeline}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0.30cm,
+    caixa/.style={
+        rectangle, rounded corners=3pt,
+        draw=azul, fill=azul!10, text=azul!90!black,
+        align=center, font=\scriptsize\bfseries,
+        inner sep=2.5pt, minimum height=1.05cm
+    },
+    seta/.style={->, >=stealth, thick, color=azul},
+    faixa/.style={
+        rectangle, rounded corners=2pt,
+        draw=azul!80, fill=azul!5, text=azul!90!black,
+        align=center, font=\tiny\bfseries,
+        inner sep=2.5pt
+    }
+]
+\node[caixa, text width=2.4cm] (tse) {Resultados TSE\\(2006-2022) +\\Pesquisas (PesqEle)};
+\node[caixa, text width=2.1cm, right=of tse] (conv) {Conversão para\\votos válidos};
+\node[caixa, text width=2.7cm, right=of conv] (media) {Média por instituto\\(última pesquisa,\\janela 21 dias)};
+\node[caixa, text width=2.3cm, right=of media] (ajust) {Ajustes\\(viés comum,\\voto útil)};
+\node[caixa, text width=2.4cm, right=of ajust] (arred) {Arredondamento\\(maiores restos)};
+\node[caixa, text width=1.5cm, right=of arred] (prev) {Previsão\\final};
 
-\section{Modelos e validação}
-Quatro modelos base: \textbf{M0} média simples da última pesquisa de cada instituto; \textbf{M1} média ponderada por recência (meia-vida $h \in \{7,14,21\}$ dias) e amostra; \textbf{M2} M1 com \emph{house effect} ($k \in \{1,3,10\}$); \textbf{M3} regressão Ridge do resultado sobre a média das pesquisas, incumbência e posição ($\alpha \in \{0{,}1;1;10\}$).
+\draw[seta] (tse) -- (conv);
+\draw[seta] (conv) -- (media);
+\draw[seta] (media) -- (ajust);
+\draw[seta] (ajust) -- (arred);
+\draw[seta] (arred) -- (prev);
 
-\textbf{Validação temporal (expanding window):} cada eleição é prevista usando apenas eleições anteriores (2014 com 2006 e 2010; 2018 com 2006 a 2014; 2022 com 2006 a 2018). O \emph{leave-one-election-out} (LOEO) é reportado como complemento. \textbf{Regra de decisão:} um modelo ou ajuste mais complexo só substitui o mais simples se a redução média do MAE superar um erro-padrão das diferenças entre eleições; em empate, vence o mais simples.
+\node[faixa, below=0.22cm of ajust, text width=4.8cm] (val) {Validação: expanding window 2014, 2018, 2022};
+\draw[seta] (val) -- (ajust);
+\end{tikzpicture}
+\vspace{-4pt}
+\caption{Diagrama do pipeline metodológico e protocolo de validação temporal. Fonte: elaboração própria.}
+\label{fig:pipeline}
+\end{figure}
 
-\vspace{2pt}
+Coletamos os resultados oficiais apurados pelo Tribunal Superior Eleitoral (TSE) de 2006 a 2022 e 109 pesquisas estimuladas de primeiro turno divulgadas nos 21 dias que antecederam cada eleição. Para a eleição de 2026, compilamos as \npesquisas{} pesquisas registradas no TSE divulgadas até o horário de corte: \listapesquisas. Estabelecemos a janela de 21 dias porque as decisões de voto dos eleitores se estabilizam nas semanas finais de campanha. Mantivemos unicamente a última pesquisa de cada instituto com o intuito de evitar que empresas com rodadas diárias de rastreamento exerçam peso desmedido no resultado agregado.
+
+\section{Modelos e protocolo de validação}
+Calculamos a proporção inicial de votos válidos de cada levantamento excluindo abstenções, brancos, nulos e indecisos:
+\begin{equation}
+v_{i,j} = \frac{x_{i,j}}{\sum_{c=1}^{K} x_{c,j}}
+\end{equation}
+em que $x_{i,j}$ representa a intenção divulgada para o candidato $i$ pelo instituto $j$.
+
+Formulamos quatro especificações base de agregação. O modelo M0 computa a média simples entre os $J$ institutos da eleição:
+\begin{equation}
+p_{i}^{\text{M0}} = \frac{1}{J}\sum_{j=1}^{J} v_{i,j}
+\end{equation}
+O modelo M1 atribui pesos ponderados pela raiz quadrada do tamanho amostral $N_j$ e pelo decaimento temporal exponencial com meia-vida $h$:
+\begin{equation}
+w_j = \sqrt{N_j} \cdot 2^{-\Delta t_j / h}, \quad p_i^{\text{M1}} = \frac{\sum_{j} w_j v_{i,j}}{\sum_j w_j}
+\end{equation}
+O modelo M2 corrige o viés sistemático de cada instituto (\emph{house effect}) por bloco político, aplicando encolhimento bayesiano:
+\begin{equation}
+\hat\beta_{j,b} = \frac{n_j}{n_j + k}\bar\beta_{j,b}, \quad v_{i,j}^{\text{corr}} = v_{i,j} - \hat\beta_{j,b(i)}
+\end{equation}
+O modelo M3 estima uma regressão Ridge com regularização $L_2$ sobre a média das pesquisas, incumbência e ordenamento prévio:
+\begin{equation}
+\hat\beta^{\text{Ridge}} = \arg\min_\beta \left\{ \sum_{t} (y_t - X_t\beta)^2 + \alpha \|\beta\|_2^2 \right\}
+\end{equation}
+
+Mensuramos o erro preditivo por meio do MAE sobre os $K$ candidatos da apuração:
+\begin{equation}
+\text{MAE} = \frac{1}{K}\sum_{i=1}^{K} |p_i - r_i|
+\end{equation}
+onde $r_i$ é o percentual oficial apurado pelo TSE.
+
+Adotamos a validação temporal prospectiva (\emph{expanding window}) nos pleitos de 2014, 2018 e 2022 porque esse critério impede o uso de informações do futuro para calibrar previsões passadas. Fixamos a regra de decisão antes da execução do backtest para coibir escolhas discricionárias após a verificação dos erros. Uma especificação de maior complexidade só é admitida se a diminuição média do MAE for superior ao erro-padrão amostral das diferenças:
+\begin{equation}
+\bar\Delta > \text{EP}(\Delta) = \frac{s_\Delta}{\sqrt{n}}
+\end{equation}
+Em caso de empate estatístico, preservamos a formulação de menor complexidade.
+
 \begin{center}\small
 \textbf{Tabela 1:} Avaliação dos modelos e ajustes no backtest expanding window (MAE em p.p.).\\[2pt]
 \begin{tabular}{lccccl}
@@ -89,14 +167,25 @@ M3 Ridge ($\alpha=1$) & 1,85 & 2,02 & 1,19 & 1,69 & rejeitado \\
 \end{center}
 
 \section{Modelo final}
-\textbf{Viés comum.} Para cada bloco $b$, $\hat\mu_b = \frac{N}{N+3}\cdot\frac{1}{N}\sum_{t}(\bar v^{\,\text{pesq}}_{b,t} - v^{\text{TSE}}_{b,t})$, a média do erro conjunto das pesquisas nas $N$ eleições de treino, encolhida. É subtraído da média das pesquisas. Historicamente, o principal adversário do PT foi subestimado nas vésperas (Aécio em 2014, Bolsonaro em 2018 e 2022).
+Incorporamos dois ajustes econométricos sobre a média simples M0 selecionada no backtest. O primeiro corrige o viés comum médio das pesquisas em cada bloco político $b$, aplicando encolhimento bayesiano sobre o erro histórico médio das pesquisas em relação à urna:
+\begin{equation}
+\hat\mu_b = \frac{N}{N+3}\cdot\frac{1}{N}\sum_{t=1}^{N} \left(\bar v^{\,\text{pesq}}_{b,t} - v^{\text{TSE}}_{b,t}\right)
+\end{equation}
+onde $N$ indica a quantidade de eleições no conjunto de treino. Introduzimos esse ajuste porque os institutos compartilham metodologias amostrais semelhantes que subestimaram recorrentemente o principal opositor do partido governista nas vésperas das eleições recentes.
 
-\textbf{Voto útil.} $\bar\delta$ é a perda média, entre a véspera e a urna, do 3º e 4º colocados nas eleições de treino. Esse total é retirado do 3º e 4º colocados e transferido aos dois primeiros, proporcionalmente às suas intenções. O resultado é renormalizado a 100\%.
+O segundo ajuste captura a coordenação estratégica de voto útil na reta final. Calculamos a perda média $\bar\delta$ verificada conjuntamente pelo terceiro e quarto colocados nas eleições passadas e a transferimos proporcionalmente aos dois concorrentes líderes:
+\begin{equation}
+\Delta v_i = \bar\delta \cdot \frac{p_i}{p_1 + p_2}, \quad i \in \{1, 2\}
+\end{equation}
+Fundamentamos esse mecanismo na decisão de eleitores que abandonam concorrentes sem probabilidade de segundo turno para definir a disputa imediata entre os favoritos.
 
-\textbf{Histórico dos nanicos.} A mediana da votação de partidos equivalentes no TSE foi testada como âncora, mas o ganho foi indistinguível de zero (as pesquisas históricas raramente divulgam nanicos individualmente), e o peso ficou em $w=0$.
+Finalizadas as correções, renormalizamos as frações para cumprir a restrição orçamentária probabilística e executamos o algoritmo dos maiores restos (método de Hamilton) para assegurar o fechamento exato em 100,0\% com uma casa decimal:
+\begin{equation}
+\sum_{i=1}^{12} \hat p_i = 100{,}0\%
+\end{equation}
+Testamos também uma âncora histórica calibrada na mediana de votação de legendas equivalentes no TSE, mas descartamos a medida porque a redução de erro foi nula no backtest ($w=0$).
 
-
-\section{Previsão e sensibilidade}
+\section{Resultados de 2026}
 \begin{center}\small
 \textbf{Tabela 2:} Previsão de votos válidos para 2026 (modelo final e média simples M0).\\[2pt]
 \begin{tabular}{lcc@{\hspace{2.2em}}lcc}
@@ -115,15 +204,62 @@ Renan Santos (Missão) & \pRenan & \mRenan & Hertz Dias (PSTU) & \pHertz & \\
 {\footnotesize Projeções em \% de votos válidos. A coluna M0 é a média simples das pesquisas, mostrada para transparência. Fonte: elaboração própria.}
 \end{center}
 
-\textbf{Como ler a diferença entre Lula e Flávio.} A distância projetada entre os dois primeiros é menor que o erro histórico da margem entre 1º e 2º colocados (média de 4,5 p.p. no modelo final, $n=3$). A previsão deve ser lida como disputa aberta, e não como aposta no vencedor.
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    bar width=6.5pt,
+    width=0.96\linewidth,
+    height=3.8cm,
+    ymin=0, ymax=52,
+    ylabel={Votos válidos (\%)},
+    symbolic x coords={Flavio, Lula, Cury, Caiado, Renan, Zema},
+    xtick=data,
+    xticklabels={Flávio, Lula, Cury, Caiado, Renan, Zema},
+    legend style={at={(0.98,0.95)}, anchor=north east, font=\scriptsize},
+    nodes near coords,
+    nodes near coords style={font=\tiny},
+    ymajorgrids=true,
+    grid style={dashed, gray!30},
+    axis line style={cinza!50},
+    tick label style={font=\scriptsize},
+    label style={font=\scriptsize},
+    enlarge x limits=0.12,
+]
+\addplot[fill=azul!85, draw=azul] coordinates {
+    (Flavio, \pFlavioDot)
+    (Lula, \pLulaDot)
+    (Cury, \pCuryDot)
+    (Caiado, \pCaiadoDot)
+    (Renan, \pRenanDot)
+    (Zema, \pZemaDot)
+};
+\addplot[fill=cinza!40, draw=cinza] coordinates {
+    (Flavio, \mFlavioDot)
+    (Lula, \mLulaDot)
+    (Cury, \mCuryDot)
+    (Caiado, \mCaiadoDot)
+    (Renan, \mRenanDot)
+    (Zema, \mZemaDot)
+};
+\legend{Modelo final, Média simples M0}
+\end{axis}
+\end{tikzpicture}
+\vspace{-6pt}
+\caption{Projeções de votos válidos (\%) para os principais candidatos em 2026: modelo final versus média simples M0. Fonte: elaboração própria.}
+\label{fig:projecoes}
+\end{figure}
 
-\textbf{Limitação.} O ajuste que mais desloca a previsão em relação às pesquisas é o viés comum. Em 2022 ele reduziu o MAE de 0,83 para 0,58, mas superestimou Bolsonaro (44,8\% contra 43,2\%) e piorou o erro da margem entre os dois primeiros, de 1,3 para 4,3 p.p. Mantivemos o ajuste porque a regra pré-registrada otimiza o erro sobre toda a distribuição, que é o critério do edital, mas registramos que ele pode errar a margem em uma eleição atípica. Com apenas três eleições de teste, todas as conclusões do backtest são frágeis por construção.
+A diferença projetada entre os dois primeiros candidatos (\pFlavio\% para Flávio Bolsonaro contra \pLula\% para Luiz Inácio Lula da Silva) é de 0,3 p.p., magnitude inferior ao erro médio observado para a margem entre os dois concorrentes mais votados no backtest histórico (média de 4,5 p.p. no modelo final, com $n=3$). Concluímos que as estimativas configuram um quadro de disputa indefinida entre as duas lideranças, sem base amostral para antecipar o vencedor do primeiro turno.
+
+Registramos uma limitação relevante relativa à aplicação do viés comum. Na validação de 2022, esse ajuste reduziu o MAE global de 0,83 para 0,58 p.p., porém superestimou a votação do concorrente opositor (44,8\% frente a 43,2\% na urna) e agravou o erro da margem entre os líderes de 1,3 para 4,3 p.p. Conservamos o viés comum porque a nossa regra pré-estabelecida visa minimizar o erro médio da distribuição integral dos candidatos, mas ressaltamos que a correção pode gerar desvio na margem em eleições cujo comportamento divirja do histórico das três rodadas anteriores.
 
 \section{Abstenção, brancos e nulos}
-Comparamos três métodos na mesma validação temporal: persistência (último valor), média histórica e tendência linear, com a mesma regra de decisão e a ordem de simplicidade persistência, média, tendência. Denominadores do edital: abstenção sobre o eleitorado apto; brancos e nulos sobre o comparecimento.
+Comparamos três métodos por validação temporal expanding window: persistência do resultado anterior, média móvel histórica e tendência linear, adotando a ordem de parcimônia persistência, média e tendência. Calculamos a taxa de abstenção em relação ao colégio de eleitores aptos, e os votos brancos e nulos em relação ao comparecimento efetivo às urnas.
 
 \begin{center}\small
-\textbf{Tabela 3:} Backtest e seleção de método para agregados eleitorais (2014--2022).\\[2pt]
+\textbf{Tabela 3:} Backtest e seleção de método para agregados eleitorais (2014-2022).\\[2pt]
 \begin{tabular}{lccccl}
 \toprule
 \textbf{Variável} & \textbf{Persistência} & \textbf{Média} & \textbf{Tendência} & \textbf{Previsão} & \textbf{Decisão} \\
@@ -135,9 +271,10 @@ Nulos & \textbf{1,32} & 1,21 & 1,40 & \textbf{\pNulos\%} & empate ($\bar\Delta=-
 \end{tabular}\\[2pt]
 {\footnotesize MAE médio em pontos percentuais nas eleições de 2014, 2018 e 2022. Fonte: elaboração própria.}
 \end{center}
-A tendência de alta da abstenção (16,8\% em 2006 para 21,0\% em 2022) é coerente com o envelhecimento do eleitorado em 2026. Para brancos e nulos, a queda forte de 2022 sugere um regime polarizado que a persistência captura melhor que a média histórica.
+
+Observamos que o movimento persistente de crescimento da abstenção (de 16,8\% em 2006 para 21,0\% em 2022) justifica a superioridade empírica da tendência linear, ao passo que a forte redução recente de brancos e nulos sob polarização acentuada faz com que a persistência imediata reflita a conjuntura presente melhor do que médias de períodos mais extensos.
 
 \section{Reprodutibilidade}
-Todo o pipeline é implementado em Python com testes automatizados, dados brutos com hash de integridade e decisões metodológicas pré-registradas. As tabelas deste documento e a planilha de entrega são geradas diretamente a partir dos dados pelo mesmo pipeline, e não digitadas. Código, dados, pré-registro e testes disponíveis em \url{https://github.com/pvaluche/trabalho-econometria-a1/tree/entrega-final}.
+Disponibilizamos os códigos, bases processadas, documentação metodológica e rotinas de validação em \url{https://github.com/pvaluche/trabalho-econometria-a1/tree/entrega-final}. Todas as projeções e tabelas constantes nesta nota são compiladas diretamente pelos procedimentos computacionais do projeto a partir dos dados originais.
 
 \end{document}
