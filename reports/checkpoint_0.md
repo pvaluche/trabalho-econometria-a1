@@ -1,153 +1,132 @@
-# Checkpoint 0 — Entendimento e Estrutura do Repositório (pós-auditoria)
+# Checkpoint 0: Entendimento e Estrutura do Repositorio (Revisao 2)
 
 **Data:** 02/10/2026
-**Projeto:** Previsão do 1º Turno Presidencial 2026
-**Desafio:** Estatística e Econometria — Prof. Valdemar Pinho, FGV EPGE
-**Commit:** _a preencher após push_
-**Tag:** `checkpoint-0`
+**Projeto:** Previsao do 1o Turno Presidencial 2026
+**Desafio:** Estatistica e Econometria, FGV EPGE [confirmar professor]
+**Commit:** 22461d5
+**Tag:** checkpoint-0
 
 ---
 
 ## O que foi feito
 
-### 1. Ambiente e estrutura do repositório
+### 1. Ambiente e estrutura do repositorio
 
 - Git (MinGit 2.56.0) instalado via winget; ambiente virtual com `uv 0.12.22` e Python 3.12.10.
 - 147 pacotes instalados (pandas, polars, scikit-learn, matplotlib, pytest, etc.).
-- Estrutura completa de diretórios criada: `data/`, `src/`, `notebooks/`, `tests/`, `interface/`, `reports/`, `docs/`, `outputs/`, `scripts/`, `.github/workflows/`.
-- `.gitignore`, `.gitattributes`, `requirements.txt`, `.pre-commit-config.yaml`, `ci.yml`, `README.md`, `DECISOES.md`.
-- Repositório conectado ao GitHub (`https://github.com/pvaluche/trabalho-econometria-a1`).
+- Estrutura completa de diretorios criada: `data/`, `src/`, `notebooks/`, `tests/`, `interface/`, `reports/`, `docs/`, `outputs/`, `scripts/`, `.github/workflows/`.
+- Repositorio conectado e sincronizado no GitHub: `https://github.com/pvaluche/trabalho-econometria-a1`.
 
-### 2. Fundamentação teórica — `docs/ENTENDIMENTO.md`
+### 2. Fundamentacao teorica: `docs/ENTENDIMENTO.md`
 
-Cobre os cinco tópicos exigidos no prompt:
+- Todos os travessoes removidos.
+- Referencias conferidas com DOI (Jackman 2005, Linzer 2013, Shirani-Mehr et al. 2018, Vehtari et al. 2017).
+- Vies comum da eleicao explicitamente separado do house effect relativo de cada instituto.
+- LOEO vs. Expanding Window documentados com regra de fallback numerica no pre-registro.
+- Faixas de incerteza por grupo (top-2, 3o-4o, nanicos).
+- Estimativa do efeito de voto util em 2022 (~5,6 p.p. somados) registrada como hipotese a testar.
 
-1. **Agregação de pesquisas:** Jackman (2005) — modelo de espaço de estados com house effect e passeio aleatório; Linzer (2013) — prior de fundamentals + rastreamento de pesquisas; metodologias públicas FiveThirtyEight e The Economist.
-2. **Erro total de pesquisa:** Shirani-Mehr et al. (2018) — RMSE empírico ~3,5 p.p. (dobro da margem declarada); distinção entre **viés comum da eleição** (todos os institutos erram na mesma direção) e **house effect relativo** (viés sistemático do instituto específico).
-3. **Caso brasileiro:** tabela corrigida com dados de votos válidos. Datafolha véspera 2022: Lula **50%** (erro +1,6 p.p.), Bolsonaro **36%** (erro -7,2 p.p.). Padrão de subestimação bolsonarista documentado em 2018 e 2022.
-4. **Validação com poucas observações:** LOEO (usa todas as eleições, não preserva ordem temporal) + expanding window em paralelo (mais conservadora). Divergências serão reportadas no Checkpoint 3.
-5. **Conclusão aplicada:** tabela relacionando cada fundamento teórico a uma decisão de implementação.
+### 3. Modulos em `src/` e `scripts/` (arquitetura sem duplicacao)
 
-### 3. Módulos `src/` implementados
+- `src/config.py`: CANDIDATOS_EDITAL como fonte unica com acentos exatos do edital; PARTIDOS_EDITAL.
+- `src/metricas.py`: `calcular_mae` e `calcular_mae_por_candidato`.
+- `src/filtros.py`: `filtrar_por_vespera` e dicionarios `VESPERAS` e `DIAS_ELEICAO` (2006-2026).
+- `src/tse.py`: `calcular_denominadores` lendo DataFrame no formato do TSE.
+- `src/pesquisas.py`: `agregar_institutos` (NaN fora da media, 0 dentro).
+- `src/conversao.py`: conversao para votos validos com descarte de sub judice nao listado.
+- `src/arredondamento.py`: maiores restos com normalizacao previa (sem bug de ponto flutuante).
+- `scripts/validar_entrega.py`: funcao importavel `validar_xlsx` com todas as checagens do edital.
 
-| Arquivo | Conteúdo principal |
-|---|---|
-| `src/config.py` | Raiz, candidatos, horário de corte, URLs TSE, grades de hiperparâmetros, sanidade 2022 |
-| `src/download.py` | Download com hash SHA-256 e registro automático no MANIFEST.csv |
-| `src/conversao.py` | Conversão para votos válidos (critério TSE), tratamento de NaN e sub judice |
-| `src/arredondamento.py` | Método dos maiores restos — bug de ponto flutuante corrigido (normalização prévia) |
+---
 
-### 4. Testes unitários — `tests/test_pipeline.py`
+## Saida do Git Log (`git log --oneline -5`)
 
+```text
+22461d5 test: testes chamam src -- metricas, filtros, tse, pesquisas, validar_entrega importados de src/
+9890991 docs: corrige entendimento apos auditoria -- sem travessoes, criterio expanding window, faixa por grupo
+249f2a1 test: testes chamam src e cobrem casos reais -- sanidade TSE, denominadores, sub judice, XLSX, filtro parametrizado 2006-2026
+c92b477 docs: corrige entendimento apos auditoria -- tabela 2022, LOEO vs expanding window, vies comum vs house effect
+e975098 feat: checkpoint 0 -- entendimento, modulos base e testes unitarios
 ```
+
+---
+
+## Saida do Linter (zero erros)
+
+```text
+.\.venv\Scripts\python.exe -m flake8 --exclude=.venv --max-line-length=110 --ignore=E501,W503,E402 src/ tests/ scripts/
+# Retorno: codigo de saida 0 (nenhum aviso ou erro)
+```
+
+---
+
+## Saida do Pytest (`pytest -v`)
+
+```text
 ============================= test session starts =============================
-platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0
-collected 45 items
+platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleicoes\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleicoes
+plugins: anyio-4.15.1, platformdirs-4.12.2
+collecting ... collected 57 items
 
-tests/test_pipeline.py::TestConversaoVotosValidos::test_soma_igual_a_100 PASSED
-tests/test_pipeline.py::TestConversaoVotosValidos::test_proporcoes_corretas_dois_candidatos PASSED
-tests/test_pipeline.py::TestConversaoVotosValidos::test_candidato_sub_judice_fora_da_lista_e_descartado PASSED
-tests/test_pipeline.py::TestConversaoVotosValidos::test_nan_tratado_como_zero PASSED
-tests/test_pipeline.py::TestConversaoVotosValidos::test_zero_e_nan_sao_distintos_mas_ambos_validos PASSED
-tests/test_pipeline.py::TestConversaoVotosValidos::test_raise_quando_todos_zero PASSED
-tests/test_pipeline.py::TestMaioresRestos::test_soma_exata_1000_decimos PASSED
-tests/test_pipeline.py::TestMaioresRestos::test_entrada_que_soma_9997 PASSED
-tests/test_pipeline.py::TestMaioresRestos::test_cada_valor_a_menos_de_01_do_original PASSED
-tests/test_pipeline.py::TestMaioresRestos::test_soma_exata_tres_candidatos PASSED
-tests/test_pipeline.py::TestMaioresRestos::test_comprimento_preservado PASSED
-tests/test_pipeline.py::TestMaioresRestos::test_uma_casa_decimal PASSED
-tests/test_pipeline.py::TestMaioresRestos::test_valor_negativo_lanca_erro PASSED
-tests/test_pipeline.py::TestMAE::test_mae_zero_previsao_perfeita PASSED
-tests/test_pipeline.py::TestMAE::test_mae_simetrico PASSED
-tests/test_pipeline.py::TestMAE::test_nanicos_pesam_igual_ao_top2 PASSED
-tests/test_pipeline.py::TestMAE::test_candidato_ausente_lanca_keyerror PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2006] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2010] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2014] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2018] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2022] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2026] PASSED
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2006] PASSED
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2010] PASSED
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2014] PASSED
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2018] PASSED
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2022] PASSED
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2026] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2006] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2010] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2014] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2018] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2022] PASSED
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2026] PASSED
-tests/test_pipeline.py::TestSanidade2022::test_sanidade_pass_com_resultados_corretos PASSED
-tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_lula_errado PASSED
-tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_abstencao_errada PASSED
-tests/test_pipeline.py::TestDenominadores::test_abstencao_calculada_sobre_aptos PASSED
-tests/test_pipeline.py::TestDenominadores::test_brancos_calculados_sobre_comparecimento PASSED
-tests/test_pipeline.py::TestDenominadores::test_nulos_calculados_sobre_comparecimento PASSED
-tests/test_pipeline.py::TestDenominadores::test_validos_mais_brancos_mais_nulos_igual_comparecimento PASSED
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_valido_passa PASSED
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_com_uma_aba_falha PASSED
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_sem_candidato_do_edital_falha PASSED
+tests/test_pipeline.py::TestConversaoVotosValidos::test_soma_igual_a_100 PASSED [  1%]
+tests/test_pipeline.py::TestConversaoVotosValidos::test_proporcoes_corretas_dois_candidatos PASSED [  3%]
+tests/test_pipeline.py::TestConversaoVotosValidos::test_candidato_sub_judice_fora_de_candidatos_edital_descartado PASSED [  5%]
+tests/test_pipeline.py::TestConversaoVotosValidos::test_nan_tratado_como_zero PASSED [  7%]
+tests/test_pipeline.py::TestConversaoVotosValidos::test_zero_e_nan_resultam_em_zero_pct PASSED [  8%]
+tests/test_pipeline.py::TestConversaoVotosValidos::test_raise_quando_todos_zero PASSED [ 10%]
+tests/test_pipeline.py::TestMaioresRestos::test_soma_exata_1000_decimos PASSED [ 12%]
+tests/test_pipeline.py::TestMaioresRestos::test_entrada_que_soma_9997 PASSED [ 14%]
+tests/test_pipeline.py::TestMaioresRestos::test_cada_valor_a_menos_de_01_do_original PASSED [ 15%]
+tests/test_pipeline.py::TestMaioresRestos::test_soma_exata_tres_candidatos PASSED [ 17%]
+tests/test_pipeline.py::TestMaioresRestos::test_comprimento_preservado PASSED [ 19%]
+tests/test_pipeline.py::TestMaioresRestos::test_uma_casa_decimal PASSED  [ 21%]
+tests/test_pipeline.py::TestMaioresRestos::test_valor_negativo_lanca_erro PASSED [ 22%]
+tests/test_pipeline.py::TestMAE::test_mae_zero_previsao_perfeita PASSED  [ 24%]
+tests/test_pipeline.py::TestMAE::test_mae_simetrico PASSED               [ 26%]
+tests/test_pipeline.py::TestMAE::test_nanicos_pesam_igual_ao_top2 PASSED [ 28%]
+tests/test_pipeline.py::TestMAE::test_candidato_ausente_em_realizados_lanca_keyerror PASSED [ 29%]
+tests/test_pipeline.py::TestMAE::test_previstos_vazio_lanca_valueerror PASSED [ 31%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2006] PASSED  [ 33%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2010] PASSED  [ 35%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2014] PASSED  [ 36%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2018] PASSED  [ 38%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2022] PASSED  [ 40%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2026] PASSED  [ 42%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2006] PASSED [ 43%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2010] PASSED [ 45%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2014] PASSED [ 47%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2018] PASSED [ 49%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2022] PASSED [ 50%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2026] PASSED [ 52%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2006] PASSED [ 54%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2010] PASSED [ 56%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2014] PASSED [ 57%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2018] PASSED [ 59%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2022] PASSED [ 61%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2026] PASSED [ 63%]
+tests/test_pipeline.py::TestDenominadores::test_abstencao_sobre_aptos PASSED [ 64%]
+tests/test_pipeline.py::TestDenominadores::test_brancos_sobre_comparecimento PASSED [ 66%]
+tests/test_pipeline.py::TestDenominadores::test_nulos_sobre_comparecimento PASSED [ 68%]
+tests/test_pipeline.py::TestDenominadores::test_validos_mais_brancos_mais_nulos_igual_comparecimento PASSED [ 70%]
+tests/test_pipeline.py::TestDenominadores::test_multiplas_linhas_somadas PASSED [ 71%]
+tests/test_pipeline.py::TestDenominadores::test_colunas_faltando_lanca_valueerror PASSED [ 73%]
+tests/test_pipeline.py::TestDenominadores::test_df_vazio_lanca_valueerror PASSED [ 75%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_nan_fica_fora_da_media PASSED [ 77%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_zero_entra_como_zero PASSED [ 78%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_todos_nan_retorna_nan PASSED [ 80%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_candidato_ausente_no_df_retorna_nan PASSED [ 82%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_df_vazio_retorna_todos_nan PASSED [ 84%]
+tests/test_pipeline.py::TestSanidade2022::test_sanidade_pass_com_resultados_corretos PASSED [ 85%]
+tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_lula_errado PASSED [ 87%]
+tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_abstencao_errada PASSED [ 89%]
+tests/test_pipeline.py::test_integracao_sanidade_2022_do_parquet SKIPPED [ 91%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_valido_passa PASSED [ 92%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_com_uma_aba_falha PASSED [ 94%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_nome_errado_falha PASSED [ 96%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_partido_errado_falha PASSED [ 98%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_sem_linha_total_falha PASSED [100%]
 
-============================= 45 passed in 8.13s ==============================
+======================== 56 passed, 1 skipped in 2.50s ========================
 ```
-
----
-
-## Decisões e Motivos
-
-Todas registradas em `DECISOES.md`. Principais:
-
-| Decisão | Alternativas | Motivo |
-|---|---|---|
-| Expanding window em paralelo ao LOEO | Só LOEO | LOEO não preserva ordem temporal; expanding window é mais conservadora e detecta overfitting ao futuro |
-| Viés comum da eleição separado do house effect | Corrigir juntos | M2 corrige apenas house effect relativo; correção do viés comum exige preditor validável no backtest |
-| Tabela de erros 2022 em votos válidos (Lula 50%, erro +1,6 p.p.) | Intenção de voto bruta | Critério do edital e do TSE é votos válidos; fonte verificada (Datafolha 01/10/2022) |
-| Arredondamento com normalização prévia | Floor direto | Bug de ponto flutuante: 0.3*10=2.999... fazia sum=100.3; normalização prévia elimina o problema |
-| Ibope e Ipec como séries separadas | Unificar | Conservador; menor risco de introduzir erro de atribuição de house effect entre institutos com metodologias distintas |
-
----
-
-## Bug Corrigido
-
-**`src/arredondamento.py`:** `math.floor(0.3 * 10) = 2` em vez de 3 (ponto flutuante). Correção: normalização dos valores de entrada para somarem exatamente 100 antes do floor, e `round(..., 10)` para remover ruído residual. Teste `test_soma_exata_1000_decimos` cobre o caso.
-
----
-
-## Resultado da Auditoria (Checkpoint 0)
-
-**Primeira submissão:** NÃO aprovado pelo Claude (6 correções no ENTENDIMENTO.md, 5 no test_pipeline.py).
-
-**Correções aplicadas:**
-
-| Item | Problema | Ação |
-|---|---|---|
-| Tabela 2022 | Lula previsto como ~0 p.p. de erro (errado) | Corrigido: Lula 50% Datafolha, erro +1,6 p.p. |
-| LOEO preserva ordem temporal | Afirmação falsa | Removida; expanding window adicionada como validação paralela |
-| Viés comum vs. house effect | Misturados no texto | Separados: M2 corrige house effect relativo; viés comum só entra se vencer no backtest |
-| Travessões (6) | Proibidos pelo prompt | Removidos todos |
-| Nota "não verificado" | Referências verificadas não estavam marcadas | Nota final ajustada |
-| Faixa de incerteza, abstenção/brancos/nulos, Ibope/Ipec, "M4.4" | Ausentes | Adicionados na seção 5 (Conclusão Aplicada) e no corpo do texto |
-| MAE definido no teste em vez de importado | Violava o princípio de testar o código real | MAE importado de `src/`; lança KeyError se candidato ausente |
-| Filtro de data não parametrizado | Apenas 2022 testado | Parametrizado: 2006, 2010, 2014, 2018, 2022, 2026 |
-| Dia da eleição 2022 errado (2022-10-03) | Data incorreta | Corrigido para 2022-10-02 |
-| Sub judice | Teste incompleto | Testa que coluna extra é descartada e os 12 somam 100% |
-| Maiores restos | Exigência round*10==1000 ausente | Adicionados 3 novos testes (1000 décimos, entrada somando 99.97, desvio < 0.1) |
-| Sanidade 2022, denominadores, 0 vs NaN, validador XLSX | Ausentes | Todos adicionados |
-
----
-
-## Dúvidas em Aberto
-
-1. **Horário de corte:** ainda a definir pelo usuário. Candidatos a: 20h, 22h ou "antes da divulgação dos últimos Datafolha/Quaest do sábado". Registrar em `config.py` e `PRE_REGISTRO.md`.
-2. **Leonardo Avalanche (PRTB):** necessário verificar se está na urna como sub judice antes de definir a normalização dos votos válidos (conforme seção 3.2 do prompt).
-3. **Autenticação Base dos Dados:** se travar, usar Wikipedia PT/EN via `pandas.read_html` para pesquisas históricas.
-
----
-
-## Arquivos para envio ao auditor
-
-- `docs/ENTENDIMENTO.md`
-- `tests/test_pipeline.py`
-- Este arquivo (`reports/checkpoint_0.md`)
