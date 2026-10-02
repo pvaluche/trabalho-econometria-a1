@@ -68,3 +68,26 @@ Este documento registra todas as decisoes tomadas ao longo do projeto de previsa
   3. **Real Time Big Data (01/10):** Resolucao do numero de registro. A materia da Veja cita textualmente "A pesquisa foi registrada no sistema do Tribunal Superior Eleitoral (TSE) pelo código BR-09503/2026." No PesqEle, `BR095032026` corresponde a REAL TIME BIG DATA, cargo Presidente, campo 26 a 30 de setembro, divulgacao em 01/10/2026 e amostra de 2.000 eleitores. Registrado `outros_agregado = 1.0%` e nanicos individuais como `NaN`.
   4. **Datafolha (01/10, BR-08039/2026):** Inclusa a rodada final de 28/09 a 01/10 com amostra de 2.506 eleitores, mantendo a rodada de 22-24/09 como observacao separada.
 - **Teste Automatizado de Transcricao:** Criado teste no pipeline (`test_transcricao_pesquisas_2026_contra_html_salvo`) que valida que cada celula numerica nao-NaN de `pesquisas_2026.csv` existe comprovadamente no texto do arquivo HTML bruto correspondente.
+
+---
+
+### Decisao 7: Auditoria do Checkpoint 2 (Ajustes de Pesquisas Historicas, Transcricao Estrita e Emenda 1)
+**Data:** 02/10/2026  
+**Contexto:** Parecer da auditoria externa (Claude) exigindo:
+1. Endurecimento do teste de transcricao para exigir que o valor numerico apareca em uma janela maxima de 80 caracteres do nome do candidato ou rotulo correspondente, e validacao estrita de zero;
+2. Tratamento agregado dos nanicos no PoderData/Aya (coluna outros_agregado = 4.0 e nanicos individuais como NaN);
+3. Verificacao da amostra de 2.506 no PesqEle para o Datafolha BR-08039/2026;
+4. Padronizacao rigorosa de institutos via dicionario prioritario com criacao de coluna contratante separada (evitando associar parceiros como Globo ou XP ao nome do instituto);
+5. Teste de sanidade historica das vesperas do Datafolha sobre votos validos (2014, 2018 e 2022);
+6. Documentacao dos revision IDs (oldid) da Wikipedia e da fonte primária de 2006 (UOL Eleicoes 2006);
+7. Registro de Emenda 1 ao PRE_REGISTRO.md em commit dedicado antes do backtest.
+
+- **Decisoes Tomadas:**
+  1. **Aproximacao Temporal em Pesquisas Historicas:** Nas pesquisas da Wikipedia (2010 a 2022) em que a data exata de divulgacao nao e discriminada em coluna isolada, utiliza-se a data final do periodo de campo (`data_fim_campo`) como aproximacao conservadora da data de divulgacao. Isso garante que nenhuma informacao posterior a vespera seja admitida no backtest, eliminando risco de vazamento temporal.
+  2. **PoderData/Aya (BR-01739/2026):** A reportagem informa: "Romeu Zema (Novo), Rui Costa Pimenta (PCO), Samara Martins (UP) e Clariana Barão (Democracia Cristã) registram 1% cada um. Wilson Grassi (Democrata), Leonardo Avalanche (PRTB), Hertz Dias (PSTU) e Edmilson Costa (PCB) não pontuam." Como a mencao e feita em bloco coletivo e nao em cartela individualizada isolada, os 7 candidatos nanicos do edital foram convertidos para `NaN` e o valor total desse grupo (1% x 4 = 4,0%) foi registrado em `outros_agregado = 4.0`. A soma total de intencoes (41 + 39 + 6 + 3 + 2 + 4 + 4 + 2) totaliza 101,0%, perfeitamente conforme ao intervalo [97, 101.5].
+  3. **Datafolha BR-08039/2026 e PesqEle:** Confirmado no arquivo oficial do TSE (`pesquisa_eleitoral_2026.zip`, tabela `pesquisa_eleitoral_2026_BRASIL.csv`) que o registro BR080392026 possui literalmente `QT_ENTREVISTADO: 2506`, confirmando o numero utilizado na base.
+  4. **Estruturacao de Institutos e Contratantes:** Criada a funcao `padronizar_instituto_e_contratante`, apoiada em um dicionario ordenado de institutos prioritarios e mapeamento de contratantes. No arquivo `pesquisas_historicas.parquet`, as colunas `instituto` e `contratante` coexistem de forma independente.
+  5. **Sanidade das Vesperas Datafolha:** Teste implementado em `tests/test_pipeline.py::TestSanidadeVesperasDatafolha` comprovando que os votos validos calculados a partir das pesquisas de vespera do Datafolha conferem com os dados historicos: 2022 (Lula 50,5% ~ 50% / Bolsonaro 35,8% ~ 36%), 2018 (Bolsonaro 40,9% ~ 40% / Haddad 25,0%), 2014 (Dilma 44,9% ~ 44% / Aecio 27,0% ~ 26% / Marina 24,7% ~ 24%), todos a menos de 1,0 p.p. de tolerancia.
+  6. **Revision IDs da Wikipedia no MANIFEST:** Identificados os revision IDs exatos nos HTMLs brutos salvos e adicionadas as URLs permanentes no `MANIFEST.csv`: 2010 (`oldid=73055941`), 2014 (`oldid=73055945`), 2018 (`oldid=73055947`), 2022 (`oldid=73055949`).
+  7. **Fonte de 2006:** A cobertura de 2006 baseia-se nos relatorios compilados e publicados pelo arquivo historico do UOL Eleicoes 2006 (noticiando Datafolha, Ibope e CNT/Sensus), arquivados em `data/raw/pesquisas_historicas/` com links e hashes no `MANIFEST.csv`.
+

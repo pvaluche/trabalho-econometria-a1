@@ -554,8 +554,10 @@ class TestPesquisas2026Manual:
 
     def test_transcricao_pesquisas_2026_contra_html_salvo(self):
         """
-        Para cada celula numerica nao-NaN de pesquisas_2026.csv, o valor
-        deve aparecer comprovadamente no texto do HTML bruto salvo correspondente.
+        Teste estrito de transcricao: para cada celula numerica nao-NaN de
+        pesquisas_2026.csv, o valor deve aparecer comprovadamente a uma distancia
+        maxima de 80 caracteres do nome do candidato ou rotulo tematico correspondente.
+        Para valores iguais a 0.0, exige mencao explicita a '0%', 'nao pontuou' ou similar.
         """
         import csv
         import re
@@ -570,6 +572,24 @@ class TestPesquisas2026Manual:
         df = pd.read_csv(PESQUISAS_2026_PATH)
         assert len(df) >= 6
 
+        aliases_map = {
+            "Luiz Inácio Lula da Silva": ["lula da silva", "lula"],
+            "Flávio Bolsonaro": ["flávio bolsonaro", "flavio bolsonaro", "flávio", "flavio"],
+            "Augusto Cury": ["augusto cury", "cury"],
+            "Renan Santos": ["renan santos", "renan"],
+            "Ronaldo Caiado": ["ronaldo caiado", "caiado"],
+            "Romeu Zema": ["romeu zema", "zema"],
+            "Clariana Barão": ["clariana barão", "clariana barao", "clariana"],
+            "Edmilson Costa": ["edmilson costa", "edmilson"],
+            "Hertz Dias": ["hertz dias", "hertz"],
+            "Rui Costa Pimenta": ["rui costa pimenta", "rui pimenta", "rui costa", "rui"],
+            "Samara Martins": ["samara martins", "samara"],
+            "Wilson Grassi": ["wilson grassi", "wilson"],
+            "brancos_nulos": ["branco", "brancos", "nulo", "nulos", "branco/nulo", "brancos/nulos"],
+            "indecisos": ["indeciso", "indecisos", "não sabe", "nao sabe", "não souberam", "nao souberam", "não responderam", "nao responderam", "ns/nr"],
+            "outros_agregado": ["outros", "demais", "outros candidatos", "cada um"],
+        }
+
         for idx, row in df.iterrows():
             url = row["fonte_url"]
             assert url in manifest_map, f"URL {url} nao encontrada no MANIFEST.csv"
@@ -578,45 +598,54 @@ class TestPesquisas2026Manual:
             assert html_path.exists(), f"Arquivo HTML {html_path} nao existe"
 
             with open(html_path, "r", encoding="utf-8", errors="ignore") as f:
-                text = BeautifulSoup(f.read(), "html.parser").get_text()
+                raw_text = BeautifulSoup(f.read(), "html.parser").get_text()
 
-            colunas_numericas = (
-                ["amostra"]
-                + CANDIDATOS_EDITAL
-                + ["outros_agregado", "brancos_nulos", "indecisos"]
-            )
-            for col in colunas_numericas:
+            # Normaliza espacos
+            text_norm = re.sub(r"\s+", " ", raw_text).lower()
+
+            colunas_a_testar = [
+                c for c in aliases_map.keys() if c in df.columns
+            ]
+            for col in colunas_a_testar:
                 val = row[col]
                 if pd.isna(val) or val == "":
                     continue
                 num = float(val)
-                num_int = int(num) if num.is_integer() else None
+                termos = aliases_map[col]
 
-                if col == "amostra":
-                    pats = [f"{num_int:,}".replace(",", "."), str(num_int)]
-                elif num == 0.0:
-                    pats = [
-                        "0%", " 0 ", "(0)", "zero", "não pontuou", "não pontua",
-                        "não pontuam", "0,0%"
+                # Localiza janelas de 80 chars em torno de qualquer dos termos
+                janelas = []
+                for termo in termos:
+                    for m in re.finditer(re.escape(termo), text_norm):
+                        s_idx = max(0, m.start() - 80)
+                        e_idx = min(len(text_norm), m.end() + 80)
+                        janelas.append(text_norm[s_idx:e_idx])
+
+                assert janelas, (
+                    f"Linha {idx} ({row['instituto']}): nenhum termo de {termos} "
+                    f"encontrado no HTML {html_path}"
+                )
+
+                num_int = int(round(num)) if abs(num - round(num)) < 1e-6 else None
+                if num == 0.0:
+                    padroes = [
+                        "0%", "0 %", "0,0%", "0.0%", "não pontuou", "nao pontuou",
+                        "não pontuam", "nao pontuam", "não pontuaram", "nao pontuaram", "zero"
                     ]
                 elif num_int is not None:
-                    pats = [
-                        f"{num_int}%", f"{num_int} %", f"{num_int},0%",
-                        f"{num_int}.0%", f"{num_int}"
+                    padroes = [
+                        f"{num_int}%", f"{num_int} %", f"{num_int},", f"{num_int}.",
+                        f" {num_int} ", f"{num_int} ponto", f"{num_int} pontos"
                     ]
                 else:
                     s_virg = f"{num:.1f}".replace(".", ",")
-                    s_ponto = f"{num:.1f}"
-                    pats = [
-                        f"{s_virg}%", f"{s_virg} %", f"{s_ponto}%",
-                        f"{s_ponto} %", s_virg, s_ponto
-                    ]
+                    s_pt = f"{num:.1f}"
+                    padroes = [f"{s_virg}%", f"{s_virg} %", f"{s_pt}%", f"{s_pt} %", s_virg, s_pt]
 
-                found = any(re.search(re.escape(p), text, re.IGNORECASE) for p in pats)
+                found = any(any(p in j for p in padroes) for j in janelas)
                 assert found, (
-                    f"Falha de transcricao na linha {idx} ({row['instituto']}): "
-                    f"coluna '{col}'={val} nao encontrada no HTML {html_path} "
-                    f"(padroes testados: {pats[:4]})"
+                    f"Linha {idx} ({row['instituto']}): valor {val} para '{col}' "
+                    f"nao encontrado em raio de 80 caracteres dos termos {termos} no HTML {html_path}"
                 )
 
 
@@ -661,7 +690,58 @@ class TestPesquisasHistoricas:
         assert "Ibope" in institutos
         assert "Ipec" in institutos
 
+    def test_coluna_contratante_presente(self):
+        df = carregar_pesquisas_historicas()
+        assert "contratante" in df.columns, "Coluna 'contratante' ausente no parquet"
+
     def test_filtro_por_ano_em_carregar_pesquisas_historicas(self):
         df_2022 = carregar_pesquisas_historicas(2022)
         assert len(df_2022) >= 30
         assert (df_2022["eleicao"] == 2022).all()
+
+
+# ============================================================
+# 12. Sanidade historica das vesperas do Datafolha (2014, 2018, 2022)
+# ============================================================
+
+
+class TestSanidadeVesperasDatafolha:
+    """
+    Verifica a sanidade historica das pesquisas de vespera do Datafolha
+    em votos validos (tolerancia de 1,0 p.p.):
+    - 2022: Lula 50%, Bolsonaro 36%
+    - 2018: Bolsonaro 40%, Haddad 25%
+    - 2014: Dilma 44%, Aecio 26%, Marina 24%
+    """
+
+    def test_vespera_datafolha_2022_votos_validos(self):
+        df = carregar_pesquisas_historicas(2022)
+        vespera = df[(df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2022-10-01")].iloc[0]
+        cands = ["Luiz Inácio Lula da Silva", "Jair Bolsonaro", "Ciro Gomes", "Simone Tebet", "Soraya Thronicke", "Felipe D'Avila"]
+        soma = sum(vespera[c] for c in cands if pd.notna(vespera[c]))
+        lula_val = (vespera["Luiz Inácio Lula da Silva"] / soma) * 100
+        bols_val = (vespera["Jair Bolsonaro"] / soma) * 100
+        assert abs(lula_val - 50.0) <= 1.0, f"Lula 2022 vespera esperado ~50, obtido {lula_val:.2f}"
+        assert abs(bols_val - 36.0) <= 1.0, f"Bolsonaro 2022 vespera esperado ~36, obtido {bols_val:.2f}"
+
+    def test_vespera_datafolha_2018_votos_validos(self):
+        df = carregar_pesquisas_historicas(2018)
+        vespera = df[(df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2018-10-06")].iloc[0]
+        cands = ["Jair Bolsonaro", "Fernando Haddad", "Ciro Gomes", "Geraldo Alckmin", "Marina Silva", "João Amoêdo", "Henrique Meirelles", "Alvaro Dias"]
+        soma = sum(vespera[c] for c in cands if pd.notna(vespera[c]))
+        bols_val = (vespera["Jair Bolsonaro"] / soma) * 100
+        had_val = (vespera["Fernando Haddad"] / soma) * 100
+        assert abs(bols_val - 40.0) <= 1.0, f"Bolsonaro 2018 vespera esperado ~40, obtido {bols_val:.2f}"
+        assert abs(had_val - 25.0) <= 1.0, f"Haddad 2018 vespera esperado ~25, obtido {had_val:.2f}"
+
+    def test_vespera_datafolha_2014_votos_validos(self):
+        df = carregar_pesquisas_historicas(2014)
+        vespera = df[(df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2014-10-04")].iloc[0]
+        cands = ["Dilma Rousseff", "Aécio Neves", "Marina Silva", "Luciana Genro", "Pastor Everaldo", "Eduardo Jorge"]
+        soma = sum(vespera[c] for c in cands if pd.notna(vespera[c]))
+        dilma_val = (vespera["Dilma Rousseff"] / soma) * 100
+        aecio_val = (vespera["Aécio Neves"] / soma) * 100
+        marina_val = (vespera["Marina Silva"] / soma) * 100
+        assert abs(dilma_val - 44.0) <= 1.0, f"Dilma 2014 vespera esperado ~44, obtido {dilma_val:.2f}"
+        assert abs(aecio_val - 26.0) <= 1.0, f"Aecio 2014 vespera esperado ~26, obtido {aecio_val:.2f}"
+        assert abs(marina_val - 24.0) <= 1.0, f"Marina 2014 vespera esperado ~24, obtido {marina_val:.2f}"

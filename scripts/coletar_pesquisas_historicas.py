@@ -112,61 +112,85 @@ def limpar_candidato_pct(cell: str | None) -> float | None:
 clean_cand_pct = limpar_candidato_pct
 
 
-def padronizar_instituto(nome_raw: str) -> str:
-    n = re.sub(r"\[.*?\]", "", nome_raw).strip()
+DICIONARIO_INSTITUTOS_PRIORITARIOS = [
+    ("Datafolha", [r"\bdatafolha\b"]),
+    ("Ipec", [r"\bipec\b"]),
+    ("Ibope", [r"\bibope\b"]),
+    ("Vox Populi", [r"\bvox\s*populi\b", r"\bvox\b"]),
+    ("CNT/MDA", [r"\bcnt/mda\b", r"\bmda\b"]),
+    ("CNT/Sensus", [r"\bcnt/sensus\b", r"\bsensus\b"]),
+    ("AtlasIntel", [r"\batlasintel\b", r"\batlas\b"]),
+    ("Quaest", [r"\bquaest\b"]),
+    ("Paraná Pesquisas", [r"\bparan[áa]\s*pesquisas\b", r"\bparan[áa]\b"]),
+    ("PoderData", [r"\bpoderdata\b", r"\bpoder360\b", r"\bdatapoder360\b", r"\bdatapoder\b"]),
+    ("FSB/BTG", [r"\bfsb/btg\b", r"\bfsb\b"]),
+    ("Ipespe", [r"\bipespe\b"]),
+    ("Real Time Big Data", [r"\breal\s*time\s*big\s*data\b", r"\brealtime\b", r"\breal\s*time\b"]),
+    ("Brasmarket", [r"\bbrasmarket\b"]),
+    ("Veritá", [r"\bverit[áa]\b"]),
+    ("Futura", [r"\bfutura\b"]),
+    ("Ideia", [r"\bideia\b"]),
+    ("Brasilis", [r"\bbrasilis\b"]),
+    ("Amostra", [r"\bamostra\b"]),
+    ("Equilíbrio Brasil", [r"\bequil[íi]brio\s*brasil\b", r"\bequil[íi]brio\b"]),
+]
+
+CONTRATANTES_MAPEAMENTO = [
+    ("Globo", [r"\bglobo\b", r"\bg1\b"]),
+    ("Folha de S.Paulo", [r"\bfolha\b"]),
+    ("O Estado de S. Paulo", [r"\bestad[ãa]o\b"]),
+    ("XP Investimentos", [r"\bxp\b"]),
+    ("BTG Pactual", [r"\bbtg\b"]),
+    ("CNT", [r"\bcnt\b"]),
+    ("RecordTV", [r"\brecord\b"]),
+    ("Band", [r"\bband\b", r"\bbandeirantes\b"]),
+    ("SBT", [r"\bsbt\b"]),
+    ("Veja", [r"\bveja\b"]),
+    ("Exame", [r"\bexame\b"]),
+    ("Genial Investimentos", [r"\bgenial\b"]),
+    ("Banco Modal", [r"\bmodal\b"]),
+    ("Jovem Pan", [r"\bjovem\s*pan\b"]),
+    ("Aya Bancah", [r"\baya\b"]),
+]
+
+
+def padronizar_instituto_e_contratante(nome_raw: str) -> tuple[str, str | None]:
+    """
+    Identifica de forma estrita e sem ambiguidade o instituto de pesquisa
+    e o eventual orgao contratante / parceiro de divulgacao.
+    """
+    n = re.sub(r"\[.*?\]", "", str(nome_raw)).strip()
     n = re.sub(r"BR-\d+/\d+", "", n).strip()
-    if "/" in n:
-        partes = [p.strip() for p in n.split("/")]
-        # Prefere a parte que contenha nome de instituto conhecido
-        for p in reversed(partes):
-            for k in [
-                "Datafolha", "IPEC", "Ipec", "IBOPE", "Ibope", "AtlasIntel", "Quaest",
-                "MDA", "Sensus", "Vox Populi", "Paraná Pesquisas", "RealTime", "PoderData",
-                "Ipespe", "Veritá", "Brasmarket", "Futura", "Ideia"
-            ]:
-                if k.lower() in p.lower():
-                    n = p
-                    break
     n_lower = n.lower()
-    if "datafolha" in n_lower:
-        return "Datafolha"
-    if "ipec" in n_lower:
-        return "Ipec"
-    if "ibope" in n_lower:
-        return "Ibope"
-    if "atlas" in n_lower:
-        return "AtlasIntel"
-    if "quaest" in n_lower:
-        return "Quaest"
-    if "mda" in n_lower:
-        return "CNT/MDA"
-    if "sensus" in n_lower:
-        return "CNT/Sensus"
-    if "vox populi" in n_lower or "vox" in n_lower:
-        return "Vox Populi"
-    if "paraná" in n_lower or "parana" in n_lower:
-        return "Paraná Pesquisas"
-    if "poder" in n_lower:
-        return "PoderData"
-    if "realtime" in n_lower or "real time" in n_lower:
-        return "Real Time Big Data"
-    if "ipespe" in n_lower:
-        return "Ipespe"
-    if "veritá" in n_lower or "verita" in n_lower:
-        return "Veritá"
-    if "brasmarket" in n_lower:
-        return "Brasmarket"
-    if "futura" in n_lower:
-        return "Futura"
-    if "ideia" in n_lower:
-        return "Ideia"
-    if "fsb" in n_lower:
-        return "FSB/BTG"
-    if "amostra" in n_lower:
-        return "Amostra"
-    if "brasilis" in n_lower:
-        return "Brasilis"
-    return n.strip()
+
+    # 1. Identifica instituto pelo dicionario prioritario
+    inst_final = None
+    for nome_padrao, padroes in DICIONARIO_INSTITUTOS_PRIORITARIOS:
+        if any(re.search(p, n_lower) for p in padroes):
+            inst_final = nome_padrao
+            break
+    if not inst_final:
+        inst_final = n.split("/")[0].strip()
+
+    # 2. Identifica contratante pelo mapeamento
+    contratante_final = None
+    for contr_padrao, padroes in CONTRATANTES_MAPEAMENTO:
+        if any(re.search(p, n_lower) for p in padroes):
+            if contr_padrao == "CNT" and inst_final in ["CNT/MDA", "CNT/Sensus"]:
+                contratante_final = "CNT"
+            elif contr_padrao == "BTG Pactual" and inst_final == "FSB/BTG":
+                contratante_final = "BTG Pactual"
+            else:
+                contratante_final = contr_padrao
+                break
+
+    return inst_final, contratante_final
+
+
+def padronizar_instituto(nome_raw: str) -> str:
+    """Retorna apenas o nome padronizado do instituto."""
+    inst, _ = padronizar_instituto_e_contratante(nome_raw)
+    return inst
 
 
 def baixar_e_registrar(url: str, nome_arquivo_local: str) -> Path:
@@ -227,9 +251,11 @@ def coletar_pesquisas_2022() -> list[dict]:
         # Indecisos e brancos
         indecisos_abst = clean_cand_pct(tds[-1]) if len(tds) > 13 else None
 
+        inst, contr = padronizar_instituto_e_contratante(inst_raw)
         pesquisas.append({
             "eleicao": 2022,
-            "instituto": padronizar_instituto(inst_raw),
+            "instituto": inst,
+            "contratante": contr,
             "data_inicio_campo": dt1.isoformat() if dt1 else None,
             "data_fim_campo": dt2.isoformat() if dt2 else None,
             "data_divulgacao": dt_div.isoformat(),
@@ -286,9 +312,11 @@ def coletar_pesquisas_2018() -> list[dict]:
         outros = clean_cand_pct(tds[13]) if len(tds) > 13 else None
         abst = clean_cand_pct(tds[14]) if len(tds) > 14 else None
 
+        inst, contr = padronizar_instituto_e_contratante(inst_raw)
         pesquisas.append({
             "eleicao": 2018,
-            "instituto": padronizar_instituto(inst_raw),
+            "instituto": inst,
+            "contratante": contr,
             "data_inicio_campo": dt1.isoformat() if dt1 else None,
             "data_fim_campo": dt2.isoformat() if dt2 else None,
             "data_divulgacao": dt_div.isoformat(),
@@ -345,9 +373,11 @@ def coletar_pesquisas_2014() -> list[dict]:
         bn = clean_cand_pct(tds[-2]) if len(tds) > 15 else None
         ind = clean_cand_pct(tds[-1]) if len(tds) > 16 else None
 
+        inst, contr = padronizar_instituto_e_contratante(inst_raw)
         pesquisas.append({
             "eleicao": 2014,
-            "instituto": padronizar_instituto(inst_raw),
+            "instituto": inst,
+            "contratante": contr,
             "data_inicio_campo": dt1.isoformat() if dt1 else None,
             "data_fim_campo": dt2.isoformat() if dt2 else None,
             "data_divulgacao": dt_div.isoformat(),
@@ -397,9 +427,11 @@ def coletar_pesquisas_2010() -> list[dict]:
         marina = clean_cand_pct(tds[4])
         outros_ind = clean_cand_pct(tds[7]) if len(tds) > 7 else None
 
+        inst, contr = padronizar_instituto_e_contratante(inst_raw)
         pesquisas.append({
             "eleicao": 2010,
-            "instituto": padronizar_instituto(inst_raw),
+            "instituto": inst,
+            "contratante": contr,
             "data_inicio_campo": dt1.isoformat() if dt1 else None,
             "data_fim_campo": dt2.isoformat() if dt2 else None,
             "data_divulgacao": dt_div.isoformat(),
@@ -435,6 +467,7 @@ def coletar_pesquisas_2006() -> list[dict]:
         {
             "eleicao": 2006,
             "instituto": "Datafolha",
+            "contratante": "Folha de S.Paulo",
             "data_inicio_campo": "2006-09-29",
             "data_fim_campo": "2006-09-30",
             "data_divulgacao": "2006-09-30",
@@ -454,6 +487,7 @@ def coletar_pesquisas_2006() -> list[dict]:
         {
             "eleicao": 2006,
             "instituto": "Ibope",
+            "contratante": "Globo",
             "data_inicio_campo": "2006-09-29",
             "data_fim_campo": "2006-09-30",
             "data_divulgacao": "2006-09-30",
@@ -473,6 +507,7 @@ def coletar_pesquisas_2006() -> list[dict]:
         {
             "eleicao": 2006,
             "instituto": "Datafolha",
+            "contratante": "Folha de S.Paulo",
             "data_inicio_campo": "2006-09-25",
             "data_fim_campo": "2006-09-26",
             "data_divulgacao": "2006-09-27",
@@ -492,6 +527,7 @@ def coletar_pesquisas_2006() -> list[dict]:
         {
             "eleicao": 2006,
             "instituto": "Ibope",
+            "contratante": "Globo",
             "data_inicio_campo": "2006-09-25",
             "data_fim_campo": "2006-09-27",
             "data_divulgacao": "2006-09-27",
@@ -511,6 +547,7 @@ def coletar_pesquisas_2006() -> list[dict]:
         {
             "eleicao": 2006,
             "instituto": "CNT/Sensus",
+            "contratante": "CNT",
             "data_inicio_campo": "2006-09-22",
             "data_fim_campo": "2006-09-24",
             "data_divulgacao": "2006-09-26",
@@ -530,6 +567,7 @@ def coletar_pesquisas_2006() -> list[dict]:
         {
             "eleicao": 2006,
             "instituto": "Datafolha",
+            "contratante": "Folha de S.Paulo",
             "data_inicio_campo": "2006-09-11",
             "data_fim_campo": "2006-09-12",
             "data_divulgacao": "2006-09-12",
@@ -549,6 +587,7 @@ def coletar_pesquisas_2006() -> list[dict]:
         {
             "eleicao": 2006,
             "instituto": "Ibope",
+            "contratante": "Globo",
             "data_inicio_campo": "2006-09-18",
             "data_fim_campo": "2006-09-20",
             "data_divulgacao": "2006-09-21",
@@ -590,7 +629,7 @@ def compilar_pesquisas_historicas() -> pd.DataFrame:
 
     # Ordena colunas
     colunas_meta = [
-        "eleicao", "instituto", "data_inicio_campo", "data_fim_campo",
+        "eleicao", "instituto", "contratante", "data_inicio_campo", "data_fim_campo",
         "data_divulgacao", "amostra", "cenario", "base"
     ]
     outras_cols = [c for c in df.columns if c not in colunas_meta]

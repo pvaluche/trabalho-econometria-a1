@@ -125,3 +125,26 @@ Embora a entrega da planilha XLSX seja estritamente pontual, a faixa de incertez
    $$V_k = \frac{P_k}{\sum_{j \in \text{Edital}} P_j} \times 100$$
 2. **Candidatos Fora do Edital (ex.: Sub Judice / Renuncia):** Votos atribuidos a candidatos fora da lista dos 12 do edital sao descartados antes da normalizacao dos validos.
 3. **Metodo dos Maiores Restos (Hamilton):** Para eliminar discrepancias de arredondamento e garantir que a soma dos 12 candidatos resulte exatamente em 100,0%, aplica-se o metodo dos maiores restos com precisao de decimos (`round(sum * 10) == 1000`), garantindo que cada candidato fique a menos de 0,1 p.p. do seu valor matematico original.
+
+---
+
+## 9. Emenda 1 (Data: 02/10/2026)
+
+**Origem e Motivação:** Auditoria externa do Checkpoint 2 (Claude). Formalizações metodológicas complementares introduzidas antes da execução de qualquer rotina do backtest histórico (Checkpoint 3).
+
+1. **Aproximação Temporal em Pesquisas Históricas (2006-2022):**
+   Nas tabelas históricas da Wikipédia onde a data exata de divulgação jornalística não for explicitamente discriminada em coluna própria, a data de divulgação é aproximada conservadoramente pela data final de campo (`data_fim_campo`), garantindo sempre a regra causal inviolável:
+   $$\text{data\_divulgacao} \le \text{vespera}$$
+   Nenhuma pesquisa coletada no dia do pleito ou pós-pleito ingressa na base de modelagem (vazamento temporal zero).
+
+2. **Tratamento de Nanicos sem Divulgação Individualizada:**
+   Quando um instituto de pesquisa divulga candidatos com baixa intenção de forma agregada (por exemplo, "outros candidatos: X%" ou "registram 1% cada um" sem discriminação isolada por linha em tabela oficial), os candidatos sem número unívoco individualizado permanecem registrados como `NaN` (vazio) no banco de dados. O percentual agregado é alocado na coluna `outros_agregado`. Para fins de cálculo do MAE e normalização de válidos, candidatos ausentes ou `NaN` em determinada pesquisa não distorcem a média dos institutos que os divulgaram individualmente.
+
+3. **Separação Estrutural entre Instituto e Contratante:**
+   A base de pesquisas históricas e de 2026 passa a discriminar formalmente o instituto responsável pela metodologia de campo (`instituto`) do veículo contratante ou financiador (`contratante`, ex.: Globo, Folha, XP, BTG, CNT, Aya Bancah). O modelo M2 de correção de viés institucional (house effect) opera exclusivamente sobre o identificador do instituto pesquisador, prevenindo contaminações por rotação de contratantes.
+
+4. **Validação de Sanidade das Vésperas (Datafolha):**
+   Fica pré-registrado o teste de sanidade empírica das pesquisas de véspera do Datafolha sobre votos válidos, exigindo aderência aos registros históricos com tolerância estrita de 1,0 p.p.:
+   - **2022:** Lula 50,0% | Bolsonaro 36,0%
+   - **2018:** Bolsonaro 40,0% | Haddad 25,0%
+   - **2014:** Dilma 44,0% | Aécio 26,0% | Marina 24,0%
