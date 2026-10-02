@@ -715,6 +715,28 @@ class TestPesquisasHistoricas:
         assert len(df_2022) >= 30
         assert (df_2022["eleicao"] == 2022).all()
 
+    def test_sem_dupla_contagem_ou_sobreposicao_campo(self):
+        """
+        Auditoria Checkpoint 3 (Item 5):
+        Garante que nao ha linhas duplicadas em pesquisas_historicas.parquet e que
+        o tracking do Vox Populi em 2010 respeita o espacamento de 4 dias sem sobreposicao.
+        """
+        df = carregar_pesquisas_historicas()
+
+        # 1. Zero duplicatas exatas por eleicao, instituto, data_divulgacao e amostra
+        cols_id = ["eleicao", "instituto", "data_divulgacao", "amostra"]
+        dups = df[df.duplicated(subset=cols_id, keep=False)]
+        assert len(dups) == 0, f"Encontradas {len(dups)} linhas duplicadas: {dups[cols_id]}"
+
+        # 2. Tracking Vox Populi 2010: rodadas consecutivas espacadas em pelo menos 4 dias
+        vp_2010 = df[(df["eleicao"] == 2010) & (df["instituto"] == "Vox Populi")].sort_values("data_divulgacao")
+        datas_vp = pd.to_datetime(vp_2010["data_divulgacao"]).tolist()
+        for i in range(len(datas_vp) - 1):
+            dias_diff = (datas_vp[i + 1] - datas_vp[i]).days
+            assert dias_diff >= 4, (
+                f"Sobreposicao no Vox Populi 2010: rodada {datas_vp[i]} e {datas_vp[i+1]} com apenas {dias_diff} dias de diferenca"
+            )
+
 
 # ============================================================
 # 12. Sanidade historica das vesperas do Datafolha (2014, 2018, 2022)
@@ -870,3 +892,35 @@ class TestBacktestHistorico:
         d_bar2, se_d2 = calcular_diferenca_e_se(mae_a2, mae_b2)
         assert abs(d_bar2 - 1.0) < 1e-6
         assert abs(se_d2 - (1.0 / np.sqrt(3))) < 1e-6
+
+    def test_mae_calculado_sobre_todos_candidatos_urna_tse(self):
+        """Item 1: Denominador do MAE deve ser o total de candidatos da urna oficial."""
+        from src.backtest import calcular_mae_eleicao, carregar_resultado_tse
+
+        res_2022 = carregar_resultado_tse(2022)
+        assert len(res_2022) == 11, "2022 deve conter 11 candidatos oficiais na urna"
+        # Previsao hipotetica onde um nanico falta: deve receber 0.0 e ser penalizado
+        preds = {c: res_2022[c] for c in list(res_2022.keys())[:-1]}
+        mae = calcular_mae_eleicao(preds, res_2022)
+        ultimo_cand = list(res_2022.keys())[-1]
+        assert mae == pytest.approx(res_2022[ultimo_cand] / 11.0)
+
+    def test_prior_nanicos_rejeitado_pela_regra_no_historico(self):
+        """Item 2: Prior de nanicos e neutro no historico (delta=0), entao w=0 no modelo oficial."""
+        from src.backtest import aplicar_ajuste_priors_nanicos
+
+        # Em eleicoes anteriores a 2026, nao altera predicoes
+        preds_2022 = {"Luiz Inácio Lula da Silva": 50.0, "Jair Bolsonaro": 50.0}
+        adj = aplicar_ajuste_priors_nanicos(preds_2022, 2022, w=0.5)
+        assert adj == preds_2022
+
+        # Em 2026, com w=0, predicoes que somam 100% permanecem inalteradas
+        preds_2026 = {
+            "Luiz Inácio Lula da Silva": 50.0,
+            "Flávio Bolsonaro": 49.6,
+            "Clariana Barão": 0.2,
+            "Wilson Grassi": 0.2,
+        }
+        adj_w0 = aplicar_ajuste_priors_nanicos(preds_2026, 2026, w=0.0)
+        assert abs(adj_w0["Clariana Barão"] - 0.2) < 1e-4
+        assert abs(adj_w0["Wilson Grassi"] - 0.2) < 1e-4

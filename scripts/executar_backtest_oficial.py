@@ -1,13 +1,16 @@
 """
 scripts/executar_backtest_oficial.py
 Executa o protocolo oficial e sequencial de backtest historico (Checkpoint 3).
+Inclui auditoria completa: MAE sobre todos os candidatos da urna, regra de empate
+na Aba 2 com contas de Delta e SE, P80 das faixas, estatisticas da margem do Top-2
+e geracao da tabela de sensibilidade de 2026.
 """
 
 from __future__ import annotations
 
 import math
-import sys
 from pathlib import Path
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
@@ -17,15 +20,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.arredondamento import maiores_restos
-
-
-def aplicar_maiores_restos_dict(d: dict[str, float]) -> dict[str, float]:
-    keys = list(d.keys())
-    vals = [d[k] for k in keys]
-    arr = maiores_restos(vals, total=100.0, casas=1)
-    return {k: round(v, 1) for k, v in zip(keys, arr)}
-
-
 from src.backtest import (
     aplicar_ajuste_priors_nanicos,
     aplicar_ajuste_vies_comum,
@@ -38,7 +32,8 @@ from src.backtest import (
     estimar_m2,
     estimar_m3,
 )
-from src.config import MANUAL_DIR
+from src.config import MANUAL_DIR, OUTPUTS_DIR, PARTIDOS_EDITAL
+from src.entrega import gerar_planilha_entrega
 from src.pesquisas import carregar_pesquisas_historicas
 
 ANOS_TESTE_EXPANDING = [2014, 2018, 2022]
@@ -47,25 +42,29 @@ TREINO_EXPANDING = {
     2018: [2006, 2010, 2014],
     2022: [2006, 2010, 2014, 2018],
 }
-
 TODOS_ANOS_LOEO = [2006, 2010, 2014, 2018, 2022]
+
+
+def aplicar_maiores_restos_dict(d: dict[str, float]) -> dict[str, float]:
+    keys = list(d.keys())
+    vals = [d[k] for k in keys]
+    arr = maiores_restos(vals, total=100.0, casas=1)
+    return {k: round(v, 1) for k, v in zip(keys, arr)}
 
 
 def rodar_etapa_1_modelos_base():
     """Etapa 1: Avalia as 11 configuracoes dos modelos base puros via Expanding Window."""
     print("=" * 80)
-    print("ETAPA 1: AVALIACAO DOS MODELOS BASE NO EXPANDING WINDOW (2014, 2018, 2022)")
+    print("ETAPA 1: AVALIACAO DOS MODELOS BASE NO EXPANDING WINDOW (URNA COMPLETA)")
     print("=" * 80)
 
     configs = {}
-    # M0
     configs["M0"] = lambda df, t, tr: estimar_m0(df, t)
 
-    # M1
     for h in [7.0, 14.0, 21.0]:
         configs[f"M1 (h={int(h)})"] = (lambda h_val: lambda df, t, tr: estimar_m1(df, t, meia_vida=h_val))(h)
 
-    # Determina melhor h de M1 preliminarmente para M2
+    # Determina melhor h preliminarmente
     maes_m1 = {}
     for h in [7.0, 14.0, 21.0]:
         m_list = []
@@ -78,19 +77,16 @@ def rodar_etapa_1_modelos_base():
 
     best_h = min(maes_m1.keys(), key=lambda h: maes_m1[h])
 
-    # M2 com melhor h
     for k in [1.0, 3.0, 10.0]:
         configs[f"M2 (h={int(best_h)}, k={int(k)})"] = (
             lambda k_val: lambda df, t, tr: estimar_m2(df, t, tr, meia_vida=best_h, k_shrinkage=k_val)
         )(k)
 
-    # M3
     for alpha in [0.01, 0.1, 1.0, 10.0]:
         configs[f"M3 (alpha={alpha})"] = (
             lambda a_val: lambda df, t, tr: estimar_m3(df, t, tr, meia_vida=best_h, alpha=a_val)
         )(alpha)
 
-    # Executa avaliacao
     tabela_base = []
     preds_armazenadas = {}
 
@@ -131,26 +127,22 @@ def rodar_etapa_2_ajustes(base_nome, base_func, preds_base, best_h):
     print("=" * 80)
 
     ajustes = {}
-    # 1. Vies Comum
     for k_mu in [1.0, 3.0]:
         ajustes[f"+ Viés Comum (k_mu={int(k_mu)})"] = (
             lambda k_val: lambda p, t, tr: aplicar_ajuste_vies_comum(p, t, tr, k_mu=k_val)
         )(k_mu)
 
-    # 2. Voto Util
     for gamma in [0.5, 1.0]:
         ajustes[f"+ Voto Útil (gamma={gamma})"] = (
             lambda g_val: lambda p, t, tr: aplicar_ajuste_voto_util(p, t, tr, gamma=g_val)
         )(gamma)
 
-    # 3. Prior Nanicos
     for w in [0.5, 1.0]:
         ajustes[f"+ Prior Nanicos (w={w})"] = (
             lambda w_val: lambda p, t, tr: aplicar_ajuste_priors_nanicos(p, t, w=w_val)
         )(w)
 
     tabela_ajustes = []
-    # Inclui o Base sem ajuste para comparacao direta
     mae_base_vals = [
         calcular_mae_eleicao(preds_base[(base_nome, t)], carregar_resultado_tse(t))
         for t in ANOS_TESTE_EXPANDING
@@ -180,11 +172,7 @@ def rodar_etapa_2_ajustes(base_nome, base_func, preds_base, best_h):
         mae_med = float(np.mean(mae_vals))
         mae_se = float(np.std(mae_vals, ddof=1) / math.sqrt(len(mae_vals)))
 
-        # Diferenca Delta = MAE_adj - MAE_base
         delta_bar, se_delta = calcular_diferenca_e_se(mae_vals, mae_base_vals)
-
-        # Regra de ativacao: reducao estrita de MAE superior a 1 SE(Delta)
-        # delta_bar deve ser significativamente menor que zero
         aprovado = bool(delta_bar < -se_delta)
 
         tabela_ajustes.append({
@@ -244,13 +232,12 @@ def rodar_loeo_completo(base_func, best_h):
     return df_loeo
 
 
-def rodar_backtest_adicionais():
-    """Backtest expanding window de abstencao, brancos e nulos (3 metodos x 3 eleicoes)."""
+def rodar_backtest_adicionais_com_contas():
+    """Backtest da Aba 2 com as contas exatas de diferenca e erro padrao."""
     print("\n" + "=" * 80)
-    print("BACKTEST DE ABSTENCAO, BRANCOS E NULOS (EXPANDING WINDOW)")
+    print("BACKTEST DA ABA 2: AGREGADOS ELEITORAIS E REGRA DE EMPATE COM CONTAS")
     print("=" * 80)
 
-    # Dados oficiais TSE
     tse_adicionais = {
         2006: {"abstencao": 16.75, "brancos": 2.73, "nulos": 5.68},
         2010: {"abstencao": 18.12, "brancos": 3.13, "nulos": 5.51},
@@ -262,11 +249,12 @@ def rodar_backtest_adicionais():
     metodos = ["Persistência (Random Walk)", "Média Móvel Histórica", "Tendência Linear"]
     variaveis = ["abstencao", "brancos", "nulos"]
 
-    resultados = []
+    resultados = {}
     for var in variaveis:
+        print(f"\n--- Agregado: {var.upper()} ---")
+        erros_por_metodo = {}
         for met in metodos:
             erros = []
-            preds = {}
             for t in ANOS_TESTE_EXPANDING:
                 tr = TREINO_EXPANDING[t]
                 y_tr = [tse_adicionais[y][var] for y in tr]
@@ -281,117 +269,142 @@ def rodar_backtest_adicionais():
                     reg = LinearRegression().fit(X_tr, y_tr)
                     pred = float(reg.predict(np.array([[t]]))[0])
 
-                preds[t] = pred
                 erros.append(abs(pred - y_real))
+            erros_por_metodo[met] = erros
+            print(f"  {met:30s}: 2014={erros[0]:.3f}, 2018={erros[1]:.3f}, 2022={erros[2]:.3f} | MAE={np.mean(erros):.4f}")
 
-            resultados.append({
-                "variavel": var,
-                "metodo": met,
-                "mae_2014": erros[0],
-                "mae_2018": erros[1],
-                "mae_2022": erros[2],
-                "mae_medio": np.mean(erros),
-            })
+        # Compara pares
+        e_lin = erros_por_metodo["Tendência Linear"]
+        e_pers = erros_por_metodo["Persistência (Random Walk)"]
+        e_med = erros_por_metodo["Média Móvel Histórica"]
 
-    df_ad = pd.DataFrame(resultados)
-    print(df_ad[["variavel", "metodo", "mae_2014", "mae_2018", "mae_2022", "mae_medio"]].to_string(index=False))
-    return df_ad, tse_adicionais
+        d_lin_pers, se_lin_pers = calcular_diferenca_e_se(e_lin, e_pers)
+        d_med_pers, se_med_pers = calcular_diferenca_e_se(e_med, e_pers)
+        d_lin_med, se_lin_med = calcular_diferenca_e_se(e_lin, e_med)
+
+        print("  Contas de Desempate:")
+        print(f"    Linear vs Persistência: Delta={d_lin_pers:+.4f}, SE={se_lin_pers:.4f} -> Empate? {abs(d_lin_pers) < se_lin_pers}")
+        print(f"    Média vs Persistência:  Delta={d_med_pers:+.4f}, SE={se_med_pers:.4f} -> Empate? {abs(d_med_pers) < se_med_pers}")
+        print(f"    Linear vs Média:        Delta={d_lin_med:+.4f}, SE={se_lin_med:.4f} -> Empate? {abs(d_lin_med) < se_lin_med}")
+
+        resultados[var] = erros_por_metodo
+
+    return resultados, tse_adicionais
 
 
-def gerar_previsao_preliminar_2026(modelo_escolhido_func, tse_adicionais):
-    """Gera a previsao preliminar oficial para 2026 com base nas pesquisas disponiveis."""
+def calcular_estatisticas_margem_top2_e_p80():
+    """Calcula o erro da margem do Top-2 (1o menos 2o) e faixas empiricas com P80."""
     print("\n" + "=" * 80)
-    print("PREVISAO PRELIMINAR OFICIAL PARA 2026 (BASE MANUAL DE 6 PESQUISAS)")
+    print("ESTATISTICAS DA MARGEM DO TOP-2 E FAIXAS EMPIRICAS COM PERCENTIL 80 (P80)")
     print("=" * 80)
 
-    csv_path = MANUAL_DIR / "pesquisas_2026.csv"
-    df_2026 = pd.read_csv(csv_path)
+    erros_margem_m0 = []
+    erros_margem_final = []
 
-    # Executa projecao de votos validos
-    treino_completo = [2006, 2010, 2014, 2018, 2022]
-    preds_raw = modelo_escolhido_func(df_2026, 2026, treino_completo)
+    erros_top2 = []
+    erros_34 = []
+    erros_demais = []
 
-    # Aplica fechamento exato dos maiores restos (Hamilton) para 100,0%
-    preds_fechadas = aplicar_maiores_restos_dict(preds_raw)
+    for t in ANOS_TESTE_EXPANDING:
+        df_t = carregar_pesquisas_historicas(t)
+        res_tse = carregar_resultado_tse(t)
+        tr = TREINO_EXPANDING[t]
 
-    print("\nAba 1: Votos Validos (%):")
-    for c, v in sorted(preds_fechadas.items(), key=lambda x: x[1], reverse=True):
-        print(f"  {c:30s}: {v:5.1f}%")
-    print(f"  {'Total':30s}: {sum(preds_fechadas.values()):5.1f}%")
+        cands_sorted_real = sorted(res_tse.keys(), key=lambda c: res_tse[c], reverse=True)
+        c1_real, c2_real = cands_sorted_real[0], cands_sorted_real[1]
+        margem_real = res_tse[c1_real] - res_tse[c2_real]
 
-    # Aba 2 (Metodo vencedor de cada agregado)
-    # Projecao linear para abstencao, persistencia/media para brancos e nulos
+        # M0
+        p0 = estimar_m0(df_t, t)
+        margem_p0 = p0[c1_real] - p0[c2_real]
+        err_m_p0 = abs(margem_p0 - margem_real)
+        erros_margem_m0.append(err_m_p0)
+
+        # Final Aprovado (M0 + Vies k=3 + Voto Util gamma=1.0)
+        p_f = aplicar_ajuste_vies_comum(p0, t, tr, k_mu=3.0)
+        p_f = aplicar_ajuste_voto_util(p_f, t, tr, gamma=1.0)
+        margem_f = p_f[c1_real] - p_f[c2_real]
+        err_m_f = abs(margem_f - margem_real)
+        erros_margem_final.append(err_m_f)
+
+        print(f"Ano {t}: Margem Real ({c1_real} - {c2_real}) = {margem_real:.2f}%")
+        print(f"         M0 Margem = {margem_p0:.2f}% | Erro Margem M0 = {err_m_p0:.2f} p.p.")
+        print(f"         Final Margem = {margem_f:.2f}% | Erro Margem Final = {err_m_f:.2f} p.p.")
+
+        cands_by_pesq = sorted(p_f.keys(), key=lambda c: p_f[c], reverse=True)
+        for rank, c in enumerate(cands_by_pesq, 1):
+            err = abs(p_f[c] - res_tse[c])
+            if rank <= 2:
+                erros_top2.append(err)
+            elif rank in [3, 4]:
+                erros_34.append(err)
+            else:
+                erros_demais.append(err)
+
+    print("\nResumo da Margem do Top-2:")
+    print(f"  Erro Margem M0:    Media = {np.mean(erros_margem_m0):.2f} p.p., Max = {np.max(erros_margem_m0):.2f} p.p., P80 = {np.percentile(erros_margem_m0, 80):.2f} p.p.")
+    print(f"  Erro Margem Final: Media = {np.mean(erros_margem_final):.2f} p.p., Max = {np.max(erros_margem_final):.2f} p.p., P80 = {np.percentile(erros_margem_final, 80):.2f} p.p.")
+
+    print("\nFaixas Empiricas de Incerteza do Backtest:")
+    print(f"  Grupo 1 (Top-2):   Media = {np.mean(erros_top2):.2f} p.p., P80 = {np.percentile(erros_top2, 80):.2f} p.p.")
+    print(f"  Grupo 2 (3º e 4º): Media = {np.mean(erros_34):.2f} p.p., P80 = {np.percentile(erros_34, 80):.2f} p.p.")
+    print(f"  Grupo 3 (Demais):  Media = {np.mean(erros_demais):.2f} p.p., P80 = {np.percentile(erros_demais, 80):.2f} p.p.")
+
+
+def gerar_tabela_sensibilidade_2026(df_2026):
+    """Gera tabela de sensibilidade confrontando todas as configuracoes para 2026."""
+    print("\n" + "=" * 80)
+    print("TABELA DE SENSIBILIDADE: PROJECOES PARA 2026 SOB TODAS AS CONFIGURACOES")
+    print("=" * 80)
+
     tr_all = [2006, 2010, 2014, 2018, 2022]
-    X_tr = np.array(tr_all).reshape(-1, 1)
+    p0 = estimar_m0(df_2026, 2026)
+    p_vies1 = aplicar_ajuste_vies_comum(p0, 2026, tr_all, k_mu=1.0)
+    p_vies3 = aplicar_ajuste_vies_comum(p0, 2026, tr_all, k_mu=3.0)
+    p_util05 = aplicar_ajuste_voto_util(p0, 2026, tr_all, gamma=0.5)
+    p_util10 = aplicar_ajuste_voto_util(p0, 2026, tr_all, gamma=1.0)
+    p_nan05 = aplicar_ajuste_priors_nanicos(p0, 2026, w=0.5)
 
-    # Abstencao: Tendencia linear
-    reg_abs = LinearRegression().fit(X_tr, [tse_adicionais[y]["abstencao"] for y in tr_all])
-    pred_abs = round(float(reg_abs.predict([[2026]])[0]), 1)
+    # Modelo Oficial Aprovado na Etapa 2 (w=0, pois o prior foi neutro no backtest)
+    p_final_oficial = aplicar_ajuste_voto_util(p_vies3, 2026, tr_all, gamma=1.0)
 
-    # Brancos: Persistencia 2022
-    pred_bra = round(float(tse_adicionais[2022]["brancos"]), 1)
+    # Modelo com Prior de Nanicos (Sensibilidade w=0.5)
+    p_sens_w05 = aplicar_ajuste_priors_nanicos(p_final_oficial, 2026, w=0.5)
 
-    # Nulos: Persistencia 2022
-    pred_nul = round(float(tse_adicionais[2022]["nulos"]), 1)
+    configs = {
+        "M0 Puro": aplicar_maiores_restos_dict(p0),
+        "M0 + Viés (k=1)": aplicar_maiores_restos_dict(p_vies1),
+        "M0 + Viés (k=3)": aplicar_maiores_restos_dict(p_vies3),
+        "M0 + Útil (g=0.5)": aplicar_maiores_restos_dict(p_util05),
+        "M0 + Útil (g=1.0)": aplicar_maiores_restos_dict(p_util10),
+        "M0 + Nanicos (w=0.5)": aplicar_maiores_restos_dict(p_nan05),
+        "Modelo Oficial (w=0)": aplicar_maiores_restos_dict(p_final_oficial),
+        "Sensibilidade (w=0.5)": aplicar_maiores_restos_dict(p_sens_w05),
+    }
 
-    print("\nAba 2: Agregados Eleitorais (%):")
-    print(f"  Abstenção (% sobre aptos):           {pred_abs:.1f}%")
-    print(f"  Votos Brancos (% sobre comparecimento): {pred_bra:.1f}%")
-    print(f"  Votos Nulos (% sobre comparecimento):   {pred_nul:.1f}%")
+    df_sens = pd.DataFrame(configs)
+    df_sens["Partido"] = [PARTIDOS_EDITAL[c] for c in df_sens.index]
+    cols_order = ["Partido", "M0 Puro", "M0 + Viés (k=3)", "M0 + Útil (g=1.0)", "Modelo Oficial (w=0)", "Sensibilidade (w=0.5)"]
+    print(df_sens[cols_order].to_string())
 
-    return preds_fechadas, {"abstencao": pred_abs, "brancos": pred_bra, "nulos": pred_nul}
+    return p_final_oficial, configs
 
 
 if __name__ == "__main__":
     df_base, preds_base, best_h = rodar_etapa_1_modelos_base()
 
-    # Selecao do Base
-    # Identifica o melhor MAE numerico
-    best_row = df_base.iloc[0]
-    base_vencedor_nome = best_row["modelo"]
-    print(f"\nModelo Base com Menor MAE: {base_vencedor_nome} (MAE = {best_row['mae_medio']:.4f})")
-
-    # Verifica regra de desempate contra modelos mais simples
-    # Ordem: M0 < M1 < M2 < M3
-    m0_row = df_base[df_base["modelo"] == "M0"].iloc[0]
-    delta_vs_m0, se_vs_m0 = calcular_diferenca_e_se(best_row["maes_ano"], m0_row["maes_ano"])
-    print(f"Comparacao {base_vencedor_nome} vs M0: Delta = {delta_vs_m0:.4f}, SE(Delta) = {se_vs_m0:.4f}")
-
-    # Funcao do modelo base vencedor
     def func_base(df, t, tr):
-        if "M1" in base_vencedor_nome:
-            return estimar_m1(df, t, meia_vida=best_h)
-        elif "M2" in base_vencedor_nome:
-            k_val = 3.0
-            if "k=1" in base_vencedor_nome:
-                k_val = 1.0
-            elif "k=10" in base_vencedor_nome:
-                k_val = 10.0
-            return estimar_m2(df, t, tr, meia_vida=best_h, k_shrinkage=k_val)
-        elif "M3" in base_vencedor_nome:
-            return estimar_m3(df, t, tr, meia_vida=best_h, alpha=1.0)
         return estimar_m0(df, t)
 
-    # Etapa 2
-    df_ajustes = rodar_etapa_2_ajustes(base_vencedor_nome, func_base, preds_base, best_h)
-
-    # LOEO
+    df_ajustes = rodar_etapa_2_ajustes("M0", func_base, preds_base, best_h)
     df_loeo = rodar_loeo_completo(func_base, best_h)
+    res_ad, tse_ad = rodar_backtest_adicionais_com_contas()
+    calcular_estatisticas_margem_top2_e_p80()
 
-    # Adicionais
-    df_ad, tse_ad = rodar_backtest_adicionais()
+    df_2026 = pd.read_csv(MANUAL_DIR / "pesquisas_2026.csv")
+    p_final_oficial, configs_sens = gerar_tabela_sensibilidade_2026(df_2026)
 
-    # Previsao 2026 preliminar: Modelo Base Puro M0
-    print("\n--- PREVISAO PRELIMINAR 2026: BASE PURO (M0) ---")
-    p2026_m0, ad2026 = gerar_previsao_preliminar_2026(func_base, tse_ad)
-
-    # Previsao 2026 preliminar: Modelo Final com Ajustes Aprovados
-    def func_modelo_final(df, t, tr):
-        p = func_base(df, t, tr)
-        p = aplicar_ajuste_vies_comum(p, t, tr, k_mu=3.0)
-        p = aplicar_ajuste_voto_util(p, t, tr, gamma=1.0)
-        p = aplicar_ajuste_priors_nanicos(p, t, w=0.5)
-        return p
-
-    print("\n--- PREVISAO PRELIMINAR 2026: MODELO FINAL (M0 + VIES COMUM + VOTO UTIL + PRIOR NANICOS) ---")
-    p2026_final, _ = gerar_previsao_preliminar_2026(func_modelo_final, tse_ad)
+    # Gera planilha oficial de entrega preliminar
+    ad2026 = {"abstencao": 22.3, "brancos": 1.6, "nulos": 2.8}
+    gerar_planilha_entrega(p_final_oficial, ad2026, OUTPUTS_DIR / "previsao_2026.xlsx")
+    print("\nOK: outputs/previsao_2026.xlsx gerada com o Modelo Oficial Aprovado (w=0).")

@@ -23,58 +23,26 @@ from src.tse import calcular_votos_validos_candidatos
 # Mapeamentos e Candidatos por Eleicao
 # --------------------------------------------------------------------------- #
 
-HISTORICO_CANDIDATOS: dict[int, list[str]] = {
-    2006: [
-        "Luiz Inácio Lula da Silva",
-        "Geraldo Alckmin",
-        "Heloísa Helena",
-        "Cristovam Buarque",
-    ],
-    2010: [
-        "Dilma Rousseff",
-        "José Serra",
-        "Marina Silva",
-    ],
-    2014: [
-        "Dilma Rousseff",
-        "Aécio Neves",
-        "Marina Silva",
-        "Luciana Genro",
-        "Pastor Everaldo",
-        "Eduardo Jorge",
-    ],
-    2018: [
-        "Jair Bolsonaro",
-        "Fernando Haddad",
-        "Ciro Gomes",
-        "Geraldo Alckmin",
-        "João Amoêdo",
-        "Henrique Meirelles",
-        "Marina Silva",
-        "Alvaro Dias",
-    ],
-    2022: [
-        "Luiz Inácio Lula da Silva",
-        "Jair Bolsonaro",
-        "Simone Tebet",
-        "Ciro Gomes",
-        "Soraya Thronicke",
-        "Felipe D'Avila",
-    ],
-    2026: CANDIDATOS_EDITAL,
-}
-
-TSE_NAMES_MAP: dict[int, dict[str, str]] = {
+CANDIDATOS_URNA_TSE: dict[int, dict[str, str]] = {
     2006: {
         "Luiz Inácio Lula da Silva": "LULA",
         "Geraldo Alckmin": "GERALDO ALCKMIN",
         "Heloísa Helena": "HELOÍSA HELENA",
         "Cristovam Buarque": "CRISTOVAM BUARQUE",
+        "Ana Maria Rangel": "ANA MARIA RANGEL",
+        "José Maria Eymael": "JOSÉ MARIA EYMAEL",
+        "Luciano Bivar": "LUCIANO BIVAR",
     },
     2010: {
         "Dilma Rousseff": "DILMA",
         "José Serra": "JOSÉ SERRA",
         "Marina Silva": "MARINA SILVA",
+        "Plínio de Arruda Sampaio": "PLÍNIO",
+        "José Maria Eymael": "EYMAEL",
+        "Zé Maria": "ZÉ MARIA",
+        "Levy Fidelix": "LEVY FIDELIX",
+        "Ivan Pinheiro": "IVAN PINHEIRO",
+        "Rui Costa Pimenta": "RUI COSTA PIMENTA",
     },
     2014: {
         "Dilma Rousseff": "DILMA",
@@ -83,6 +51,11 @@ TSE_NAMES_MAP: dict[int, dict[str, str]] = {
         "Luciana Genro": "LUCIANA GENRO",
         "Pastor Everaldo": "PASTOR EVERALDO",
         "Eduardo Jorge": "EDUARDO JORGE",
+        "Levy Fidelix": "LEVY FIDELIX",
+        "Zé Maria": "ZÉ MARIA",
+        "José Maria Eymael": "EYMAEL",
+        "Mauro Iasi": "MAURO IASI",
+        "Rui Costa Pimenta": "RUI COSTA PIMENTA",
     },
     2018: {
         "Jair Bolsonaro": "JAIR BOLSONARO",
@@ -90,9 +63,14 @@ TSE_NAMES_MAP: dict[int, dict[str, str]] = {
         "Ciro Gomes": "CIRO GOMES",
         "Geraldo Alckmin": "GERALDO ALCKMIN",
         "João Amoêdo": "JOÃO AMOÊDO",
+        "Cabo Daciolo": "CABO DACIOLO",
         "Henrique Meirelles": "HENRIQUE MEIRELLES",
         "Marina Silva": "MARINA SILVA",
         "Alvaro Dias": "ALVARO DIAS",
+        "Guilherme Boulos": "GUILHERME BOULOS",
+        "Vera Lúcia": "VERA",
+        "José Maria Eymael": "EYMAEL",
+        "João Goulart Filho": "JOÃO GOULART FILHO",
     },
     2022: {
         "Luiz Inácio Lula da Silva": "LULA",
@@ -101,8 +79,20 @@ TSE_NAMES_MAP: dict[int, dict[str, str]] = {
         "Ciro Gomes": "CIRO GOMES",
         "Soraya Thronicke": "SORAYA THRONICKE",
         "Felipe D'Avila": "FELIPE D AVILA",
+        "Padre Kelmon": "PADRE KELMON",
+        "Léo Péricles": "LÉO PÉRICLES",
+        "Sofia Manzano": "SOFIA MANZANO",
+        "Vera Lúcia": "VERA",
+        "Constituinte Eymael": "CONSTITUINTE EYMAEL",
     },
 }
+
+HISTORICO_CANDIDATOS: dict[int, list[str]] = {
+    ano: list(cands.keys()) for ano, cands in CANDIDATOS_URNA_TSE.items()
+}
+HISTORICO_CANDIDATOS[2026] = CANDIDATOS_EDITAL
+
+TSE_NAMES_MAP: dict[int, dict[str, str]] = CANDIDATOS_URNA_TSE
 
 BLOCOS_POLITICOS: dict[int, dict[str, list[str]]] = {
     2006: {
@@ -188,6 +178,8 @@ def converter_pesquisa_validos(row: pd.Series, candidatos: list[str]) -> dict[st
     vals = {}
     for c in candidatos:
         val = row.get(c, np.nan)
+        if pd.isna(val) and c == "Felipe D'Avila":
+            val = row.get("Felipe D Avila", np.nan)
         if pd.notna(val) and float(val) > 0:
             vals[c] = float(val)
         else:
@@ -574,11 +566,11 @@ def aplicar_ajuste_priors_nanicos(
 
 
 def calcular_mae_eleicao(preds: dict[str, float], realizados: dict[str, float]) -> float:
-    """Calcula o MAE entre previsao e realizado sobre os candidatos comparaveis."""
-    cands = [c for c in preds if c in realizados]
+    """Calcula o MAE entre previsao e realizado sobre TODOS os candidatos da eleicao."""
+    cands = list(realizados.keys())
     if not cands:
         return 0.0
-    return float(np.mean([abs(preds[c] - realizados[c]) for c in cands]))
+    return float(np.mean([abs(preds.get(c, 0.0) - realizados[c]) for c in cands]))
 
 
 def calcular_diferenca_e_se(mae_A: list[float], mae_B: list[float]) -> tuple[float, float]:

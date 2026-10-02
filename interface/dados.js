@@ -1,4 +1,5 @@
-{
+// Gerado automaticamente por scripts/gerar_dados_interface.py
+window.DADOS = {
   "metadata": {
     "titulo": "Painel Comparador de Modelos - Desafio FGV EPGE 2026",
     "grupo": [
@@ -1443,4 +1444,4 @@
       "mae_oficial": 0.5819
     }
   }
-}
+};
