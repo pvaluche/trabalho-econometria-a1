@@ -392,5 +392,13 @@ PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> .venv\
 
 ### c) `git log --oneline -8`
 ```
-(Será registrado com o commit das correções do Checkpoint 2)
+PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> git log --oneline -8
+affd344 fix: correcoes da auditoria do checkpoint 2: transcricao estrita, emenda 1 no pre-registro, sanidade das vesperas e contratantes
+af5774b docs: registra git log no relatorio do checkpoint 2
+7c42ff0 feat: checkpoint 2: pesquisas historicas 2006-2022 compiladas e pre-registro congelado
+81f59b1 fix: correcoes da auditoria do checkpoint 1 rodada 2 -- transcricao verificada, protocolo realtime, outros_agregado e datafolha final
+f208e5e docs: registra git log oficial no relatorio do checkpoint 1
+67f5662 fix: revisao 2 do checkpoint 1 -- fontes de pesquisas_2026 verificadas, pesqele validado, candidatos consulta_cand listados
+54348b3 docs: atualiza reports/checkpoint_1.md com git log oficial
+e98bfa4 feat: checkpoint 1 -- base TSE 2006-2022 processada em parquet, sanidade 2022 validada e pesquisas 2026 preenchidas
 ```
