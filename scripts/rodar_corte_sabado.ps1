@@ -235,3 +235,6 @@ Write-Host '  git commit -m "feat(checkpoint-4): previsao oficial final apos cor
 Write-Host "  git tag checkpoint-4" -ForegroundColor Gray
 Write-Host "  git push origin main; git push origin checkpoint-4" -ForegroundColor Gray
 Write-Host ""
+Write-Host "Apos o commit final: git tag entrega-final && git push origin entrega-final" -ForegroundColor Yellow
+Write-Host ""
+
