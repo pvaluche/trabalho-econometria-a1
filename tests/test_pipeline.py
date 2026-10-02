@@ -414,18 +414,24 @@ def _criar_xlsx_valido() -> bytes:
     wb = openpyxl.Workbook()
     ws1 = wb.active
     ws1.title = "Candidatos"
-    ws1.append(["Candidato(a)", "Partido", "Previsao de votos validos (%)"])
+    ws1.append(["Candidato(a)", "Partido", "Previsão de votos válidos (%)"])
     # Distribui igualmente (maiores restos) para que soma seja exatamente 100,0%
     pcts = maiores_restos([100.0 / 12] * 12)
-    for nome, pct in zip(CANDIDATOS_EDITAL, pcts):
+    for i, (nome, pct) in enumerate(zip(CANDIDATOS_EDITAL, pcts), start=2):
         ws1.append([nome, PARTIDOS_EDITAL[nome], pct])
+        ws1.cell(row=i, column=3).number_format = "0.0"
+    linha_total_idx = len(CANDIDATOS_EDITAL) + 2
     ws1.append(["Total", "", 100.0])
+    ws1.cell(row=linha_total_idx, column=3).number_format = "0.0"
 
     ws2 = wb.create_sheet("Adicionais")
-    ws2.append(["Resultado", "Previsao (%)"])
-    ws2.append(["Abstencao", 20.95])
+    ws2.append(["Resultado", "Previsão (%)"])
+    ws2.append(["Abstenção", 20.95])
+    ws2.cell(row=2, column=2).number_format = "0.0"
     ws2.append(["Votos brancos", 2.5])
+    ws2.cell(row=3, column=2).number_format = "0.0"
     ws2.append(["Votos nulos", 2.5])
+    ws2.cell(row=4, column=2).number_format = "0.0"
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -466,10 +472,17 @@ class TestValidacaoXLSX:
         wb = openpyxl.Workbook()
         ws1 = wb.active
         ws1.title = "Candidatos"
-        ws1.append(["Candidato(a)", "Partido", "Previsao (%)"])
+        ws1.append(["Candidato(a)", "Partido", "Previsão de votos válidos (%)"])
         ws1.append(["Nome Errado", "Partido X", 100.0])
+        ws1.cell(row=2, column=3).number_format = "0.0"
         ws2 = wb.create_sheet("Adicionais")
-        ws2.append(["Abstencao", 20.0])
+        ws2.append(["Resultado", "Previsão (%)"])
+        ws2.append(["Abstenção", 20.0])
+        ws2.cell(row=2, column=2).number_format = "0.0"
+        ws2.append(["Votos brancos", 2.0])
+        ws2.cell(row=3, column=2).number_format = "0.0"
+        ws2.append(["Votos nulos", 2.0])
+        ws2.cell(row=4, column=2).number_format = "0.0"
         buf = io.BytesIO()
         wb.save(buf)
         p = tmp_path / "nome_errado.xlsx"
@@ -482,17 +495,22 @@ class TestValidacaoXLSX:
         wb = openpyxl.Workbook()
         ws1 = wb.active
         ws1.title = "Candidatos"
-        ws1.append(["Candidato(a)", "Partido", "Previsao (%)"])
+        ws1.append(["Candidato(a)", "Partido", "Previsão de votos válidos (%)"])
         pcts = maiores_restos([100.0 / 12] * 12)
-        for nome, pct in zip(CANDIDATOS_EDITAL, pcts):
+        for i, (nome, pct) in enumerate(zip(CANDIDATOS_EDITAL, pcts), start=2):
             partido = PARTIDOS_EDITAL[nome] if nome != "Augusto Cury" else "PARTIDO_ERRADO"
             ws1.append([nome, partido, pct])
+            ws1.cell(row=i, column=3).number_format = "0.0"
         ws1.append(["Total", "", 100.0])
+        ws1.cell(row=len(CANDIDATOS_EDITAL) + 2, column=3).number_format = "0.0"
         ws2 = wb.create_sheet("Adicionais")
-        ws2.append(["Resultado", "Previsao (%)"])
-        ws2.append(["Abstencao", 21.0])
+        ws2.append(["Resultado", "Previsão (%)"])
+        ws2.append(["Abstenção", 21.0])
+        ws2.cell(row=2, column=2).number_format = "0.0"
         ws2.append(["Votos brancos", 2.0])
+        ws2.cell(row=3, column=2).number_format = "0.0"
         ws2.append(["Votos nulos", 2.0])
+        ws2.cell(row=4, column=2).number_format = "0.0"
         buf = io.BytesIO()
         wb.save(buf)
         p = tmp_path / "partido_errado.xlsx"
@@ -505,16 +523,20 @@ class TestValidacaoXLSX:
         wb = openpyxl.Workbook()
         ws1 = wb.active
         ws1.title = "Candidatos"
-        ws1.append(["Candidato(a)", "Partido", "Previsao (%)"])
+        ws1.append(["Candidato(a)", "Partido", "Previsão de votos válidos (%)"])
         pcts = maiores_restos([100.0 / 12] * 12)
-        for nome, pct in zip(CANDIDATOS_EDITAL, pcts):
+        for i, (nome, pct) in enumerate(zip(CANDIDATOS_EDITAL, pcts), start=2):
             ws1.append([nome, PARTIDOS_EDITAL[nome], pct])
+            ws1.cell(row=i, column=3).number_format = "0.0"
         # Sem linha Total
         ws2 = wb.create_sheet("Adicionais")
-        ws2.append(["Resultado", "Previsao (%)"])
-        ws2.append(["Abstencao", 21.0])
+        ws2.append(["Resultado", "Previsão (%)"])
+        ws2.append(["Abstenção", 21.0])
+        ws2.cell(row=2, column=2).number_format = "0.0"
         ws2.append(["Votos brancos", 2.0])
+        ws2.cell(row=3, column=2).number_format = "0.0"
         ws2.append(["Votos nulos", 2.0])
+        ws2.cell(row=4, column=2).number_format = "0.0"
         buf = io.BytesIO()
         wb.save(buf)
         p = tmp_path / "sem_total.xlsx"
@@ -522,6 +544,59 @@ class TestValidacaoXLSX:
         res = validar_xlsx(p)
         assert not res["valido"]
         assert any("Total" in e for e in res["erros"])
+
+    def test_xlsx_rotulo_sem_acento_falha(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws1 = wb.active
+        ws1.title = "Candidatos"
+        ws1.append(["Candidato(a)", "Partido", "Previsao de votos validos (%)"])  # sem acento
+        pcts = maiores_restos([100.0 / 12] * 12)
+        for i, (nome, pct) in enumerate(zip(CANDIDATOS_EDITAL, pcts), start=2):
+            ws1.append([nome, PARTIDOS_EDITAL[nome], pct])
+            ws1.cell(row=i, column=3).number_format = "0.0"
+        ws1.append(["Total", "", 100.0])
+        ws1.cell(row=14, column=3).number_format = "0.0"
+        ws2 = wb.create_sheet("Adicionais")
+        ws2.append(["Resultado", "Previsão (%)"])
+        ws2.append(["Abstenção", 21.0])
+        ws2.cell(row=2, column=2).number_format = "0.0"
+        ws2.append(["Votos brancos", 2.0])
+        ws2.cell(row=3, column=2).number_format = "0.0"
+        ws2.append(["Votos nulos", 2.0])
+        ws2.cell(row=4, column=2).number_format = "0.0"
+        buf = io.BytesIO()
+        wb.save(buf)
+        p = tmp_path / "sem_acento.xlsx"
+        p.write_bytes(buf.getvalue())
+        res = validar_xlsx(p)
+        assert not res["valido"]
+        assert any("Cabecalho da Aba 1 invalido" in e for e in res["erros"])
+
+    def test_xlsx_number_format_invalido_falha(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws1 = wb.active
+        ws1.title = "Candidatos"
+        ws1.append(["Candidato(a)", "Partido", "Previsão de votos válidos (%)"])
+        pcts = maiores_restos([100.0 / 12] * 12)
+        for i, (nome, pct) in enumerate(zip(CANDIDATOS_EDITAL, pcts), start=2):
+            ws1.append([nome, PARTIDOS_EDITAL[nome], pct])
+            # number_format padrao 'General', nao '0.0'
+        ws1.append(["Total", "", 100.0])
+        ws2 = wb.create_sheet("Adicionais")
+        ws2.append(["Resultado", "Previsão (%)"])
+        ws2.append(["Abstenção", 21.0])
+        ws2.cell(row=2, column=2).number_format = "0.0"
+        ws2.append(["Votos brancos", 2.0])
+        ws2.cell(row=3, column=2).number_format = "0.0"
+        ws2.append(["Votos nulos", 2.0])
+        ws2.cell(row=4, column=2).number_format = "0.0"
+        buf = io.BytesIO()
+        wb.save(buf)
+        p = tmp_path / "format_invalido.xlsx"
+        p.write_bytes(buf.getvalue())
+        res = validar_xlsx(p)
+        assert not res["valido"]
+        assert any("Formato numerico invalido" in e for e in res["erros"])
 
     def test_valores_numeros_finais_latex_coincidem_com_xlsx(self):
         """

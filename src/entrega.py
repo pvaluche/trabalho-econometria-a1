@@ -38,19 +38,32 @@ def gerar_planilha_entrega(
     # Aba 1: Candidatos
     ws1 = wb.active
     ws1.title = "Candidatos"
-    ws1.append(["Candidato(a)", "Partido", "Previsao de votos validos (%)"])
+    ws1.append(["Candidato(a)", "Partido", "Previsão de votos válidos (%)"])
 
-    for nome, pct in zip(CANDIDATOS_EDITAL, valores_fechados):
+    for i, (nome, pct) in enumerate(zip(CANDIDATOS_EDITAL, valores_fechados), start=2):
         ws1.append([nome, PARTIDOS_EDITAL[nome], round(float(pct), 1)])
+        ws1.cell(row=i, column=3).number_format = "0.0"
 
+    linha_total_idx = len(CANDIDATOS_EDITAL) + 2
     ws1.append(["Total", "", 100.0])
+    ws1.cell(row=linha_total_idx, column=3).number_format = "0.0"
 
     # Aba 2: Adicionais
     ws2 = wb.create_sheet("Adicionais")
-    ws2.append(["Resultado", "Previsao (%)"])
-    ws2.append(["Abstencao", round(float(adicionais.get("abstencao", 22.3)), 1)])
-    ws2.append(["Votos brancos", round(float(adicionais.get("brancos", 1.6)), 1)])
-    ws2.append(["Votos nulos", round(float(adicionais.get("nulos", 2.8)), 1)])
+    ws2.append(["Resultado", "Previsão (%)"])
+
+    val_abst = adicionais.get("abstencao", adicionais.get("abstenção", 22.3))
+    val_brancos = adicionais.get("brancos", adicionais.get("votos brancos", 1.6))
+    val_nulos = adicionais.get("nulos", adicionais.get("votos nulos", 2.8))
+
+    ws2.append(["Abstenção", round(float(val_abst), 1)])
+    ws2.cell(row=2, column=2).number_format = "0.0"
+
+    ws2.append(["Votos brancos", round(float(val_brancos), 1)])
+    ws2.cell(row=3, column=2).number_format = "0.0"
+
+    ws2.append(["Votos nulos", round(float(val_nulos), 1)])
+    ws2.cell(row=4, column=2).number_format = "0.0"
 
     wb.save(caminho_saida)
     return caminho_saida

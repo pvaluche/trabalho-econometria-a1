@@ -64,14 +64,28 @@ def validar_xlsx(caminho: str | Path) -> dict:
     ws1 = wb.worksheets[0]
     ws2 = wb.worksheets[1]
 
+    # Valida cabecalho da Aba 1
+    cabecalho_ws1 = [str(ws1.cell(row=1, column=c).value or "").strip() for c in range(1, 4)]
+    cabecalho_esperado_ws1 = ["Candidato(a)", "Partido", "Previsão de votos válidos (%)"]
+    if cabecalho_ws1 != cabecalho_esperado_ws1:
+        erros.append(
+            f"Cabecalho da Aba 1 invalido. Esperado {cabecalho_esperado_ws1}, encontrado {cabecalho_ws1}"
+        )
+
     # Le aba 1 (pula cabecalho -- linha 1)
     linhas_aba1 = []
-    for row in ws1.iter_rows(min_row=2, values_only=True):
-        nome = str(row[0] or "").strip()
+    for row_idx, row in enumerate(ws1.iter_rows(min_row=2, values_only=False), start=2):
+        nome = str(row[0].value or "").strip()
         if not nome:
             continue
-        partido = str(row[1] or "").strip() if len(row) > 1 else ""
-        pct_raw = row[2] if len(row) > 2 else None
+        partido = str(row[1].value or "").strip() if len(row) > 1 else ""
+        pct_cell = row[2] if len(row) > 2 else None
+        pct_raw = pct_cell.value if pct_cell is not None else None
+        if pct_cell is not None and pct_cell.number_format != "0.0":
+            erros.append(
+                f"Formato numerico invalido na linha {row_idx} da Aba 1: "
+                f"esperado '0.0', encontrado '{pct_cell.number_format}'"
+            )
         linhas_aba1.append({"nome": nome, "partido": partido, "pct": pct_raw})
 
     # Separa linha Total dos candidatos
@@ -127,22 +141,35 @@ def validar_xlsx(caminho: str | Path) -> dict:
             if pct < 0 or pct > 100:
                 erros.append(f"Percentual fora do intervalo [0,100] para '{linha['nome']}': {pct}")
 
-    # 7. Aba 2: abstencao, brancos, nulos presentes e plausíveis
+    # 7. Aba 2: cabecalho exato, linhas (Abstenção, Votos brancos, Votos nulos) e plausibilidade
+    cabecalho_ws2 = [str(ws2.cell(row=1, column=c).value or "").strip() for c in range(1, 3)]
+    cabecalho_esperado_ws2 = ["Resultado", "Previsão (%)"]
+    if cabecalho_ws2 != cabecalho_esperado_ws2:
+        erros.append(
+            f"Cabecalho da Aba 2 invalido. Esperado {cabecalho_esperado_ws2}, encontrado {cabecalho_ws2}"
+        )
+
+    rotulos_esperados_aba2 = ["Abstenção", "Votos brancos", "Votos nulos"]
     labels_aba2 = []
     valores_aba2 = {}
-    for row in ws2.iter_rows(min_row=2, values_only=True):
-        label = str(row[0] or "").strip().lower()
-        val = row[1] if len(row) > 1 else None
+    for row_idx, row in enumerate(ws2.iter_rows(min_row=2, values_only=False), start=2):
+        label = str(row[0].value or "").strip()
+        val_cell = row[1] if len(row) > 1 else None
+        val = val_cell.value if val_cell is not None else None
+        if val_cell is not None and val_cell.number_format != "0.0":
+            erros.append(
+                f"Formato numerico invalido na linha {row_idx} da Aba 2: "
+                f"esperado '0.0', encontrado '{val_cell.number_format}'"
+            )
         if label:
             labels_aba2.append(label)
             valores_aba2[label] = val
 
-    for esperado in ["abstencao", "votos brancos", "votos nulos"]:
-        encontrado = any(esperado in lab for lab in labels_aba2)
-        if not encontrado:
-            erros.append(f"Linha '{esperado}' ausente na aba 2.")
+    for esperado in rotulos_esperados_aba2:
+        if esperado not in labels_aba2:
+            erros.append(f"Linha '{esperado}' ausente na aba 2 (rotulo exato com acento requerido).")
 
-    # Plausibilidade: abstencao entre 15% e 35%, brancos/nulos entre 0% e 10%
+    # Plausibilidade: abstencao entre 10% e 40%, brancos/nulos entre 0% e 15%
     for label, val in valores_aba2.items():
         if val is None:
             continue
@@ -151,9 +178,9 @@ def validar_xlsx(caminho: str | Path) -> dict:
         except (TypeError, ValueError):
             erros.append(f"Valor nao numerico na aba 2 para '{label}': {val!r}")
             continue
-        if "abstencao" in label and not (10.0 <= v <= 40.0):
+        if "Abstenção" in label and not (10.0 <= v <= 40.0):
             avisos.append(f"Abstencao ({v:.1f}%) fora do intervalo historico [10, 40].")
-        if ("branco" in label or "nulo" in label) and not (0.0 <= v <= 15.0):
+        if ("branco" in label.lower() or "nulo" in label.lower()) and not (0.0 <= v <= 15.0):
             avisos.append(f"'{label}' ({v:.1f}%) fora do intervalo esperado [0, 15].")
 
     return {"valido": len(erros) == 0, "erros": erros, "avisos": avisos}
