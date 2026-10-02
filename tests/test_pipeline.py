@@ -18,6 +18,14 @@ import pytest
 
 from scripts.validar_entrega import validar_xlsx
 from src.arredondamento import maiores_restos
+from src.backtest import (
+    calcular_diferenca_e_se,
+    calcular_house_effects_relativos,
+    estimar_m0,
+    estimar_m1,
+    renormalizar_votos,
+)
+from src.entrega import gerar_planilha_entrega
 from src.config import (
     CANDIDATOS_EDITAL,
     MANIFEST_PATH,
@@ -433,6 +441,14 @@ class TestValidacaoXLSX:
         res = validar_xlsx(p)
         assert res["valido"], res["erros"]
 
+    def test_gerar_planilha_entrega_produz_arquivo_valido(self, tmp_path):
+        cands = {c: 100.0 / 12 for c in CANDIDATOS_EDITAL}
+        ad = {"abstencao": 22.3, "brancos": 1.6, "nulos": 2.8}
+        out_file = tmp_path / "entrega_teste.xlsx"
+        gerar_planilha_entrega(cands, ad, out_file)
+        res = validar_xlsx(out_file)
+        assert res["valido"], res["erros"]
+
     def test_xlsx_com_uma_aba_falha(self, tmp_path):
         wb = openpyxl.Workbook()
         buf = io.BytesIO()
@@ -804,3 +820,53 @@ class TestPriorsNanicosEIncumbencia:
         # 2026: Lula incumbente
         assert obter_incumbencia(2026, "Luiz Inácio Lula da Silva") == 1
         assert obter_incumbencia(2026, "Flávio Bolsonaro") == 0
+
+
+class TestBacktestHistorico:
+    """Valida motores de estimacao e metricas do Checkpoint 3."""
+
+    def test_renormalizar_votos_soma_100_e_trunca_negativos(self):
+        d = {"A": 40.0, "B": 40.0, "C": -10.0}
+        norm = renormalizar_votos(d)
+        assert abs(sum(norm.values()) - 100.0) < 1e-6
+        assert norm["C"] == 0.0
+        assert norm["A"] == 50.0
+        assert norm["B"] == 50.0
+
+    def test_estimar_m0_2022_soma_100_e_contem_candidatos(self):
+        df_2022 = carregar_pesquisas_historicas(2022)
+        p0 = estimar_m0(df_2022, 2022)
+        assert abs(sum(p0.values()) - 100.0) < 1e-4
+        assert "Luiz Inácio Lula da Silva" in p0
+        assert "Jair Bolsonaro" in p0
+        assert p0["Luiz Inácio Lula da Silva"] > 40.0
+        assert p0["Jair Bolsonaro"] > 35.0
+
+    def test_estimar_m1_2022_soma_100(self):
+        df_2022 = carregar_pesquisas_historicas(2022)
+        p1 = estimar_m1(df_2022, 2022, meia_vida=7.0)
+        assert abs(sum(p1.values()) - 100.0) < 1e-4
+        assert all(v >= 0.0 for v in p1.values())
+
+    def test_calcular_house_effects_relativos_com_shrinkage(self):
+        he = calcular_house_effects_relativos([2006, 2010, 2014, 2018], k_shrinkage=3.0)
+        assert isinstance(he, dict)
+        for (inst, b), val in he.items():
+            assert isinstance(inst, str)
+            assert b in ["pt", "adv", "demais"]
+            assert isinstance(val, float)
+
+    def test_calcular_diferenca_e_se_valores_conhecidos(self):
+        mae_a = [2.0, 3.0, 4.0]
+        mae_b = [1.0, 2.0, 3.0]
+        d_bar, se_d = calcular_diferenca_e_se(mae_a, mae_b)
+        assert abs(d_bar - 1.0) < 1e-6
+        assert abs(se_d - 0.0) < 1e-6
+
+        # Com variabilidade
+        mae_a2 = [1.0, 2.0, 3.0]
+        mae_b2 = [1.0, 1.0, 1.0]
+        # deltas = [0, 1, 2] -> media = 1.0, s = 1.0, se = 1.0 / sqrt(3)
+        d_bar2, se_d2 = calcular_diferenca_e_se(mae_a2, mae_b2)
+        assert abs(d_bar2 - 1.0) < 1e-6
+        assert abs(se_d2 - (1.0 / np.sqrt(3))) < 1e-6
