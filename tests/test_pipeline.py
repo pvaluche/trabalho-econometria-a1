@@ -31,7 +31,7 @@ from src.config import (
 from src.conversao import converter_para_votos_validos
 from src.filtros import DIAS_ELEICAO, VESPERAS, filtrar_por_vespera
 from src.metricas import calcular_mae
-from src.pesquisas import agregar_institutos
+from src.pesquisas import agregar_institutos, carregar_pesquisas_historicas
 from src.tse import calcular_denominadores, calcular_votos_validos_candidatos
 
 
@@ -618,3 +618,50 @@ class TestPesquisas2026Manual:
                     f"coluna '{col}'={val} nao encontrada no HTML {html_path} "
                     f"(padroes testados: {pats[:4]})"
                 )
+
+
+# ============================================================
+# 11. Validacao do arquivo processado pesquisas_historicas.parquet
+# ============================================================
+
+
+class TestPesquisasHistoricas:
+    def test_arquivo_parquet_existe(self):
+        caminho = PROCESSED_DIR / "pesquisas_historicas.parquet"
+        assert caminho.exists(), "pesquisas_historicas.parquet nao encontrado"
+
+    def test_cinco_eleicoes_presentes(self):
+        df = carregar_pesquisas_historicas()
+        anos = sorted(df["eleicao"].unique().tolist())
+        assert anos == [2006, 2010, 2014, 2018, 2022]
+
+    def test_todas_as_pesquisas_dentro_da_janela_de_corte(self):
+        """
+        Para cada eleicao, data_divulgacao deve ser <= vespera e >= janela de 21 dias.
+        Nenhuma pesquisa divulgada no dia da eleicao ou apos pode estar presente.
+        """
+        df = carregar_pesquisas_historicas()
+        for ano in [2006, 2010, 2014, 2018, 2022]:
+            df_ano = df[df["eleicao"] == ano]
+            vespera = VESPERAS[ano].strftime("%Y-%m-%d")
+            dia_eleicao = DIAS_ELEICAO[ano].strftime("%Y-%m-%d")
+
+            max_div = df_ano["data_divulgacao"].max()
+            assert max_div <= vespera, (
+                f"Eleicao {ano}: pesquisa divulgada apos a vespera ({max_div} > {vespera})"
+            )
+            assert max_div < dia_eleicao, (
+                f"Eleicao {ano}: pesquisa divulgada no dia da eleicao ({max_div})"
+            )
+
+    def test_principais_institutos_presentes(self):
+        df = carregar_pesquisas_historicas()
+        institutos = set(df["instituto"].unique())
+        assert "Datafolha" in institutos
+        assert "Ibope" in institutos
+        assert "Ipec" in institutos
+
+    def test_filtro_por_ano_em_carregar_pesquisas_historicas(self):
+        df_2022 = carregar_pesquisas_historicas(2022)
+        assert len(df_2022) >= 30
+        assert (df_2022["eleicao"] == 2022).all()

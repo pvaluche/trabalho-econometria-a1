@@ -22,7 +22,7 @@ def converter_para_votos_validos(
     Converte uma linha de pesquisa para percentuais de votos validos.
 
     O metodo exclui brancos, nulos e indecisos e renormaliza
-    proporcionalmente — identico ao criterio do TSE.
+    proporcionalmente: identico ao criterio do TSE.
 
     Parameters
     ----------

@@ -11,7 +11,30 @@ from __future__ import annotations
 
 import pandas as pd
 
-from src.config import CANDIDATOS_2026
+from src.config import CANDIDATOS_2026, PROCESSED_DIR
+
+
+def carregar_pesquisas_historicas(ano: int | None = None) -> pd.DataFrame:
+    """
+    Carrega o dataset compilado de pesquisas historicas (2006-2022).
+
+    Parameters
+    ----------
+    ano : int, optional
+        Se fornecido, filtra pesquisas daquela eleicao especifica.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame contendo as pesquisas historicas processadas.
+    """
+    path = PROCESSED_DIR / "pesquisas_historicas.parquet"
+    if not path.exists():
+        raise FileNotFoundError(f"Arquivo {path} nao encontrado.")
+    df = pd.read_parquet(path)
+    if ano is not None:
+        df = df[df["eleicao"] == ano].copy()
+    return df
 
 
 def agregar_institutos(
