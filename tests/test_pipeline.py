@@ -745,3 +745,62 @@ class TestSanidadeVesperasDatafolha:
         assert abs(dilma_val - 44.0) <= 1.0, f"Dilma 2014 vespera esperado ~44, obtido {dilma_val:.2f}"
         assert abs(aecio_val - 26.0) <= 1.0, f"Aecio 2014 vespera esperado ~26, obtido {aecio_val:.2f}"
         assert abs(marina_val - 24.0) <= 1.0, f"Marina 2014 vespera esperado ~24, obtido {marina_val:.2f}"
+
+
+# ============================================================
+# 13. Validacao de Priors de Nanicos e Incumbencia Governista
+# ============================================================
+
+
+class TestPriorsNanicosEIncumbencia:
+    def test_priors_nanicos_contem_todos_candidatos_e_valores_razoaveis(self):
+        from src.nanicos import calcular_priors_nanicos_tse
+
+        priors = calcular_priors_nanicos_tse()
+        esperados = [
+            "Clariana Barão",
+            "Edmilson Costa",
+            "Hertz Dias",
+            "Rui Costa Pimenta",
+            "Samara Martins",
+            "Wilson Grassi",
+        ]
+        for c in esperados:
+            assert c in priors, f"Candidato {c} ausente nos priors de nanicos"
+            assert 0.005 <= priors[c] <= 0.20, f"Prior {priors[c]} fora da faixa razoavel para {c}"
+
+        # Verifica valores exatos das medianas do TSE
+        assert abs(priors["Clariana Barão"] - 0.0589) < 1e-4
+        assert abs(priors["Edmilson Costa"] - 0.0386) < 1e-4
+        assert abs(priors["Hertz Dias"] - 0.0677) < 1e-4
+        assert abs(priors["Rui Costa Pimenta"] - 0.0119) < 1e-4
+        assert abs(priors["Samara Martins"] - 0.0453) < 1e-4
+        assert abs(priors["Wilson Grassi"] - 0.0546) < 1e-4
+
+    def test_incumbencia_governista_mapeamento_correto(self):
+        from src.incumbencia import obter_incumbencia
+
+        # 2006: Lula incumbente
+        assert obter_incumbencia(2006, "Luiz Inácio Lula da Silva") == 1
+        assert obter_incumbencia(2006, "Geraldo Alckmin") == 0
+
+        # 2010: Dilma apoiada pelo governo
+        assert obter_incumbencia(2010, "Dilma Rousseff") == 1
+        assert obter_incumbencia(2010, "José Serra") == 0
+
+        # 2014: Dilma incumbente
+        assert obter_incumbencia(2014, "Dilma Rousseff") == 1
+        assert obter_incumbencia(2014, "Aécio Neves") == 0
+
+        # 2018: Meirelles candidato governista do governo Temer
+        assert obter_incumbencia(2018, "Henrique Meirelles") == 1
+        assert obter_incumbencia(2018, "Jair Bolsonaro") == 0
+        assert obter_incumbencia(2018, "Fernando Haddad") == 0
+
+        # 2022: Bolsonaro incumbente
+        assert obter_incumbencia(2022, "Jair Bolsonaro") == 1
+        assert obter_incumbencia(2022, "Luiz Inácio Lula da Silva") == 0
+
+        # 2026: Lula incumbente
+        assert obter_incumbencia(2026, "Luiz Inácio Lula da Silva") == 1
+        assert obter_incumbencia(2026, "Flávio Bolsonaro") == 0

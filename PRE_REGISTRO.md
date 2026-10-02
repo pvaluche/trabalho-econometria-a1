@@ -234,3 +234,95 @@ com $w \in \{0.0, 0.5, 1.0\}$. O peso $w$ é computado no teto formal de hiperpa
 - **Protocolo de Decisão Soberano:** O modelo que definirá as previsões oficiais de 2026 será selecionado exclusivamente com base no **menor MAE médio nas 3 janelas prospectivas temporais da validação por expanding window** (2014 com treino 2006-2010; 2018 com treino 2006-2014; 2022 com treino 2006-2018).
 - A validação Leave-One-Election-Out (LOEO) será calculada e reportada integralmente no relatório como protocolo complementar e de sensibilidade, ressaltando explicitamente sua natureza acausal (utilização de eleições cronologicamente futuras no treino).
 - **Nota Formal de Limitação Amostral ($n=3$):** Registra-se com rigor a limitação amostral de dispormos de exatamente 3 pontos de validação prospectiva ($n = 3$). Em decorrência do tamanho amostral reduzido, a aplicação da regra de parcimônia definida na Seção 4 desta Emenda é mandatória para evitar a escolha de modelos sobreajustados.
+
+---
+
+## 11. Emenda 3 (Data: 02/10/2026)
+
+**Origem e Motivação:** Auditoria externa do Checkpoint 2 rodada 3 (Claude). Aperfeiçoamento econométrico do viés institucional, apuração automatizada dos priors históricos via TSE, substituição da grade combinatória por protocolo sequencial parcimonioso e publicação de parâmetros estruturais antes do backtest (Checkpoint 3).
+
+### 1. House Effect Relativo (Separação entre Viés Institucional e Viés Comum)
+Na formulação anterior, o house effect de cada instituto usava o erro bruto em relação à apuração oficial, absorvendo inadvertidamente o viés comum compartilhado por todas as pesquisas em eleições com desvio sistêmico (como 2018 e 2022).
+
+Para assegurar a separação teórica postulada em `docs/ENTENDIMENTO.md`, o viés de cada instituto $j$ no bloco $b \in \{B_1, B_2, B_3\}$ na eleição $t$ é definido como o seu **desvio relativo em relação à média de todos os institutos** naquela mesma eleição e bloco:
+
+1. Erro médio do instituto $j$ no bloco $b$ na eleição $t$:
+   $$e_{j, b, t} = \frac{1}{|S_{j, b, t}|} \sum_{i \in \text{pesquisas}(j, t)} \sum_{c \in b} (\hat{v}_{i, c} - v_{c, t}^{\text{TSE}})$$
+
+2. Erro médio de todos os institutos no bloco $b$ na eleição $t$:
+   $$\bar{e}_{b, t} = \frac{1}{|S_{b, t}|} \sum_{i \in \text{todas pesquisas}(t)} \sum_{c \in b} (\hat{v}_{i, c} - v_{c, t}^{\text{TSE}})$$
+
+3. Desvio institucional relativo da eleição $t$:
+   $$d_{j, b, t} = e_{j, b, t} - \bar{e}_{b, t}$$
+
+4. House effect relativo histórico consolidado nas eleições de treino:
+   $$\bar{\beta}_{j, b}^{\text{rel}} = \frac{1}{n_{j}} \sum_{t \in E_{\text{treino}, j}} d_{j, b, t}$$
+
+5. Ajuste encolhido com shrinkage empírico Bayesiano:
+   $$\beta_{j, b}^{\text{rel}} = \frac{n_j}{n_j + k} \cdot \bar{\beta}_{j, b}^{\text{rel}}, \quad \text{com } k \in \{1, 3, 10\}$$
+   onde $n_j$ é o número de eleições de treino com presença do instituto $j$. Institutos sem histórico ($n_j = 0$) recebem correção nula ($\beta = 0$).
+
+O viés comum da eleição ($\mu_b$) permanece tratado de forma estritamente independente na Seção 6.
+
+### 2. Priors dos Nanicos Calculados por Código via Microdados do TSE
+Os valores dos priors históricos para candidatos nanicos em 2026 são computados de forma programática pelo módulo `src/nanicos.py`, lendo diretamente os arquivos processados de votação nominal do TSE (`data/processed/votacao_candidato_*.parquet`, 2006-2022). O prior de cada legenda corresponde à **mediana** de sua série de votos válidos no 1º turno:
+
+| Candidato 2026 | Partido 2026 | Legenda de Referência no TSE | Votação Válida Histórica Ano a Ano (%) | Mediana TSE (Prior Oficial) |
+| :--- | :--- | :--- | :--- | :---: |
+| **Clariana Barão** | DC | PSDC / DC | 2006 (0,0659%), 2010 (0,0880%), 2014 (0,0589%), 2018 (0,0390%), 2022 (0,0140%) | **0,0589%** |
+| **Edmilson Costa** | PCB | PCB | 2010 (0,0385%), 2014 (0,0460%), 2022 (0,0386%) | **0,0386%** |
+| **Hertz Dias** | PSTU | PSTU | 2010 (0,0833%), 2014 (0,0877%), 2018 (0,0521%), 2022 (0,0217%) | **0,0677%** |
+| **Rui Costa Pimenta**| PCO | PCO | 2010 (0,0120%), 2014 (0,0118%) | **0,0119%** |
+| **Samara Martins** | UP | UP | 2022 (0,0453%) | **0,0453%** |
+| **Wilson Grassi** | Democrata | Candidaturas TSE < 0,5% (2006-2022) | 22 candidaturas presidenciais com < 0,5% no TSE (PSL 2006, PRP 2006, PRTB 2010/2014, PPL 2018, PTB 2022, NOVO 2022, etc.) | **0,0546%** |
+
+A combinação convexa para nanicos é:
+$$\hat{y}_c = (1 - w) \cdot \hat{v}_c^{\text{pesquisas}} + w \cdot \text{Prior}_c^{\text{hist}}, \quad w \in \{0.5, 1.0\}$$
+
+### 3. Protocolo Sequencial de Decisão (Prevenção de Overfitting)
+Substitui-se a busca em grade combinatória conjunta (que geraria 162 combinações para apenas 3 eleições de teste) por um protocolo sequencial parcimonioso de 2 etapas:
+
+- **Etapa 1: Seleção do Modelo Base ($M^*$):**
+  Avaliam-se exclusivamente os modelos base puros nas 3 janelas prospectivas do expanding window (2014, 2018, 2022):
+  - M0 (Baseline simples): 1 configuração.
+  - M1 (Média ponderada temporal): $h \in \{7, 14, 21\}$ dias (3 configurações).
+  - M2 (M1 com melhor $h$ + House Effect Relativo): $k \in \{1, 3, 10\}$ (3 configurações).
+  - M3 (Ridge Regression regularizada): $\alpha \in \{0.01, 0.1, 1.0, 10.0\}$ (4 configurações).
+  *Total da Etapa 1:* 11 configurações avaliadas.
+  *Critério de Escolha:* Seleciona-se o modelo com menor MAE médio, sujeito à regra estrita de empate técnico: se $|\bar{\Delta}| < \text{SE}(\Delta)$, adota-se compulsoriamente o modelo mais simples ($\text{M0} \prec \text{M1} \prec \text{M2} \prec \text{M3}$).
+
+- **Etapa 2: Avaliação Individual e Isolada de Ajustes Opcionais:**
+  Sobre o modelo base $M^*$ vencedor da Etapa 1, avalia-se **um único ajuste por vez**, comparado diretamente contra $M^*$ puro:
+  1. *Ajuste por Viés Comum:* $M^* + \hat{\mu}_b$ com $k_\mu \in \{1, 3\}$ (2 configurações).
+  2. *Ajuste por Voto Útil:* $M^* + \text{Voto Útil}$ com $\gamma \in \{0.5, 1.0\}$ (2 configurações).
+  3. *Ajuste por Prior de Nanicos:* $M^* + \text{Prior TSE}$ com $w \in \{0.5, 1.0\}$ (2 configurações).
+  *Total da Etapa 2:* 6 configurações avaliadas.
+  *Regra de Ativação:* Cada ajuste só ingressa no modelo final se demonstrar redução estrita do MAE em relação a $M^*$ por uma margem superior a $1 \text{ SE}(\Delta)$ da diferença. Ajustes empatados ou inferiores são rejeitados.
+
+*Contabilidade Total:* Exatamente **17 configurações avaliadas** no total, eliminando a inflação de graus de liberdade. O relatório do Checkpoint 3 deve reportar o MAE de todas as 17 configurações na tabela de ablation.
+
+### 4. Renormalização Obrigatória para 100,0%
+Qualquer transformação aritmética sobre as intenções de voto (correção de house effect relativo, subtração de viés comum, transferência de voto útil ou combinação convexa de nanicos) pode gerar desvios de soma ou valores marginais negativos. Fica estabelecido como regra causal invariante que:
+1. Todo valor projetado negativo é truncado em zero: $\hat{v}_k \leftarrow \max(0.0, \, \hat{v}_k)$.
+2. O vetor de candidatos é compulsoriamente renormalizado para somar 100,0%:
+   $$\hat{v}_k^{\text{norm}} = \frac{\hat{v}_k}{\sum_{j=1}^{K} \hat{v}_j} \times 100$$
+Essa renormalização ocorre imediatamente antes do cálculo de qualquer métrica de validação (MAE).
+
+### 5. Tabela Oficial de Incumbência Governista (2006-2026)
+A variável binária $X_{2, c} \in \{0, 1\}$ do modelo M3 é codificada a partir do alinhamento formal com a chefia do Poder Executivo Federal em exercício na data da eleição:
+
+| Eleição | Candidato(a) Governista ($X_{2} = 1$) | Justificativa Institucional | Candidatos de Oposição ($X_{2} = 0$) |
+| :---: | :--- | :--- | :--- |
+| **2006** | **Luiz Inácio Lula da Silva** (PT) | Presidente da República em exercício de mandato | Geraldo Alckmin, Heloísa Helena, Cristovam Buarque e demais |
+| **2010** | **Dilma Rousseff** (PT) | Candidata oficial apoiada pelo Presidente Lula em exercício | José Serra, Marina Silva, Plínio de Arruda Sampaio e demais |
+| **2014** | **Dilma Rousseff** (PT) | Presidente da República em exercício de mandato | Aécio Neves, Marina Silva, Luciana Genro, Pastor Everaldo e demais |
+| **2018** | **Henrique Meirelles** (MDB) | Candidato da situação (ex-Ministro da Fazenda do Governo Michel Temer) | Jair Bolsonaro, Fernando Haddad, Ciro Gomes, Geraldo Alckmin e demais |
+| **2022** | **Jair Bolsonaro** (PL) | Presidente da República em exercício de mandato | Luiz Inácio Lula da Silva, Ciro Gomes, Simone Tebet e demais |
+| **2026** | **Luiz Inácio Lula da Silva** (PT) | Presidente da República em exercício de mandato | Flávio Bolsonaro, Augusto Cury, Renan Santos, Ronaldo Caiado e demais |
+
+### 6. Esclarecimento sobre o Arquivo `tests/test_sanity.py`
+O arquivo `tests/test_sanity.py` consiste em um teste preliminar de verificação de ambiente (`test_sanity()` com `assert True`). Ele foi gerado na fase zero de configuração para testar a comunicação do runner `pytest` sob o Windows e não contém nenhuma lógica de negócio, parâmetros de modelagem ou dados eleitorais.
+
+### 7. Errata: Soma da Pesquisa PoderData/Aya 2026
+Registra-se formalmente a errata aritmética: a soma das intenções de voto estimuladas da pesquisa PoderData/Aya (protocolo BR-01739/2026) em `data/manual/pesquisas_2026.csv` totaliza **101,0%** ($41 + 39 + 6 + 3 + 2 + 1 + 1 + 1 + 1 + 0 + 0 + 0 + 4 \text{ brancos/nulos} + 2 \text{ indecisos}$), decorrente de arredondamento comercial dos percentuais unitários, enquadrando-se perfeitamente na tolerância técnica pré-registrada de $[97,0\%, 101,5\%]$.
+
