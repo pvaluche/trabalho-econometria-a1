@@ -205,4 +205,10 @@ tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_sem_linha_total_falha PASSE
 
 ### Git Log (`git log --oneline -5`)
 
-*(Sera atualizado com o hash do commit deste checkpoint)*
+```text
+e98bfa4 feat: checkpoint 1 -- base TSE 2006-2022 processada em parquet, sanidade 2022 validada e pesquisas 2026 preenchidas
+de65167 docs: atualiza reports/checkpoint_0.md com saidas completas da auditoria
+22461d5 test: testes chamam src -- metricas, filtros, tse, pesquisas, validar_entrega importados de src/
+9890991 docs: corrige entendimento apos auditoria -- sem travessoes, criterio expanding window, faixa por grupo
+249f2a1 test: testes chamam src e cobrem casos reais -- sanidade TSE, denominadores, sub judice, XLSX, filtro parametrizado 2006-2026
+```
