@@ -329,7 +329,12 @@ PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> .venv\
 
 ### c) `git log --oneline -5`
 ```
-(Será exibido com o commit do Checkpoint 2 inserido logo abaixo)
+PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> git log --oneline -5
+7c42ff0 feat: checkpoint 2: pesquisas historicas 2006-2022 compiladas e pre-registro congelado
+81f59b1 fix: correcoes da auditoria do checkpoint 1 rodada 2 -- transcricao verificada, protocolo realtime, outros_agregado e datafolha final
+f208e5e docs: registra git log oficial no relatorio do checkpoint 1
+67f5662 fix: revisao 2 do checkpoint 1 -- fontes de pesquisas_2026 verificadas, pesqele validado, candidatos consulta_cand listados
+54348b3 docs: atualiza reports/checkpoint_1.md com git log oficial
 ```
 
 ---
