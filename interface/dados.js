@@ -7,8 +7,8 @@ window.DADOS = {
       "Arthur Caron Lyra",
       "Lethicia Manfioletti Possamai"
     ],
-    "commit": "4d52493",
-    "gerado_em": "2026-10-02T15:30:39-03:00",
+    "commit": "a44b0a3",
+    "gerado_em": "2026-10-02T15:43:45-03:00",
     "status": "PRELIMINAR (aguardando pesquisas de véspera de sábado 03/10 às 20h)",
     "aviso_governanca": "Ferramenta de decisão do grupo. Nenhuma configuração é a oficial até a criação da tag modelo-congelado.",
     "total_pesquisas_2026": 6,
@@ -27,24 +27,6 @@ window.DADOS = {
         "media": 0.44,
         "p80": 0.62,
         "label": "Demais candidatos"
-      }
-    },
-    "erro_margem_stats": {
-      "m0": {
-        "2014": 10.89,
-        "2018": 3.58,
-        "2022": 1.29,
-        "media": 5.25,
-        "p80": 7.96,
-        "max": 10.89
-      },
-      "modelo_oficial": {
-        "2014": 5.72,
-        "2018": 3.58,
-        "2022": 4.32,
-        "media": 4.54,
-        "p80": 5.16,
-        "max": 5.72
       }
     },
     "protocolos_sabado": [
@@ -90,10 +72,10 @@ window.DADOS = {
       "id": "modelo_oficial",
       "nome": "Modelo Oficial Aprovado (w=0)",
       "rotulo": "Modelo Oficial",
-      "descricao": "M0 integrando os ajustes aprovados pela regra formal: Vies Comum (k_mu=3) e Voto Util (gamma=1.0), com w=0 para nanicos.",
+      "descricao": "M0 integrando os ajustes aprovados pela regra formal: Viés Comum (k_mu=3) e Voto Útil (gamma=1.0), com w=0 para nanicos.",
       "formula": "y = M0 + Vies(k=3) + VotoUtil(g=1.0) + Nanicos(w=0.0)",
       "status_regra": "Modelo Oficial Aprovado",
-      "justificativa": "Menor erro medio consolidado no expanding window (MAE 0,9640 p.p.), com reducao consistente em todas as eleicoes.",
+      "justificativa": "Menor erro médio consolidado no expanding window (MAE 0,9640 p.p.), com redução consistente em todas as eleições.",
       "is_default": true,
       "previsao_2026": {
         "tabela": [
@@ -238,10 +220,18 @@ window.DADOS = {
         "diferenca": 0.3,
         "lider": "Flávio Bolsonaro",
         "vantagem_texto": "Flávio Bolsonaro +0.3 p.p.",
-        "faixa_p80_margem": 5.16,
-        "max_margem": 5.72,
+        "erro_margem_stats": {
+          "por_ano": {
+            "2014": 5.72,
+            "2018": 3.58,
+            "2022": 4.32
+          },
+          "media": 4.54,
+          "p80": 5.16,
+          "max": 5.72
+        },
         "empate_tecnico": true,
-        "explicacao_empate": "Diferença projetada (0.3 p.p.) é inferior ao P80 do erro histórico da margem (5.2 p.p.) e ao erro máximo (5.7 p.p.), caracterizando empate técnico estatístico na liderança."
+        "explicacao_empate": "Diferença projetada (0.3 p.p.) é inferior ao P80 do erro da margem histórica (5.2 p.p.) e ao erro máximo (5.7 p.p.), confirmando empate técnico na disputa pela liderança."
       },
       "backtest_expanding": {
         "erros": {
@@ -267,17 +257,17 @@ window.DADOS = {
         "delta_vs_m0": -0.2568,
         "se_delta": 0.0856,
         "status": "Modelo Oficial Aprovado",
-        "justificativa": "Menor erro medio consolidado no expanding window (MAE 0,9640 p.p.), com reducao consistente em todas as eleicoes."
+        "justificativa": "Menor erro médio consolidado no expanding window (MAE 0,9640 p.p.), com redução consistente em todas as eleições."
       }
     },
     "m0": {
       "id": "m0",
-      "nome": "M0 Puro (Media Simples)",
+      "nome": "M0 Puro (Média Simples)",
       "rotulo": "M0 Puro",
-      "descricao": "Media simples da ultima pesquisa de cada instituto na vespera (sem ponderacao, sem ajustes).",
+      "descricao": "Média simples da última pesquisa de cada instituto na véspera (sem ponderação, sem ajustes).",
       "formula": "y = media(pesquisas_vespera)",
-      "status_regra": "Referencia Base",
-      "justificativa": "Modelo base vencedor da Etapa 1 pela regra de parcimonia (MAE 1,2207 p.p. vs M1=1,4878 e M2=1,4890).",
+      "status_regra": "Referência Base",
+      "justificativa": "Modelo base vencedor da Etapa 1 pela regra de parcimônia (MAE 1,2207 p.p. vs M1=1,4878 e M2=1,4890).",
       "is_default": false,
       "previsao_2026": {
         "tabela": [
@@ -422,10 +412,18 @@ window.DADOS = {
         "diferenca": 3.9,
         "lider": "Luiz Inácio Lula da Silva",
         "vantagem_texto": "Luiz Inácio Lula da Silva +3.9 p.p.",
-        "faixa_p80_margem": 7.96,
-        "max_margem": 10.89,
+        "erro_margem_stats": {
+          "por_ano": {
+            "2014": 10.89,
+            "2018": 3.58,
+            "2022": 1.29
+          },
+          "media": 5.25,
+          "p80": 7.97,
+          "max": 10.89
+        },
         "empate_tecnico": true,
-        "explicacao_empate": "Diferença projetada (3.9 p.p.) é inferior ao P80 do erro histórico da margem (8.0 p.p.) e ao erro máximo (10.9 p.p.), caracterizando empate técnico estatístico na liderança."
+        "explicacao_empate": "Diferença projetada (3.9 p.p.) é inferior ao P80 do erro da margem histórica (8.0 p.p.) e ao erro máximo (10.9 p.p.), confirmando empate técnico na disputa pela liderança."
       },
       "backtest_expanding": {
         "erros": {
@@ -450,15 +448,15 @@ window.DADOS = {
       "regra_decisao": {
         "delta_vs_m0": 0.0,
         "se_delta": 0.0,
-        "status": "Referencia Base",
-        "justificativa": "Modelo base vencedor da Etapa 1 pela regra de parcimonia (MAE 1,2207 p.p. vs M1=1,4878 e M2=1,4890)."
+        "status": "Referência Base",
+        "justificativa": "Modelo base vencedor da Etapa 1 pela regra de parcimônia (MAE 1,2207 p.p. vs M1=1,4878 e M2=1,4890)."
       }
     },
     "m0_vies": {
       "id": "m0_vies",
-      "nome": "M0 + Vies Comum (k=3)",
-      "rotulo": "M0 + Vies",
-      "descricao": "M0 com correcao regularizada do vies historico comum por bloco politico (PT, Principal Adversario, Demais).",
+      "nome": "M0 + Viés Comum (k=3)",
+      "rotulo": "M0 + Viés",
+      "descricao": "M0 com correção regularizada do viés histórico comum por bloco político (PT, Principal Adversário, Demais).",
       "formula": "y = M0 - mu_hat (k_mu=3)",
       "status_regra": "Aprovado na Etapa 2",
       "justificativa": "Reduz o MAE em 0,1834 p.p. superando 1 SE(Delta) = 0,1026 p.p. (reduz erro em 2014 e 2022).",
@@ -606,10 +604,18 @@ window.DADOS = {
         "diferenca": 0.3,
         "lider": "Flávio Bolsonaro",
         "vantagem_texto": "Flávio Bolsonaro +0.3 p.p.",
-        "faixa_p80_margem": 5.16,
-        "max_margem": 5.72,
+        "erro_margem_stats": {
+          "por_ano": {
+            "2014": 5.66,
+            "2018": 3.27,
+            "2022": 4.34
+          },
+          "media": 4.42,
+          "p80": 5.13,
+          "max": 5.66
+        },
         "empate_tecnico": true,
-        "explicacao_empate": "Diferença projetada (0.3 p.p.) é inferior ao P80 do erro histórico da margem (5.2 p.p.) e ao erro máximo (5.7 p.p.), caracterizando empate técnico estatístico na liderança."
+        "explicacao_empate": "Diferença projetada (0.3 p.p.) é inferior ao P80 do erro da margem histórica (5.1 p.p.) e ao erro máximo (5.7 p.p.), confirmando empate técnico na disputa pela liderança."
       },
       "backtest_expanding": {
         "erros": {
@@ -640,9 +646,9 @@ window.DADOS = {
     },
     "m0_util": {
       "id": "m0_util",
-      "nome": "M0 + Voto Util (gamma=1.0)",
-      "rotulo": "M0 + Voto Util",
-      "descricao": "Transferencia da desidratacao de vespera dos 3o e 4o colocados para os lideres polarizados.",
+      "nome": "M0 + Voto Útil (gamma=1.0)",
+      "rotulo": "M0 + Voto Útil",
+      "descricao": "Transferência da desidratação de véspera dos 3º e 4º colocados para os líderes polarizados.",
       "formula": "y = M0 + trans_util (gamma=1.0)",
       "status_regra": "Aprovado na Etapa 2",
       "justificativa": "Reduz o MAE em 0,1301 p.p. superando 1 SE(Delta) = 0,0889 p.p. (MAE 2022 cai para 0,5284 p.p.).",
@@ -790,10 +796,18 @@ window.DADOS = {
         "diferenca": 4.0,
         "lider": "Luiz Inácio Lula da Silva",
         "vantagem_texto": "Luiz Inácio Lula da Silva +4.0 p.p.",
-        "faixa_p80_margem": 5.16,
-        "max_margem": 5.72,
+        "erro_margem_stats": {
+          "por_ano": {
+            "2014": 10.97,
+            "2018": 3.37,
+            "2022": 1.42
+          },
+          "media": 5.25,
+          "p80": 7.93,
+          "max": 10.97
+        },
         "empate_tecnico": true,
-        "explicacao_empate": "Diferença projetada (4.0 p.p.) é inferior ao P80 do erro histórico da margem (5.2 p.p.) e ao erro máximo (5.7 p.p.), caracterizando empate técnico estatístico na liderança."
+        "explicacao_empate": "Diferença projetada (4.0 p.p.) é inferior ao P80 do erro da margem histórica (7.9 p.p.) e ao erro máximo (11.0 p.p.), confirmando empate técnico na disputa pela liderança."
       },
       "backtest_expanding": {
         "erros": {
@@ -826,10 +840,10 @@ window.DADOS = {
       "id": "sensibilidade_nanicos",
       "nome": "Sensibilidade com Prior Nanicos (w=0.5)",
       "rotulo": "Sensibilidade (w=0.5)",
-      "descricao": "Variacao do modelo aplicando combinacao convexa (w=0.5) com as medianas historicas do TSE para legendas nanicas.",
+      "descricao": "Variação do modelo aplicando combinação convexa (w=0.5) com as medianas históricas do TSE para legendas nanicas.",
       "formula": "y = ModeloOficial + PriorNanicos(w=0.5)",
-      "status_regra": "Analise de Sensibilidade",
-      "justificativa": "Prior teve ganho nulo no historico (delta=0), por isso w=0 no oficial; mantido aqui para avaliar sensibilidade a zero espurio.",
+      "status_regra": "Análise de Sensibilidade",
+      "justificativa": "Prior teve ganho nulo no histórico (delta=0), por isso w=0 no oficial; mantido aqui para avaliar sensibilidade a zero espúrio.",
       "is_default": false,
       "previsao_2026": {
         "tabela": [
@@ -974,10 +988,18 @@ window.DADOS = {
         "diferenca": 0.3,
         "lider": "Flávio Bolsonaro",
         "vantagem_texto": "Flávio Bolsonaro +0.3 p.p.",
-        "faixa_p80_margem": 5.16,
-        "max_margem": 5.72,
+        "erro_margem_stats": {
+          "por_ano": {
+            "2014": 5.72,
+            "2018": 3.58,
+            "2022": 4.32
+          },
+          "media": 4.54,
+          "p80": 5.16,
+          "max": 5.72
+        },
         "empate_tecnico": true,
-        "explicacao_empate": "Diferença projetada (0.3 p.p.) é inferior ao P80 do erro histórico da margem (5.2 p.p.) e ao erro máximo (5.7 p.p.), caracterizando empate técnico estatístico na liderança."
+        "explicacao_empate": "Diferença projetada (0.3 p.p.) é inferior ao P80 do erro da margem histórica (5.2 p.p.) e ao erro máximo (5.7 p.p.), confirmando empate técnico na disputa pela liderança."
       },
       "backtest_expanding": {
         "erros": {
@@ -1002,8 +1024,8 @@ window.DADOS = {
       "regra_decisao": {
         "delta_vs_m0": -0.2568,
         "se_delta": 0.0856,
-        "status": "Analise de Sensibilidade",
-        "justificativa": "Prior teve ganho nulo no historico (delta=0), por isso w=0 no oficial; mantido aqui para avaliar sensibilidade a zero espurio."
+        "status": "Análise de Sensibilidade",
+        "justificativa": "Prior teve ganho nulo no histórico (delta=0), por isso w=0 no oficial; mantido aqui para avaliar sensibilidade a zero espúrio."
       }
     }
   },

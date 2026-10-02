@@ -1,7 +1,7 @@
 """
 scripts/gerar_dados_interface.py
 Gera interface/dados.json e interface/dados.js a partir do motor econometrico de backtest.
-Atende integralmente a todas as diretrizes da auditoria do Checkpoint 3.
+Calcula o erro historico da MARGEM do Top-2 dinamicamente para cada configuracao.
 Zero travessoes em todo o arquivo.
 """
 
@@ -55,7 +55,7 @@ def obter_git_commit() -> str:
             return res.stdout.strip()
         except Exception:
             continue
-    return "dd5d98e"
+    return "9d41bcd"
 
 
 def aplicar_maiores_restos_dict(d: dict[str, float]) -> dict[str, float]:
@@ -67,15 +67,7 @@ def aplicar_maiores_restos_dict(d: dict[str, float]) -> dict[str, float]:
 
 
 def executar_configuracao(cfg_id: str, df: pd.DataFrame, t: int, tr: list[int]) -> dict[str, float]:
-    """
-    Executa a configuracao especificada no backtest ou projecao.
-    Modelos suportados:
-    - m0: M0 Puro
-    - m0_vies: M0 + Vies Comum (k_mu=3)
-    - m0_util: M0 + Voto Util (gamma=1.0)
-    - modelo_oficial: Modelo Oficial Aprovado (M0 + Vies k_mu=3 + Voto Util gamma=1.0, w=0)
-    - sensibilidade_nanicos: Sensibilidade com Prior Nanicos (w=0.5)
-    """
+    """Executa a configuracao especificada no backtest ou projecao."""
     p = estimar_m0(df, t)
     if cfg_id == "m0":
         return p
@@ -86,7 +78,6 @@ def executar_configuracao(cfg_id: str, df: pd.DataFrame, t: int, tr: list[int]) 
     elif cfg_id == "modelo_oficial":
         p = aplicar_ajuste_vies_comum(p, t, tr, k_mu=3.0)
         p = aplicar_ajuste_voto_util(p, t, tr, gamma=1.0)
-        # Prior de nanicos com w=0.0 (rejeitado no historico por delta=0)
         p = aplicar_ajuste_priors_nanicos(p, t, w=0.0)
         return p
     elif cfg_id == "sensibilidade_nanicos":
@@ -112,56 +103,32 @@ def gerar_dados():
         "demais": {"media": 0.44, "p80": 0.62, "label": "Demais candidatos"},
     }
 
-    # Estatisticas historicas do erro da margem (1o menos 2o)
-    # Erro da Margem = | (p1_pred - p2_pred) - (p1_tse - p2_tse) |
-    # 2014: Margem real = 8.05%, M0 = 18.93% (erro 10.89), Oficial = 13.77% (erro 5.72)
-    # 2018: Margem real = 16.75%, M0 = 13.18% (erro 3.58), Oficial = 20.34% (erro 3.58)
-    # 2022: Margem real = 5.23%, M0 = 6.53% (erro 1.29), Oficial = 0.91% (erro 4.32)
-    erro_margem_stats = {
-        "m0": {
-            "2014": 10.89,
-            "2018": 3.58,
-            "2022": 1.29,
-            "media": 5.25,
-            "p80": 7.96,
-            "max": 10.89,
-        },
-        "modelo_oficial": {
-            "2014": 5.72,
-            "2018": 3.58,
-            "2022": 4.32,
-            "media": 4.54,
-            "p80": 5.16,
-            "max": 5.72,
-        },
-    }
-
     configs_meta = [
         {
             "id": "modelo_oficial",
             "nome": "Modelo Oficial Aprovado (w=0)",
             "rotulo": "Modelo Oficial",
-            "descricao": "M0 integrando os ajustes aprovados pela regra formal: Vies Comum (k_mu=3) e Voto Util (gamma=1.0), com w=0 para nanicos.",
+            "descricao": "M0 integrando os ajustes aprovados pela regra formal: Viés Comum (k_mu=3) e Voto Útil (gamma=1.0), com w=0 para nanicos.",
             "formula": "y = M0 + Vies(k=3) + VotoUtil(g=1.0) + Nanicos(w=0.0)",
             "status_regra": "Modelo Oficial Aprovado",
-            "justificativa": "Menor erro medio consolidado no expanding window (MAE 0,9640 p.p.), com reducao consistente em todas as eleicoes.",
+            "justificativa": "Menor erro médio consolidado no expanding window (MAE 0,9640 p.p.), com redução consistente em todas as eleições.",
             "is_default": True,
         },
         {
             "id": "m0",
-            "nome": "M0 Puro (Media Simples)",
+            "nome": "M0 Puro (Média Simples)",
             "rotulo": "M0 Puro",
-            "descricao": "Media simples da ultima pesquisa de cada instituto na vespera (sem ponderacao, sem ajustes).",
+            "descricao": "Média simples da última pesquisa de cada instituto na véspera (sem ponderação, sem ajustes).",
             "formula": "y = media(pesquisas_vespera)",
-            "status_regra": "Referencia Base",
-            "justificativa": "Modelo base vencedor da Etapa 1 pela regra de parcimonia (MAE 1,2207 p.p. vs M1=1,4878 e M2=1,4890).",
+            "status_regra": "Referência Base",
+            "justificativa": "Modelo base vencedor da Etapa 1 pela regra de parcimônia (MAE 1,2207 p.p. vs M1=1,4878 e M2=1,4890).",
             "is_default": False,
         },
         {
             "id": "m0_vies",
-            "nome": "M0 + Vies Comum (k=3)",
-            "rotulo": "M0 + Vies",
-            "descricao": "M0 com correcao regularizada do vies historico comum por bloco politico (PT, Principal Adversario, Demais).",
+            "nome": "M0 + Viés Comum (k=3)",
+            "rotulo": "M0 + Viés",
+            "descricao": "M0 com correção regularizada do viés histórico comum por bloco político (PT, Principal Adversário, Demais).",
             "formula": "y = M0 - mu_hat (k_mu=3)",
             "status_regra": "Aprovado na Etapa 2",
             "justificativa": "Reduz o MAE em 0,1834 p.p. superando 1 SE(Delta) = 0,1026 p.p. (reduz erro em 2014 e 2022).",
@@ -169,9 +136,9 @@ def gerar_dados():
         },
         {
             "id": "m0_util",
-            "nome": "M0 + Voto Util (gamma=1.0)",
-            "rotulo": "M0 + Voto Util",
-            "descricao": "Transferencia da desidratacao de vespera dos 3o e 4o colocados para os lideres polarizados.",
+            "nome": "M0 + Voto Útil (gamma=1.0)",
+            "rotulo": "M0 + Voto Útil",
+            "descricao": "Transferência da desidratação de véspera dos 3º e 4º colocados para os líderes polarizados.",
             "formula": "y = M0 + trans_util (gamma=1.0)",
             "status_regra": "Aprovado na Etapa 2",
             "justificativa": "Reduz o MAE em 0,1301 p.p. superando 1 SE(Delta) = 0,0889 p.p. (MAE 2022 cai para 0,5284 p.p.).",
@@ -181,10 +148,10 @@ def gerar_dados():
             "id": "sensibilidade_nanicos",
             "nome": "Sensibilidade com Prior Nanicos (w=0.5)",
             "rotulo": "Sensibilidade (w=0.5)",
-            "descricao": "Variacao do modelo aplicando combinacao convexa (w=0.5) com as medianas historicas do TSE para legendas nanicas.",
+            "descricao": "Variação do modelo aplicando combinação convexa (w=0.5) com as medianas históricas do TSE para legendas nanicas.",
             "formula": "y = ModeloOficial + PriorNanicos(w=0.5)",
-            "status_regra": "Analise de Sensibilidade",
-            "justificativa": "Prior teve ganho nulo no historico (delta=0), por isso w=0 no oficial; mantido aqui para avaliar sensibilidade a zero espurio.",
+            "status_regra": "Análise de Sensibilidade",
+            "justificativa": "Prior teve ganho nulo no histórico (delta=0), por isso w=0 no oficial; mantido aqui para avaliar sensibilidade a zero espúrio.",
             "is_default": False,
         },
     ]
@@ -207,17 +174,33 @@ def gerar_dados():
     for meta in configs_meta:
         cfg_id = meta["id"]
 
-        # 1. Backtest Expanding Window
+        # 1. Backtest Expanding Window (MAE sobre Urna Completa)
         maes_exp = {}
+        erros_margem_anos = {}
+
         for t in [2014, 2018, 2022]:
             df_t = obter_pesquisas_eleicao(t)
             res = carregar_resultado_tse(t)
             p = executar_configuracao(cfg_id, df_t, t, treino_expanding[t])
             maes_exp[str(t)] = round(float(calcular_mae_eleicao(p, res)), 4)
 
+            # Calculo dinamico do Erro da Margem do Top-2 (Item 3 da auditoria)
+            top2_tse = sorted(res.keys(), key=lambda c: res[c], reverse=True)[:2]
+            c1_tse, c2_tse = top2_tse[0], top2_tse[1]
+            m_real = abs(res[c1_tse] - res[c2_tse])
+            m_pred = abs(p.get(c1_tse, 0.0) - p.get(c2_tse, 0.0))
+            erro_m = abs(m_pred - m_real)
+            erros_margem_anos[str(t)] = round(float(erro_m), 2)
+
         vals_exp = [maes_exp[str(t)] for t in [2014, 2018, 2022]]
         mae_exp_med = round(float(np.mean(vals_exp)), 4)
         se_exp = round(float(np.std(vals_exp, ddof=1) / math.sqrt(len(vals_exp))), 4)
+
+        # Estatisticas do erro da margem
+        vals_erros_m = list(erros_margem_anos.values())
+        media_margem = round(float(np.mean(vals_erros_m)), 2)
+        max_margem = round(float(np.max(vals_erros_m)), 2)
+        p80_margem = round(float(np.percentile(vals_erros_m, 80)), 2)
 
         if cfg_id == "m0":
             delta_vs_m0 = 0.0
@@ -279,7 +262,7 @@ def gerar_dados():
                 "max": max_val,
             })
 
-        # Destaque Lula x Flavio
+        # Destaque Top-2: Lula x Flavio
         pct_lula = pred_fechada["Luiz Inácio Lula da Silva"]
         pct_flavio = pred_fechada["Flávio Bolsonaro"]
         diff = round(abs(pct_flavio - pct_lula), 1)
@@ -291,13 +274,9 @@ def gerar_dados():
             vantagem_txt = f"Luiz Inácio Lula da Silva +{diff} p.p."
         else:
             lider = "Empate Exato"
-            vantagem_txt = "Empate em 46,0%"
+            vantagem_txt = "Empate exato"
 
-        # Criterio do Erro da Margem do Top-2 (Item 8 da Auditoria)
-        # Compara a diferenca projetada contra o P80 do erro da margem historica
-        stats_margem = erro_margem_stats.get(cfg_id, erro_margem_stats["modelo_oficial"])
-        p80_margem = stats_margem["p80"]
-        max_margem = stats_margem["max"]
+        # Empate Tecnico baseado no erro historico da margem (Item 3 da auditoria)
         empate_tecnico = bool(diff <= p80_margem)
 
         resultados_configs[cfg_id] = {
@@ -312,13 +291,17 @@ def gerar_dados():
                 "diferenca": diff,
                 "lider": lider,
                 "vantagem_texto": vantagem_txt,
-                "faixa_p80_margem": p80_margem,
-                "max_margem": max_margem,
+                "erro_margem_stats": {
+                    "por_ano": erros_margem_anos,
+                    "media": media_margem,
+                    "p80": p80_margem,
+                    "max": max_margem,
+                },
                 "empate_tecnico": empate_tecnico,
                 "explicacao_empate": (
-                    f"Diferença projetada ({diff} p.p.) é inferior ao P80 do erro histórico da margem "
-                    f"({p80_margem:.1f} p.p.) e ao erro máximo ({max_margem:.1f} p.p.), caracterizando "
-                    "empate técnico estatístico na liderança."
+                    f"Diferença projetada ({diff} p.p.) é inferior ao P80 do erro da margem histórica "
+                    f"({p80_margem:.1f} p.p.) e ao erro máximo ({max_margem:.1f} p.p.), confirmando "
+                    "empate técnico na disputa pela liderança."
                 ),
             },
             "backtest_expanding": {
@@ -510,7 +493,6 @@ def gerar_dados():
             "aviso_governanca": "Ferramenta de decisão do grupo. Nenhuma configuração é a oficial até a criação da tag modelo-congelado.",
             "total_pesquisas_2026": len(df_2026),
             "faixas_empiricas": faixas_empiricas_info,
-            "erro_margem_stats": erro_margem_stats,
             "protocolos_sabado": protocolos_sabado,
         },
         "configuracoes": resultados_configs,

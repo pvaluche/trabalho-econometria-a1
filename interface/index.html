@@ -4,31 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terminal Econometrico 2026 - FGV EPGE</title>
-  <!-- Tipografia: JetBrains Mono para codigo, tabelas e numeros; Inter para titulos -->
+  
+  <!-- Carregamento sincrono de dados.js para abertura direta via duplo-clique (file://) sem servidor -->
+  <script src="dados.js"></script>
+
+  <!-- Tipografia: JetBrains Mono (codigo, numeros, labels, tabelas) e Inter (titulos) via Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    /* Reset e variaveis de design de terminal */
+    /* -------------------------------------------------------------------------
+       DESIGN SYSTEM: TERMINAL DE IA (FLAT, SEM GRADIENTES, SEM SOMBRAS)
+       Fundo quase preto (#0b0d10), destaque verde fosforo (#00ff66)
+       ------------------------------------------------------------------------- */
     :root {
       --bg-terminal: #0b0d10;
-      --bg-card: #12161f;
-      --bg-card-hover: #171d28;
-      --bg-subtle: #0f1218;
-      --border-terminal: #1e2638;
-      --border-focus: #00ff66;
-      --text-main: #e2e8f0;
-      --text-muted: #8492a6;
-      --text-dim: #4c566a;
-      --accent-green: #00ff66;
-      --accent-green-dim: rgba(0, 255, 102, 0.12);
+      --bg-surface: #10141d;
+      --bg-surface-alt: #0a0d13;
+      --bg-input: #151a26;
+      --border-terminal: #1c2436;
+      --border-bright: #2d3b55;
+      --text-bright: #f1f5f9;
+      --text-normal: #cbd5e1;
+      --text-muted: #8091a7;
+      --text-dim: #475569;
+      --accent-phosphor: #00ff66;
+      --accent-phosphor-dim: rgba(0, 255, 102, 0.10);
       --accent-amber: #f59e0b;
       --accent-amber-dim: rgba(245, 158, 11, 0.12);
-      --accent-cyan: #06b6d4;
       --accent-red: #ef4444;
-      --accent-blue: #3b82f6;
-      --font-mono: 'JetBrains Mono', monospace, ui-monospace, Menlo, Consolas;
+      --accent-blue: #38bdf8;
+      --font-mono: 'JetBrains Mono', Consolas, monospace;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
@@ -40,35 +47,38 @@
 
     body {
       background-color: var(--bg-terminal);
-      color: var(--text-main);
+      color: var(--text-normal);
       font-family: var(--font-mono);
       font-size: 13px;
       line-height: 1.5;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      position: relative;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
-    h1, h2, h3, h4, .font-sans {
+    /* Grid de scanline sutil (CRT / Console de Terminal de IA) */
+    body::before {
+      content: " ";
+      display: block;
+      position: fixed;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.18),
+        rgba(0, 0, 0, 0.18) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.35;
+    }
+
+    h1, h2, h3, h4, .font-title {
       font-family: var(--font-sans);
-    }
-
-    /* Scrollbars estilo terminal */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: var(--bg-terminal);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: var(--border-terminal);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--text-dim);
+      letter-spacing: -0.01em;
     }
 
     /* Container global */
@@ -76,513 +86,507 @@
       width: 100%;
       max-width: 1440px;
       margin: 0 auto;
-      padding: 16px 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       flex: 1;
-    }
-
-    /* Cards e bordas */
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-terminal);
-      border-radius: 8px;
-      padding: 16px;
       position: relative;
+      z-index: 1;
     }
 
-    .card-header {
+    /* Painel / Card Flat (linhas finas, cantos retos, sem sombra) */
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-terminal);
+      border-radius: 2px;
+      padding: 14px 16px;
+    }
+
+    .panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--border-terminal);
-      padding-bottom: 12px;
-      margin-bottom: 14px;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
     }
 
-    .card-title {
-      font-size: 14px;
+    .panel-title {
+      font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-main);
+      letter-spacing: 0.06em;
+      color: var(--text-bright);
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .card-title::before {
-      content: "#";
-      color: var(--accent-green);
+    .panel-title::before {
+      content: ">";
+      color: var(--accent-phosphor);
       font-weight: 800;
     }
 
-    /* Prompt de comando no topo */
-    .top-prompt-bar {
-      background: var(--bg-subtle);
+    /* Top Prompt Bar */
+    .prompt-bar {
+      background: var(--bg-surface-alt);
       border: 1px solid var(--border-terminal);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border-radius: 2px;
+      padding: 10px 14px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .prompt-command-line {
+    .prompt-line {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      color: var(--text-main);
+      color: var(--text-bright);
     }
 
-    .prompt-prefix {
-      color: var(--accent-green);
+    .prompt-symbol {
+      color: var(--accent-phosphor);
     }
 
     .cursor-blink {
       display: inline-block;
       width: 8px;
-      height: 15px;
-      background: var(--accent-green);
+      height: 14px;
+      background: var(--accent-phosphor);
       vertical-align: middle;
-      animation: blink 1s step-start infinite;
+      animation: cursorBlink 1s step-start infinite;
     }
 
-    @keyframes blink {
+    @keyframes cursorBlink {
       0%, 50% { opacity: 1; }
       51%, 100% { opacity: 0; }
     }
 
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 11px;
+    .tag-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
+      border-radius: 2px;
+      border: 1px solid;
     }
 
-    .status-preliminar {
+    .tag-preliminar {
       background: var(--accent-amber-dim);
       color: var(--accent-amber);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-color: rgba(245, 158, 11, 0.35);
     }
 
-    .status-aprovado {
-      background: var(--accent-green-dim);
-      color: var(--accent-green);
-      border: 1px solid rgba(0, 255, 102, 0.3);
+    .tag-aprovado {
+      background: var(--accent-phosphor-dim);
+      color: var(--accent-phosphor);
+      border-color: rgba(0, 255, 102, 0.35);
     }
 
-    /* Log simulado de terminal */
-    .terminal-log-box {
+    .tag-referencia {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border-color: var(--border-bright);
+    }
+
+    /* Caixa de Logs do Terminal (Efeito Digitado) */
+    .terminal-console-log {
       background: #06080a;
       border: 1px solid var(--border-terminal);
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-family: var(--font-mono);
+      border-radius: 2px;
+      padding: 10px 12px;
       font-size: 11px;
       color: var(--text-muted);
-      max-height: 85px;
+      height: 78px;
       overflow-y: auto;
-      line-height: 1.6;
+      line-height: 1.55;
+      font-family: var(--font-mono);
     }
 
-    .terminal-log-box .log-line {
+    .log-entry {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
-    .terminal-log-box .log-prefix {
-      color: var(--accent-green);
+    .log-arrow {
+      color: var(--accent-phosphor);
+      user-select: none;
     }
 
-    .terminal-log-box .log-highlight {
-      color: var(--text-main);
+    .log-tag {
+      color: var(--text-bright);
       font-weight: 600;
     }
 
-    /* Seletor de configuracao (botoes de comando) */
-    .config-selector-grid {
+    /* Seletor de Configuracoes (Chips de Console) */
+    .config-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+      gap: 8px;
     }
 
-    .config-btn {
-      background: var(--bg-subtle);
+    .btn-config {
+      background: var(--bg-surface-alt);
       border: 1px solid var(--border-terminal);
-      border-radius: 6px;
-      padding: 10px 12px;
+      border-radius: 2px;
+      padding: 8px 12px;
       color: var(--text-muted);
       cursor: pointer;
       text-align: left;
       font-family: var(--font-mono);
-      font-size: 12px;
-      transition: all 0.15s ease-in-out;
+      font-size: 11px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
+      transition: border-color 0.15s ease, background 0.15s ease;
     }
 
-    .config-btn:hover {
-      background: var(--bg-card-hover);
-      border-color: rgba(0, 255, 102, 0.4);
-      color: var(--text-main);
+    .btn-config:hover {
+      background: var(--bg-input);
+      border-color: var(--border-bright);
+      color: var(--text-bright);
     }
 
-    .config-btn.active {
-      background: rgba(0, 255, 102, 0.08);
-      border-color: var(--accent-green);
-      color: var(--accent-green);
-      box-shadow: 0 0 12px rgba(0, 255, 102, 0.15);
+    .btn-config.active {
+      background: rgba(0, 255, 102, 0.06);
+      border-color: var(--accent-phosphor);
+      color: var(--accent-phosphor);
     }
 
-    .config-btn-header {
+    .btn-config-title {
+      font-weight: 700;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-weight: 700;
-      font-size: 12px;
     }
 
-    .config-btn-sub {
+    .btn-config-sub {
       font-size: 10px;
       color: var(--text-dim);
     }
 
-    .config-btn.active .config-btn-sub {
-      color: rgba(0, 255, 102, 0.8);
+    .btn-config.active .btn-config-sub {
+      color: rgba(0, 255, 102, 0.7);
     }
 
-    /* Card Destaque Top-2 (Polarizacao e Empate Tecnico) */
-    .top2-card {
-      background: linear-gradient(135deg, #101522 0%, #151b2c 100%);
-      border: 1px solid #232d44;
-      border-radius: 8px;
-      padding: 18px 20px;
+    /* Painel Top-2: Polarizacao Lula x Flavio e Empate Tecnico */
+    .top2-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-terminal);
+      border-radius: 2px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
 
-    .top2-grid {
+    .top2-columns {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      gap: 20px;
-    }
-
-    .top2-cand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .top2-cand.right {
-      flex-direction: row-reverse;
-      text-align: right;
-    }
-
-    .top2-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-sans);
-      font-size: 20px;
-      font-weight: 900;
-      color: #fff;
-    }
-
-    .avatar-lula {
-      background: #dc2626;
-      border: 2px solid #ef4444;
-    }
-
-    .avatar-flavio {
-      background: #2563eb;
-      border: 2px solid #3b82f6;
-    }
-
-    .top2-info-name {
-      font-family: var(--font-sans);
-      font-size: 16px;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .top2-info-party {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-
-    .top2-pct {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: #fff;
-    }
-
-    .top2-faixa {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .top2-center-box {
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid var(--border-terminal);
-      border-radius: 6px;
-      padding: 10px 16px;
-      text-align: center;
-      min-width: 220px;
-    }
-
-    .top2-center-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .top2-diff-val {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--accent-amber);
-      margin: 2px 0;
-    }
-
-    .top2-badge-empate {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: var(--accent-green-dim);
-      color: var(--accent-green);
-      border: 1px solid rgba(0, 255, 102, 0.3);
-    }
-
-    .top2-bar-wrapper {
-      width: 100%;
-      height: 8px;
-      background: #0a0d14;
-      border-radius: 4px;
-      overflow: hidden;
-      display: flex;
-    }
-
-    .top2-bar-lula {
-      background: #ef4444;
-      height: 100%;
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .top2-bar-flavio {
-      background: #3b82f6;
-      height: 100%;
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .top2-bar-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    /* Layout duas colunas */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 7fr 5fr;
       gap: 16px;
     }
 
+    .top2-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .top2-item.right {
+      text-align: right;
+    }
+
+    .top2-candidate-name {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+
+    .top2-party-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .top2-number {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+    }
+
+    .top2-interval {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .top2-center-display {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-terminal);
+      border-radius: 2px;
+      padding: 8px 14px;
+      text-align: center;
+      min-width: 250px;
+    }
+
+    .center-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+
+    .center-diff-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent-phosphor);
+      margin: 2px 0;
+    }
+
+    .center-status-empate {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 2px;
+      border: 1px solid;
+    }
+
+    .center-ref-margem {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Barra de disputa proporcional */
+    .top2-bar-track {
+      width: 100%;
+      height: 6px;
+      background: #080b10;
+      border-radius: 0;
+      display: flex;
+      overflow: hidden;
+      border: 1px solid var(--border-terminal);
+    }
+
+    .top2-bar-fill-lula {
+      background: var(--accent-red);
+      height: 100%;
+      transition: width 0.4s ease;
+    }
+
+    .top2-bar-fill-flavio {
+      background: var(--accent-blue);
+      height: 100%;
+      transition: width 0.4s ease;
+    }
+
+    .top2-bar-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* Grid Principal: 7 colunas tabela 2026 / 5 colunas avaliacao econometrica */
+    .layout-main-grid {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      gap: 14px;
+    }
+
     @media (max-width: 1024px) {
-      .main-grid {
+      .layout-main-grid {
         grid-template-columns: 1fr;
       }
-      .top2-grid {
+      .top2-columns {
         grid-template-columns: 1fr;
-        gap: 14px;
+        gap: 12px;
       }
-      .top2-cand.right {
-        flex-direction: row;
+      .top2-item.right {
         text-align: left;
       }
     }
 
-    /* Tabela de Candidatos 2026 */
-    .tabela-wrapper {
+    /* Tabelas Flat com Linhas Finas */
+    .table-container {
       width: 100%;
       overflow-x: auto;
     }
 
-    table.terminal-table {
+    table.flat-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12px;
       text-align: left;
     }
 
-    table.terminal-table th {
-      background: var(--bg-subtle);
+    table.flat-table th {
+      background: var(--bg-surface-alt);
       color: var(--text-dim);
       font-weight: 700;
       text-transform: uppercase;
       font-size: 10px;
       letter-spacing: 0.05em;
-      padding: 8px 10px;
+      padding: 7px 8px;
       border-bottom: 1px solid var(--border-terminal);
     }
 
-    table.terminal-table td {
-      padding: 9px 10px;
-      border-bottom: 1px solid rgba(30, 38, 56, 0.6);
-      color: var(--text-main);
+    table.flat-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(28, 36, 54, 0.6);
+      color: var(--text-normal);
     }
 
-    table.terminal-table tr:hover td {
-      background: rgba(255, 255, 255, 0.02);
+    table.flat-table tr:hover td {
+      background: rgba(255, 255, 255, 0.015);
     }
 
-    .bar-col-wrapper {
+    /* Barras proporcionais de candidatos */
+    .progress-bar-container {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
     }
 
-    .bar-progress-bg {
+    .progress-bar-bg {
       flex: 1;
-      height: 6px;
-      background: #0a0d14;
-      border-radius: 3px;
+      height: 4px;
+      background: #080b10;
+      border: 1px solid rgba(28, 36, 54, 0.8);
       overflow: hidden;
-      min-width: 80px;
+      min-width: 60px;
     }
 
-    .bar-progress-fill {
+    .progress-bar-fill {
       height: 100%;
-      background: var(--accent-green);
-      border-radius: 3px;
-      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--accent-phosphor);
+      transition: width 0.4s ease;
     }
 
-    .bar-progress-fill.lead-lula { background: #ef4444; }
-    .bar-progress-fill.lead-flavio { background: #3b82f6; }
-    .bar-progress-fill.third-party { background: var(--accent-amber); }
-    .bar-progress-fill.nanico { background: var(--text-dim); }
+    .progress-bar-fill.lead-lula { background: var(--accent-red); }
+    .progress-bar-fill.lead-flavio { background: var(--accent-blue); }
+    .progress-bar-fill.third-party { background: var(--accent-amber); }
+    .progress-bar-fill.nanico { background: var(--text-dim); }
 
-    /* Metricas e Regra de Decisao */
-    .metrics-box {
+    /* Metricas de Backtest */
+    .stat-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 6px;
     }
 
-    .metrics-row {
+    .stat-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 10px;
-      background: var(--bg-subtle);
+      padding: 6px 8px;
+      background: var(--bg-surface-alt);
       border: 1px solid var(--border-terminal);
-      border-radius: 4px;
     }
 
-    .metrics-label {
+    .stat-label {
       font-size: 11px;
       color: var(--text-muted);
     }
 
-    .metrics-val {
-      font-size: 12px;
+    .stat-val {
+      font-size: 11px;
       font-weight: 700;
-      color: var(--text-main);
+      color: var(--text-bright);
     }
 
-    .metrics-val.highlight {
-      color: var(--accent-green);
+    .stat-val.highlight {
+      color: var(--accent-phosphor);
     }
 
-    /* Navegacao por abas secundarias */
-    .tab-nav {
+    /* Navegacao de Abas Secundarias */
+    .tab-strip {
       display: flex;
-      gap: 4px;
+      gap: 2px;
       border-bottom: 1px solid var(--border-terminal);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
-    .tab-btn {
+    .tab-trigger {
       background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      padding: 8px 14px;
+      border: 1px solid transparent;
+      border-bottom: none;
+      padding: 6px 12px;
       color: var(--text-muted);
       cursor: pointer;
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      transition: all 0.15s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    .tab-btn:hover {
-      color: var(--text-main);
+    .tab-trigger:hover {
+      color: var(--text-bright);
     }
 
-    .tab-btn.active {
-      color: var(--accent-green);
-      border-bottom-color: var(--accent-green);
+    .tab-trigger.active {
+      color: var(--accent-phosphor);
+      background: var(--bg-surface);
+      border-color: var(--border-terminal);
+      border-bottom: 1px solid var(--bg-surface);
+      margin-bottom: -1px;
     }
 
-    .tab-content {
+    .tab-panel {
       display: none;
     }
 
-    .tab-content.active {
+    .tab-panel.active {
       display: block;
     }
 
     /* Skeleton Loading State (Zero numeros estaticos) */
-    .skeleton-text {
+    .skeleton-placeholder {
       display: inline-block;
-      min-width: 40px;
-      height: 14px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 3px;
-      animation: pulse 1.2s infinite ease-in-out;
-    }
-
-    .skeleton-box {
-      width: 100%;
-      height: 20px;
+      min-width: 36px;
+      height: 12px;
       background: rgba(255, 255, 255, 0.05);
-      border-radius: 4px;
-      animation: pulse 1.2s infinite ease-in-out;
+      border-radius: 1px;
+      animation: skeletonPulse 1.2s infinite ease-in-out;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 0.8; }
+    @keyframes skeletonPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.7; }
     }
 
-    /* Rodape */
-    .footer-bar {
+    /* Box de governanca e rodape */
+    .governance-banner {
+      background: var(--bg-surface-alt);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #fbbf24;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .terminal-footer {
       border-top: 1px solid var(--border-terminal);
-      padding: 14px 0 6px 0;
+      padding: 12px 0 4px 0;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
@@ -591,110 +595,113 @@
       color: var(--text-dim);
     }
 
-    .footer-highlight {
+    .footer-white {
       color: var(--text-muted);
-    }
-
-    .governance-alert {
-      background: rgba(245, 158, 11, 0.08);
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 11px;
-      color: #fbd38d;
-      margin-top: 4px;
     }
   </style>
 </head>
 <body>
 
-  <!-- CARREGAMENTO PRIMARIO: dados.js LOCAL COM FALLBACK PARA dados.json -->
-  <script src="dados.js"></script>
-
   <div class="terminal-container">
 
-    <!-- BARRA SUPERIOR / PROMPT DE COMANDO -->
-    <header class="top-prompt-bar">
-      <div class="prompt-command-line">
-        <span class="prompt-prefix">$</span>
+    <!-- CABECALHO / PROMPT DE TERMINAL -->
+    <header class="prompt-bar">
+      <div class="prompt-line">
+        <span class="prompt-symbol">$</span>
         <span>previsao --eleicao 2026 --config</span>
-        <span id="prompt-config-tag" style="color: var(--accent-green); font-weight: 700;">carregando...</span>
+        <span id="prompt-config-label" style="color: var(--accent-phosphor); font-weight: 700;">
+          <span class="skeleton-placeholder" style="min-width: 100px;"></span>
+        </span>
         <span class="cursor-blink"></span>
       </div>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span class="status-badge status-preliminar" id="badge-status-top">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="tag-badge tag-preliminar" id="badge-status-preliminar">
           PRELIMINAR
         </span>
-        <span style="font-size: 11px; color: var(--text-muted);" id="header-pesquisas-count">
-          -- pesquisas de véspera
+        <span style="font-size: 11px; color: var(--text-muted);" id="prompt-pesquisas-count">
+          <span class="skeleton-placeholder"></span> pesquisas de véspera
         </span>
       </div>
     </header>
 
-    <!-- ALERTA DE GOVERNANCA E TERMINAL LOG BOX -->
-    <section class="governance-alert" id="aviso-governanca-box">
-      <strong>[GOVERNANCA]:</strong> Ferramenta de decisao do grupo (Joao Pedro Valuche, Arthur Caron Lyra, Lethicia Manfioletti Possamai). 
-      Nenhuma configuracao e a oficial ate a criacao da tag <code>modelo-congelado</code> no sabado 03/10 as 20h.
+    <!-- AVISO DE GOVERNANCA RIGIDA (PRE-REGISTRO) -->
+    <section class="governance-banner" id="banner-governanca">
+      <div>
+        <strong>[GOVERNANCA]:</strong> Ferramenta de decisao metodologica (Joao Pedro Valuche, Arthur Caron Lyra, Lethicia Manfioletti Possamai).
+      </div>
+      <div>
+        Nenhuma configuracao e oficial ate a criacao da tag <code>modelo-congelado</code> no sabado 03/10 as 20h.
+      </div>
     </section>
 
-    <!-- TERMINAL LOG (SIMULACAO DE EXECUCAO DO MOTOR) -->
-    <div class="terminal-log-box" id="terminal-log">
-      <div class="log-line"><span class="log-prefix">&gt;</span> <span class="log-highlight">[sistema]</span> Inicializando terminal econometrico FGV EPGE 2026...</div>
+    <!-- CONSOLE DE LOGS EM TEMPO REAL (DIGITADO) -->
+    <div class="terminal-console-log" id="terminal-console">
+      <div class="log-entry">
+        <span class="log-arrow">&gt;</span>
+        <span class="log-tag">[boot]</span>
+        <span>Inicializando terminal econometrico FGV EPGE...</span>
+      </div>
     </div>
 
-    <!-- SELETOR DE CONFIGURACOES -->
-    <section class="card">
-      <div class="card-header">
-        <h2 class="card-title">Configuracoes do Motor Econometrico</h2>
-        <span style="font-size: 11px; color: var(--text-dim);" id="info-formula-atual">
-          y = M0 + Ajustes Aprovados
+    <!-- SELETOR DE CONFIGURACOES DO MODELO -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Configuracoes do Motor Econometrico</h2>
+        <span style="font-size: 11px; color: var(--text-dim);" id="formula-config-label">
+          <span class="skeleton-placeholder" style="min-width: 160px;"></span>
         </span>
       </div>
-      <div class="config-selector-grid" id="container-config-botoes">
-        <!-- Injetado dinamicamente via JS (skeleton no boot) -->
-        <div class="skeleton-box"></div>
-        <div class="skeleton-box"></div>
-        <div class="skeleton-box"></div>
-        <div class="skeleton-box"></div>
-        <div class="skeleton-box"></div>
+      <div class="config-grid" id="grid-config-botoes">
+        <!-- Injetado dinamicamente via JS (skeleton loading) -->
+        <div class="btn-config"><span class="skeleton-placeholder" style="width: 100%;"></span></div>
+        <div class="btn-config"><span class="skeleton-placeholder" style="width: 100%;"></span></div>
+        <div class="btn-config"><span class="skeleton-placeholder" style="width: 100%;"></span></div>
+        <div class="btn-config"><span class="skeleton-placeholder" style="width: 100%;"></span></div>
+        <div class="btn-config"><span class="skeleton-placeholder" style="width: 100%;"></span></div>
       </div>
     </section>
 
-    <!-- DESTAQUE POLARIZACAO TOP-2 E EMPATE TECNICO (LULA X FLAVIO) -->
-    <section class="top2-card" id="card-top2">
-      <div class="top2-grid">
+    <!-- PAINEL DE POLARIZACAO TOP-2 E EMPATE TECNICO (LULA X FLAVIO) -->
+    <section class="top2-panel" id="panel-top2">
+      <div class="top2-columns">
         
         <!-- Lula -->
-        <div class="top2-cand">
-          <div class="top2-avatar avatar-lula">L</div>
-          <div>
-            <div class="top2-info-party" style="color: #fca5a5;">PT • 13</div>
-            <div class="top2-info-name">Luiz Inácio Lula da Silva</div>
-            <div class="top2-pct" id="top2-lula-pct"><span class="skeleton-text"></span></div>
-            <div class="top2-faixa" id="top2-lula-faixa">Intervalo P80: --</div>
+        <div class="top2-item">
+          <div class="top2-party-tag" style="color: var(--accent-red);">PT • 13</div>
+          <div class="top2-candidate-name">Luiz Inácio Lula da Silva</div>
+          <div class="top2-number" id="top2-lula-pct">
+            <span class="skeleton-placeholder" style="min-width: 70px; height: 24px;"></span>
+          </div>
+          <div class="top2-interval" id="top2-lula-intervalo">
+            Faixa P80: <span class="skeleton-placeholder"></span>
           </div>
         </div>
 
-        <!-- Placar Central / Margem Histórica e Empate Técnico -->
-        <div class="top2-center-box">
-          <div class="top2-center-label">Diferenca Projetada</div>
-          <div class="top2-diff-val" id="top2-diferenca-val">--</div>
-          <div class="top2-badge-empate" id="top2-badge-empate">
-            Calculando...
+        <!-- Centro: Diferenca e Criterio da Margem Historica (Item 3) -->
+        <div class="top2-center-display">
+          <div class="center-label">Diferenca Projetada Top-2</div>
+          <div class="center-diff-value" id="top2-diff-val">
+            <span class="skeleton-placeholder" style="min-width: 80px;"></span>
           </div>
-          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;" id="top2-ref-margem">
-            Ref. Margem P80: -- | Máx: --
+          <div>
+            <span class="center-status-empate tag-aprovado" id="top2-status-empate">
+              <span class="skeleton-placeholder" style="min-width: 120px;"></span>
+            </span>
+          </div>
+          <div class="center-ref-margem" id="top2-ref-margem-historica">
+            Ref. Margem Top-2: P80 = <span class="skeleton-placeholder"></span> | Máx = <span class="skeleton-placeholder"></span>
           </div>
         </div>
 
         <!-- Flavio -->
-        <div class="top2-cand right">
-          <div class="top2-avatar avatar-flavio">F</div>
-          <div>
-            <div class="top2-info-party" style="color: #93c5fd;">PL • 22</div>
-            <div class="top2-info-name">Flávio Bolsonaro</div>
-            <div class="top2-pct" id="top2-flavio-pct"><span class="skeleton-text"></span></div>
-            <div class="top2-faixa" id="top2-flavio-faixa">Intervalo P80: --</div>
+        <div class="top2-item right">
+          <div class="top2-party-tag" style="color: var(--accent-blue);">PL • 22</div>
+          <div class="top2-candidate-name">Flávio Bolsonaro</div>
+          <div class="top2-number" id="top2-flavio-pct">
+            <span class="skeleton-placeholder" style="min-width: 70px; height: 24px;"></span>
+          </div>
+          <div class="top2-interval" id="top2-flavio-intervalo">
+            Faixa P80: <span class="skeleton-placeholder"></span>
           </div>
         </div>
 
@@ -702,40 +709,40 @@
 
       <!-- Barra de proporcao relativa -->
       <div>
-        <div class="top2-bar-wrapper">
-          <div class="top2-bar-lula" id="top2-bar-lula" style="width: 50%;"></div>
-          <div class="top2-bar-flavio" id="top2-bar-flavio" style="width: 50%;"></div>
+        <div class="top2-bar-track">
+          <div class="top2-bar-fill-lula" id="bar-fill-lula" style="width: 50%;"></div>
+          <div class="top2-bar-fill-flavio" id="bar-fill-flavio" style="width: 50%;"></div>
         </div>
-        <div class="top2-bar-labels" style="margin-top: 4px;">
-          <span id="top2-label-share-lula">Lula: --</span>
-          <span id="top2-label-share-flavio">Flávio: --</span>
+        <div class="top2-bar-legend">
+          <span id="label-share-lula">Lula: <span class="skeleton-placeholder"></span></span>
+          <span id="label-share-flavio">Flávio: <span class="skeleton-placeholder"></span></span>
         </div>
       </div>
     </section>
 
-    <!-- NAVEGACAO POR ABAS DO PROJETO -->
-    <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="tab-projecao">Projecao 2026 (Urna Completa)</button>
-      <button class="tab-btn" data-tab="tab-aba2">Aba 2: Agregados & Desempate</button>
-      <button class="tab-btn" data-tab="tab-backtest-eleicoes">Backtest Historico por Eleicao</button>
-      <button class="tab-btn" data-tab="tab-pesqele">Protocolos PesqEle Sabado</button>
+    <!-- NAVEGACAO DE ABAS -->
+    <nav class="tab-strip">
+      <button class="tab-trigger active" data-tab="tab-projecao-2026">Projecao 2026 (Urna Completa)</button>
+      <button class="tab-trigger" data-tab="tab-agregados-aba2">Aba 2: Agregados & Desempate</button>
+      <button class="tab-trigger" data-tab="tab-backtest-historico">Backtest por Eleicao</button>
+      <button class="tab-trigger" data-tab="tab-pesqele-sabado">Protocolos PesqEle Sabado</button>
     </nav>
 
-    <!-- CONTEUDO DA ABA 1: PROJECAO 2026 + METRICAS DO MODELO -->
-    <div class="tab-content active" id="tab-projecao">
-      <div class="main-grid">
+    <!-- ABA 1: PROJECAO 2026 E AVALIACAO ECONOMETRICA -->
+    <div class="tab-panel active" id="tab-projecao-2026">
+      <div class="layout-main-grid">
         
-        <!-- Coluna Esquerda: Tabela de Candidatos 2026 -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Votos Validos 2026 (12 Candidatos)</h3>
-            <span style="font-size: 11px; color: var(--text-dim);" id="soma-validos-label">
-              Soma: 100,0% (Maiores Restos)
+        <!-- Tabela dos 12 candidatos de 2026 -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">Projecao 2026: Votos Validos (12 Candidatos)</h3>
+            <span style="font-size: 11px; color: var(--text-dim);" id="soma-validos-status">
+              Soma: <span class="skeleton-placeholder"></span> (Maiores Restos)
             </span>
           </div>
 
-          <div class="tabela-wrapper">
-            <table class="terminal-table" id="tabela-candidatos-2026">
+          <div class="table-container">
+            <table class="flat-table" id="tabela-2026">
               <thead>
                 <tr>
                   <th>#</th>
@@ -748,137 +755,136 @@
                   <th style="text-align: right;">Máx</th>
                 </tr>
               </thead>
-              <tbody id="tbody-candidatos-2026">
-                <!-- Injetado dinamicamente via JS -->
-                <tr><td colspan="8"><span class="skeleton-text" style="width: 100%;"></span></td></tr>
+              <tbody id="tbody-2026">
+                <tr><td colspan="8"><span class="skeleton-placeholder" style="width: 100%;"></span></td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Coluna Direita: Avaliacao Econometrica e Regra de Decisao -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Avaliacao Econometrica</h3>
-            <span class="status-badge status-aprovado" id="badge-status-regra">
-              Avaliado
+        <!-- Avaliacao Econometrica e Regra de Decisao -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="panel-title">Avaliacao Econometrica & Regra Formal</h3>
+            <span class="tag-badge tag-aprovado" id="badge-status-config">
+              <span class="skeleton-placeholder"></span>
             </span>
           </div>
 
-          <div class="metrics-box">
-            <div class="metrics-row">
-              <span class="metrics-label">Expanding Window (MAE Medio)</span>
-              <span class="metrics-val highlight" id="metric-mae-expanding">--</span>
+          <div class="stat-list">
+            <div class="stat-item">
+              <span class="stat-label">Expanding Window (MAE Medio)</span>
+              <span class="stat-val highlight" id="stat-mae-expanding"><span class="skeleton-placeholder"></span></span>
             </div>
-            <div class="metrics-row">
-              <span class="metrics-label">Erro-Padrao SE(MAE Expanding)</span>
-              <span class="metrics-val" id="metric-se-expanding">--</span>
+            <div class="stat-item">
+              <span class="stat-label">Erro-Padrao SE(MAE Expanding)</span>
+              <span class="stat-val" id="stat-se-expanding"><span class="skeleton-placeholder"></span></span>
             </div>
-            <div class="metrics-row">
-              <span class="metrics-label">Delta vs M0 Puro (Δ)</span>
-              <span class="metrics-val" id="metric-delta-m0">--</span>
+            <div class="stat-item">
+              <span class="stat-label">Diferenca vs M0 Puro (Δ)</span>
+              <span class="stat-val" id="stat-delta-m0"><span class="skeleton-placeholder"></span></span>
             </div>
-            <div class="metrics-row">
-              <span class="metrics-label">Erro-Padrao da Diferenca SE(Δ)</span>
-              <span class="metrics-val" id="metric-se-delta">--</span>
+            <div class="stat-item">
+              <span class="stat-label">Erro-Padrao da Diferenca SE(Δ)</span>
+              <span class="stat-val" id="stat-se-delta"><span class="skeleton-placeholder"></span></span>
             </div>
-            <div class="metrics-row">
-              <span class="metrics-label">LOEO 2006-2022 (MAE Medio)</span>
-              <span class="metrics-val" id="metric-mae-loeo">--</span>
+            <div class="stat-item">
+              <span class="stat-label">LOEO 2006-2022 (MAE Medio)</span>
+              <span class="stat-val" id="stat-mae-loeo"><span class="skeleton-placeholder"></span></span>
             </div>
-
-            <!-- Box explicativo da regra do pre-registro -->
-            <div style="background: var(--bg-subtle); border: 1px solid var(--border-terminal); border-radius: 6px; padding: 12px; margin-top: 6px;">
-              <div style="font-size: 11px; font-weight: 700; color: var(--accent-green); margin-bottom: 4px;">
-                REGRA FORMAL DE DECISAO (PRE-REGISTRO):
-              </div>
-              <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;" id="justificativa-regra-txt">
-                Carregando analise econometrica...
-              </p>
-            </div>
-
-            <!-- Tabela detalhada dos erros expanding por eleicao -->
-            <div style="margin-top: 8px;">
-              <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase;">
-                MAE Expanding Window por Eleicao (Urna Completa):
-              </div>
-              <table class="terminal-table" style="font-size: 11px;">
-                <thead>
-                  <tr>
-                    <th>2014</th>
-                    <th>2018</th>
-                    <th>2022</th>
-                    <th style="color: var(--accent-green);">Média</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td id="exp-2014-val">--</td>
-                    <td id="exp-2018-val">--</td>
-                    <td id="exp-2022-val">--</td>
-                    <td id="exp-med-val" style="font-weight: 700; color: var(--accent-green);">--</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
           </div>
+
+          <!-- Regra do pre-registro explicita -->
+          <div style="background: var(--bg-surface-alt); border: 1px solid var(--border-terminal); padding: 10px; margin-top: 10px; font-size: 11px;">
+            <div style="color: var(--accent-phosphor); font-weight: 700; margin-bottom: 4px;">
+              [REGRA FORMAL DE DECISAO - PRE-REGISTRO]:
+            </div>
+            <div id="stat-justificativa" style="color: var(--text-normal); line-height: 1.5;">
+              <span class="skeleton-placeholder" style="width: 100%;"></span>
+            </div>
+          </div>
+
+          <!-- Erros do expanding por eleicao -->
+          <div style="margin-top: 10px;">
+            <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">
+              MAE Expanding Window por Eleicao (Urna Completa):
+            </div>
+            <table class="flat-table" style="font-size: 11px;">
+              <thead>
+                <tr>
+                  <th>2014</th>
+                  <th>2018</th>
+                  <th>2022</th>
+                  <th style="color: var(--accent-phosphor);">Média</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="cell-exp-2014"><span class="skeleton-placeholder"></span></td>
+                  <td id="cell-exp-2018"><span class="skeleton-placeholder"></span></td>
+                  <td id="cell-exp-2022"><span class="skeleton-placeholder"></span></td>
+                  <td id="cell-exp-medio" style="font-weight: 700; color: var(--accent-phosphor);"><span class="skeleton-placeholder"></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
         </div>
 
       </div>
     </div>
 
-    <!-- CONTEUDO DA ABA 2: AGREGADOS ELEITORAIS & REGRAS DE DESEMPATE COM CONTAS -->
-    <div class="tab-content" id="tab-aba2">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Aba 2: Agregados Eleitorais e Regras Formais de Desempate</h3>
+    <!-- ABA 2: AGREGADOS ELEITORAIS & DEMONSTRACAO FORMAL DE DESEMPATE (ITEM 3) -->
+    <div class="tab-panel" id="tab-agregados-aba2">
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Aba 2: Agregados Eleitorais e Contas Formais de Desempate</h3>
           <span style="font-size: 11px; color: var(--text-dim);">
-            Contas de Δ, SE(Δ) e Parcimônia Pré-Registrada
+            Expanding Window (2014, 2018, 2022) e Criterio de Parcimonia
           </span>
         </div>
 
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
-          Cada variavel agregada foi testada contra 3 metodos no expanding window (2014, 2018, 2022). Em caso de empate estatistico (|Δ| &le; SE(Δ)), aplica-se a regra de parcimonia pré-registrada.
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+          Cada variavel agregada foi confrontada entre 3 metodos prospectivos: Persistencia (Random Walk), Media Movel Historica e Tendencia Linear. Em caso de empate estatistico (|Δ| &le; SE(Δ)), aplica-se a regra de parcimonia pre-registrada.
         </p>
 
-        <div style="display: flex; flex-direction: column; gap: 20px;" id="container-variaveis-aba2">
-          <!-- Injetado dinamicamente via JS -->
-          <div class="skeleton-box" style="height: 120px;"></div>
+        <div style="display: flex; flex-direction: column; gap: 16px;" id="container-aba2-variaveis">
+          <!-- Injetado via JS -->
+          <div class="skeleton-placeholder" style="height: 100px; width: 100%;"></div>
         </div>
       </div>
     </div>
 
-    <!-- CONTEUDO DA ABA 3: BACKTEST DETALHADO POR ELEICAO (M0 VS MODELO OFICIAL) -->
-    <div class="tab-content" id="tab-backtest-eleicoes">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Backtest Candidato a Candidato sobre a Urna Completa</h3>
-          <div style="display: flex; gap: 8px;">
-            <button class="config-btn active btn-ano-backtest" data-ano="2022" style="padding: 4px 10px;">2022</button>
-            <button class="config-btn btn-ano-backtest" data-ano="2018" style="padding: 4px 10px;">2018</button>
-            <button class="config-btn btn-ano-backtest" data-ano="2014" style="padding: 4px 10px;">2014</button>
+    <!-- ABA 3: BACKTEST DETALHADO POR ELEICAO (M0 VS MODELO OFICIAL) -->
+    <div class="tab-panel" id="tab-backtest-historico">
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Backtest Candidato a Candidato sobre a Urna Completa</h3>
+          <div style="display: flex; gap: 6px;" id="botoes-seletor-ano">
+            <button class="btn-config active btn-ano-tab" data-ano="2022" style="padding: 3px 8px;">2022</button>
+            <button class="btn-config btn-ano-tab" data-ano="2018" style="padding: 3px 8px;">2018</button>
+            <button class="btn-config btn-ano-tab" data-ano="2014" style="padding: 3px 8px;">2014</button>
           </div>
         </div>
 
-        <div style="margin-bottom: 12px; display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
-          <span>Eleição Presidencial <strong id="backtest-ano-label" style="color: var(--text-main);">2022</strong> (Urna Oficial do TSE)</span>
-          <span id="backtest-mae-resumo">MAE M0: -- | MAE Oficial: --</span>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+          <span>Eleicao Presidencial <strong id="label-ano-backtest" style="color: var(--text-bright);">2022</strong> (Urna Oficial TSE)</span>
+          <span id="label-maes-backtest">MAE M0: <span class="skeleton-placeholder"></span> | MAE Oficial: <span class="skeleton-placeholder"></span></span>
         </div>
 
-        <div class="tabela-wrapper">
-          <table class="terminal-table" id="tabela-backtest-ano">
+        <div class="table-container">
+          <table class="flat-table" id="tabela-backtest-detalhada">
             <thead>
               <tr>
                 <th>Candidato Oficial (Urna TSE)</th>
                 <th style="text-align: right;">Realizado TSE</th>
                 <th style="text-align: right;">Previsão M0</th>
                 <th style="text-align: right;">Erro M0</th>
-                <th style="text-align: right; color: var(--accent-green);">Previsão Modelo Oficial</th>
-                <th style="text-align: right; color: var(--accent-green);">Erro Oficial</th>
+                <th style="text-align: right; color: var(--accent-phosphor);">Previsão Modelo Oficial</th>
+                <th style="text-align: right; color: var(--accent-phosphor);">Erro Oficial</th>
               </tr>
             </thead>
-            <tbody id="tbody-backtest-ano">
+            <tbody id="tbody-backtest-detalhada">
               <!-- Injetado via JS -->
             </tbody>
           </table>
@@ -886,31 +892,31 @@
       </div>
     </div>
 
-    <!-- CONTEUDO DA ABA 4: PROTOCOLOS PESQELE SABADO (03/10/2026) -->
-    <div class="tab-content" id="tab-pesqele">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Pesquisas Registradas no PesqEle para Sábado (03/10/2026)</h3>
-          <span class="status-badge status-aprovado">TSE Conforme</span>
+    <!-- ABA 4: PROTOCOLOS PESQELE SABADO (03/10/2026) -->
+    <div class="tab-panel" id="tab-pesqele-sabado">
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Pesquisas Registradas no PesqEle para Sabado (03/10/2026)</h3>
+          <span class="tag-badge tag-aprovado">TSE Auditado</span>
         </div>
 
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
-          Protocolos reais obtidos diretamente da base oficial do PesqEle (<code>pesquisa_eleitoral_2026_BRASIL.csv</code>). O corte metodologico final sera realizado as 20h00 de sabado 03/10/2026.
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+          Protocolos reais extraidos da base oficial do PesqEle (<code>pesquisa_eleitoral_2026_BRASIL.csv</code>). O corte definitivo do pipeline sera executado as 20h00 de sabado 03/10/2026.
         </p>
 
-        <div class="tabela-wrapper">
-          <table class="terminal-table" id="tabela-pesqele-sabado">
+        <div class="table-container">
+          <table class="flat-table" id="tabela-protocolos-pesqele">
             <thead>
               <tr>
                 <th>Instituto</th>
                 <th>Registro TSE (Protocolo)</th>
                 <th style="text-align: right;">Amostra</th>
                 <th>Periodo de Campo</th>
-                <th>Data Divulgação</th>
+                <th>Data Divulgacao</th>
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody id="tbody-pesqele-sabado">
+            <tbody id="tbody-protocolos-pesqele">
               <!-- Injetado via JS -->
             </tbody>
           </table>
@@ -918,30 +924,30 @@
       </div>
     </div>
 
-    <!-- RODAPE OFICIAL -->
-    <footer class="footer-bar">
+    <!-- RODAPE DE GOVERNANCA E METADADOS -->
+    <footer class="terminal-footer">
       <div>
-        <span>FGV EPGE 2026 • Equipe: </span>
-        <span class="footer-highlight">João Pedro Valuche, Arthur Caron Lyra, Lethicia Manfioletti Possamai</span>
+        <span>FGV EPGE 2026 • Grupo: </span>
+        <span class="footer-white" id="footer-grupo-nomes">João Pedro Valuche, Arthur Caron Lyra, Lethicia Manfioletti Possamai</span>
       </div>
       <div>
-        <span>Commit: </span><code id="footer-commit" style="color: var(--accent-green);">--</code>
+        <span>Commit: </span><code id="footer-commit-sha" style="color: var(--accent-phosphor); font-weight: 700;">--</code>
         <span style="margin: 0 6px;">•</span>
-        <span>Gerado em: </span><span id="footer-timestamp" class="footer-highlight">--</span>
+        <span>Gerado em: </span><span id="footer-timestamp-iso" class="footer-white">--</span>
       </div>
     </footer>
 
   </div>
 
-  <!-- SCRIPT DE LOGICA, RENDERING E INTERATIVIDADE -->
+  <!-- SCRIPT DE LOGICA, RENDERING DINAMICO E INTERATIVIDADE -->
   <script>
     (function () {
-      let DADOS_ATUAIS = null;
-      let CONFIG_SELECIONADA = 'modelo_oficial';
-      let ANO_BACKTEST_SELECIONADO = '2022';
+      let DADOS_MEM = null;
+      let CONFIG_ID = 'modelo_oficial';
+      let ANO_BACKTEST = '2022';
 
-      // Utilitario de formatacao pt-BR
-      function formatPct(val, dec = 1) {
+      // Funcoes de formatacao em pt-BR (com virgula)
+      function ptBrPct(val, dec = 1) {
         if (val === undefined || val === null || isNaN(val)) return '--';
         return Number(val).toLocaleString('pt-BR', {
           minimumFractionDigits: dec,
@@ -949,7 +955,7 @@
         }) + '%';
       }
 
-      function formatNum(val, dec = 1) {
+      function ptBrNum(val, dec = 1) {
         if (val === undefined || val === null || isNaN(val)) return '--';
         return Number(val).toLocaleString('pt-BR', {
           minimumFractionDigits: dec,
@@ -957,143 +963,143 @@
         });
       }
 
-      // Sistema de logs do terminal
-      function pushLog(prefix, tag, msg) {
-        const box = document.getElementById('terminal-log');
-        if (!box) return;
-        const line = document.createElement('div');
-        line.className = 'log-line';
-        line.innerHTML = `<span class="log-prefix">${prefix}</span> <span class="log-highlight">[${tag}]</span> ${msg}`;
-        box.appendChild(line);
-        box.scrollTop = box.scrollHeight;
+      // Sistema de logs de terminal com efeito de fluxo continuo
+      function appendLog(tag, msg) {
+        const consoleEl = document.getElementById('terminal-console');
+        if (!consoleEl) return;
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="log-arrow">&gt;</span> <span class="log-tag">[${tag}]</span> <span>${msg}</span>`;
+        consoleEl.appendChild(entry);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
       }
 
       // Animacao de count-up para numeros
-      function animateCountUp(element, endVal, prefix = '', suffix = '%', decimals = 1, duration = 400) {
+      function animateNumber(element, targetVal, prefix = '', suffix = '%', decimals = 1, duration = 350) {
         if (!element) return;
-        const startVal = parseFloat(element.getAttribute('data-val')) || 0;
-        const startTime = performance.now();
+        const startVal = parseFloat(element.getAttribute('data-raw')) || 0;
+        const start = performance.now();
 
-        function update(currentTime) {
-          const elapsed = currentTime - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          // Easing easeOutQuad
-          const easeProgress = 1 - (1 - progress) * (1 - progress);
-          const current = startVal + (endVal - startVal) * easeProgress;
-          element.textContent = prefix + formatNum(current, decimals) + suffix;
+        function step(now) {
+          const progress = Math.min((now - start) / duration, 1);
+          const ease = 1 - (1 - progress) * (1 - progress); // easeOutQuad
+          const current = startVal + (targetVal - startVal) * ease;
+          element.textContent = prefix + ptBrNum(current, decimals) + suffix;
           if (progress < 1) {
-            requestAnimationFrame(update);
+            requestAnimationFrame(step);
           } else {
-            element.textContent = prefix + formatNum(endVal, decimals) + suffix;
-            element.setAttribute('data-val', endVal);
+            element.textContent = prefix + ptBrNum(targetVal, decimals) + suffix;
+            element.setAttribute('data-raw', targetVal);
           }
         }
-        requestAnimationFrame(update);
+        requestAnimationFrame(step);
       }
 
-      // Renderiza as configuracoes do seletor
-      function renderizarSeletorConfigs(configs) {
-        const container = document.getElementById('container-config-botoes');
-        if (!container) return;
-        container.innerHTML = '';
+      // Renderiza os botoes do seletor de configuracoes
+      function renderizarBotoesConfig(configs) {
+        const grid = document.getElementById('grid-config-botoes');
+        if (!grid) return;
+        grid.innerHTML = '';
 
         const keys = Object.keys(configs);
-        keys.forEach((key, idx) => {
+        keys.forEach((key, index) => {
           const cfg = configs[key];
           const btn = document.createElement('button');
-          btn.className = `config-btn ${key === CONFIG_SELECIONADA ? 'active' : ''}`;
-          btn.setAttribute('data-cfg', key);
+          btn.className = `btn-config ${key === CONFIG_ID ? 'active' : ''}`;
+          btn.setAttribute('data-id', key);
 
           btn.innerHTML = `
-            <div class="config-btn-header">
-              <span>[${idx + 1}] ${cfg.rotulo}</span>
-              <span style="font-size: 10px; font-weight: normal; color: var(--accent-green);">${formatNum(cfg.backtest_expanding.mae_medio, 2)} p.p.</span>
+            <div class="btn-config-title">
+              <span>[${index + 1}] ${cfg.rotulo}</span>
+              <span style="font-weight: 700; color: var(--accent-phosphor);">${ptBrNum(cfg.backtest_expanding.mae_medio, 2)} p.p.</span>
             </div>
-            <div class="config-btn-sub">${cfg.formula}</div>
+            <div class="btn-config-sub">${cfg.formula}</div>
           `;
 
           btn.addEventListener('click', () => {
-            if (CONFIG_SELECIONADA === key) return;
-            CONFIG_SELECIONADA = key;
-            document.querySelectorAll('.config-btn').forEach(b => b.classList.remove('active'));
+            if (CONFIG_ID === key) return;
+            CONFIG_ID = key;
+            document.querySelectorAll('.btn-config').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            pushLog('&gt;', 'config', `Alternando para <strong>${cfg.nome}</strong>...`);
-            pushLog('&gt;', 'backtest', `MAE Expanding = ${formatNum(cfg.backtest_expanding.mae_medio, 4)} p.p. | SE = ${formatNum(cfg.backtest_expanding.se, 4)} p.p.`);
-            atualizarTelaConfiguracao();
+            appendLog('config', `Alternando para <strong>${cfg.nome}</strong>...`);
+            appendLog('backtest', `MAE expanding = ${ptBrNum(cfg.backtest_expanding.mae_medio, 4)} p.p. | SE = ${ptBrNum(cfg.backtest_expanding.se, 4)} p.p.`);
+            if (cfg.regra_decisao.delta_vs_m0 !== 0) {
+              const sinal = cfg.regra_decisao.delta_vs_m0 > 0 ? '+' : '';
+              appendLog('delta', `Δ vs M0 = ${sinal}${ptBrNum(cfg.regra_decisao.delta_vs_m0, 4)} p.p. (SE = ${ptBrNum(cfg.regra_decisao.se_delta, 4)} p.p.) -> ${cfg.status_regra}`);
+            }
+            atualizarVisualizacao();
           });
 
-          container.appendChild(btn);
+          grid.appendChild(btn);
         });
       }
 
-      // Atualiza toda a tela para a configuracao selecionada
-      function atualizarTelaConfiguracao() {
-        if (!DADOS_ATUAIS) return;
-        const cfg = DADOS_ATUAIS.configuracoes[CONFIG_SELECIONADA];
+      // Atualiza todos os componentes para a configuracao ativa
+      function atualizarVisualizacao() {
+        if (!DADOS_MEM) return;
+        const cfg = DADOS_MEM.configuracoes[CONFIG_ID];
         if (!cfg) return;
 
-        // 1. Atualiza prompt superior
-        const promptTag = document.getElementById('prompt-config-tag');
-        if (promptTag) promptTag.textContent = CONFIG_SELECIONADA;
+        // 1. Prompt Superior e Formula
+        const promptLabel = document.getElementById('prompt-config-label');
+        const formulaLabel = document.getElementById('formula-config-label');
+        if (promptLabel) promptLabel.textContent = CONFIG_ID;
+        if (formulaLabel) formulaLabel.textContent = cfg.formula;
 
-        const infoFormula = document.getElementById('info-formula-atual');
-        if (infoFormula) infoFormula.textContent = cfg.formula;
-
-        // 2. Card de Destaque Top-2
+        // 2. Destaque Top-2 (Lula x Flavio)
         const top2 = cfg.top2_destaque;
         const lulaEl = document.getElementById('top2-lula-pct');
         const flavioEl = document.getElementById('top2-flavio-pct');
-        const diffEl = document.getElementById('top2-diferenca-val');
-        const faixaLula = document.getElementById('top2-lula-faixa');
-        const faixaFlavio = document.getElementById('top2-flavio-faixa');
-        const badgeEmpate = document.getElementById('top2-badge-empate');
-        const refMargem = document.getElementById('top2-ref-margem');
+        const diffValEl = document.getElementById('top2-diff-val');
+        const statusEmpateEl = document.getElementById('top2-status-empate');
+        const refMargemEl = document.getElementById('top2-ref-margem-historica');
+        const faixaLulaEl = document.getElementById('top2-lula-intervalo');
+        const faixaFlavioEl = document.getElementById('top2-flavio-intervalo');
 
-        animateCountUp(lulaEl, top2.lula, '', '%', 1);
-        animateCountUp(flavioEl, top2.flavio, '', '%', 1);
-        if (diffEl) diffEl.textContent = top2.vantagem_texto;
+        animateNumber(lulaEl, top2.lula, '', '%', 1);
+        animateNumber(flavioEl, top2.flavio, '', '%', 1);
+        if (diffValEl) diffValEl.textContent = top2.vantagem_texto;
 
-        // Margem e Empate Tecnico via Erro da Margem Historica (Item 8)
-        const p80Margem = top2.faixa_p80_margem;
-        const maxMargem = top2.max_margem;
-        if (refMargem) {
-          refMargem.textContent = `P80 Erro Margem: ±${formatNum(p80Margem, 1)} p.p. | Máx: ±${formatNum(maxMargem, 1)} p.p.`;
+        // Criterio de Empate Tecnico via Erro da Margem do Top-2 (Item 3 da auditoria)
+        const statsMargem = top2.erro_margem_stats;
+        if (refMargemEl && statsMargem) {
+          refMargemEl.innerHTML = `Ref. Margem Top-2: P80 = <strong>${ptBrNum(statsMargem.p80, 1)} p.p.</strong> | Máx = <strong>${ptBrNum(statsMargem.max, 1)} p.p.</strong>`;
         }
 
-        if (badgeEmpate) {
+        if (statusEmpateEl) {
           if (top2.empate_tecnico) {
-            badgeEmpate.textContent = 'EMPATE TÉCNICO (Δ Margem <= P80)';
-            badgeEmpate.className = 'top2-badge-empate status-aprovado';
+            statusEmpateEl.textContent = 'EMPATE TÉCNICO (Δ Top-2 <= P80 Margem)';
+            statusEmpateEl.className = 'center-status-empate tag-aprovado';
           } else {
-            badgeEmpate.textContent = 'LIDERANÇA ISOLADA';
-            badgeEmpate.className = 'top2-badge-empate status-preliminar';
+            statusEmpateEl.textContent = 'LIDERANÇA ISOLADA';
+            statusEmpateEl.className = 'center-status-empate tag-preliminar';
           }
         }
 
         // Faixas de incerteza P80
-        const top2FaixaP80 = DADOS_ATUAIS.metadata.faixas_empiricas.top2.p80;
-        if (faixaLula) faixaLula.textContent = `Intervalo P80: ${formatNum(Math.max(0, top2.lula - top2FaixaP80), 1)}% - ${formatNum(top2.lula + top2FaixaP80, 1)}%`;
-        if (faixaFlavio) faixaFlavio.textContent = `Intervalo P80: ${formatNum(Math.max(0, top2.flavio - top2FaixaP80), 1)}% - ${formatNum(top2.flavio + top2FaixaP80, 1)}%`;
+        const top2P80 = DADOS_MEM.metadata.faixas_empiricas.top2.p80;
+        if (faixaLulaEl) faixaLulaEl.textContent = `Faixa P80: ${ptBrNum(Math.max(0, top2.lula - top2P80), 1)}% - ${ptBrNum(top2.lula + top2P80, 1)}%`;
+        if (faixaFlavioEl) faixaFlavioEl.textContent = `Faixa P80: ${ptBrNum(Math.max(0, top2.flavio - top2P80), 1)}% - ${ptBrNum(top2.flavio + top2P80, 1)}%`;
 
-        // Barra de proporcao relativa
-        const somaLulaFlavio = top2.lula + top2.flavio;
-        const shareLula = (top2.lula / somaLulaFlavio) * 100;
-        const shareFlavio = (top2.flavio / somaLulaFlavio) * 100;
-        const barLula = document.getElementById('top2-bar-lula');
-        const barFlavio = document.getElementById('top2-bar-flavio');
-        if (barLula) barLula.style.width = shareLula.toFixed(1) + '%';
-        if (barFlavio) barFlavio.style.width = shareFlavio.toFixed(1) + '%';
+        // Barra de proporcao relativa entre lideres
+        const somaLideres = top2.lula + top2.flavio;
+        const shareLula = (top2.lula / somaLideres) * 100;
+        const shareFlavio = (top2.flavio / somaLideres) * 100;
+        const fillLula = document.getElementById('bar-fill-lula');
+        const fillFlavio = document.getElementById('bar-fill-flavio');
+        if (fillLula) fillLula.style.width = shareLula.toFixed(1) + '%';
+        if (fillFlavio) fillFlavio.style.width = shareFlavio.toFixed(1) + '%';
 
-        const labelLula = document.getElementById('top2-label-share-lula');
-        const labelFlavio = document.getElementById('top2-label-share-flavio');
-        if (labelLula) labelLula.textContent = `Lula: ${formatNum(shareLula, 1)}% dos líderes`;
-        if (labelFlavio) labelFlavio.textContent = `Flávio: ${formatNum(shareFlavio, 1)}% dos líderes`;
+        const labelLula = document.getElementById('label-share-lula');
+        const labelFlavio = document.getElementById('label-share-flavio');
+        if (labelLula) labelLula.textContent = `Lula: ${ptBrNum(shareLula, 1)}% dos líderes`;
+        if (labelFlavio) labelFlavio.textContent = `Flávio: ${ptBrNum(shareFlavio, 1)}% dos líderes`;
 
-        // 3. Tabela de Candidatos 2026
-        const tbody = document.getElementById('tbody-candidatos-2026');
-        if (tbody) {
-          tbody.innerHTML = '';
+        // 3. Tabela de 12 Candidatos de 2026
+        const tbody2026 = document.getElementById('tbody-2026');
+        if (tbody2026) {
+          tbody2026.innerHTML = '';
           const lista = cfg.previsao_2026.tabela;
           const maxPct = Math.max(...lista.map(c => c.pct));
 
@@ -1104,122 +1110,120 @@
             else if (c.candidato === 'Flávio Bolsonaro') corClasse = 'lead-flavio';
             else if (c.posicao <= 4) corClasse = 'third-party';
 
-            const barWidth = Math.max(2, (c.pct / maxPct) * 100).toFixed(1);
+            const barW = Math.max(1.5, (c.pct / maxPct) * 100).toFixed(1);
 
             tr.innerHTML = `
               <td style="color: var(--text-dim); font-weight: 700;">${c.posicao}</td>
-              <td style="font-weight: 600; color: #fff;">${c.candidato}</td>
-              <td><span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 3px; font-size: 11px;">${c.partido}</span></td>
-              <td style="text-align: right; font-weight: 700; font-size: 13px;">${formatPct(c.pct, 1)}</td>
+              <td style="font-weight: 600; color: var(--text-bright);">${c.candidato}</td>
+              <td><span style="background: rgba(255,255,255,0.05); padding: 1px 5px; font-size: 10px; border-radius: 1px;">${c.partido}</span></td>
+              <td style="text-align: right; font-weight: 700; color: ${corClasse === 'nanico' ? 'var(--text-normal)' : 'var(--text-bright)'}; font-size: 13px;">${ptBrPct(c.pct, 1)}</td>
               <td>
-                <div class="bar-col-wrapper">
-                  <div class="bar-progress-bg">
-                    <div class="bar-progress-fill ${corClasse}" style="width: ${barWidth}%;"></div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill ${corClasse}" style="width: ${barW}%;"></div>
                   </div>
                 </div>
               </td>
-              <td style="text-align: right; color: var(--text-muted); font-size: 11px;">±${formatNum(c.faixa_p80, 1)} p.p.</td>
-              <td style="text-align: right; color: var(--text-dim); font-size: 11px;">${formatPct(c.min, 1)}</td>
-              <td style="text-align: right; color: var(--text-dim); font-size: 11px;">${formatPct(c.max, 1)}</td>
+              <td style="text-align: right; color: var(--text-muted); font-size: 11px;">±${ptBrNum(c.faixa_p80, 1)} p.p.</td>
+              <td style="text-align: right; color: var(--text-dim); font-size: 11px;">${ptBrPct(c.min, 1)}</td>
+              <td style="text-align: right; color: var(--text-dim); font-size: 11px;">${ptBrPct(c.max, 1)}</td>
             `;
-            tbody.appendChild(tr);
+            tbody2026.appendChild(tr);
           });
         }
 
-        const somaLabel = document.getElementById('soma-validos-label');
-        if (somaLabel) somaLabel.textContent = `Soma: ${formatNum(cfg.previsao_2026.soma, 1)}% (Maiores Restos)`;
+        const somaStatus = document.getElementById('soma-validos-status');
+        if (somaStatus) somaStatus.textContent = `Soma: ${ptBrNum(cfg.previsao_2026.soma, 1)}% (Maiores Restos)`;
 
         // 4. Metricas Econometricas
-        const mExp = document.getElementById('metric-mae-expanding');
-        const sExp = document.getElementById('metric-se-expanding');
-        const dM0 = document.getElementById('metric-delta-m0');
-        const sDelta = document.getElementById('metric-se-delta');
-        const mLoeo = document.getElementById('metric-mae-loeo');
-        const justifTxt = document.getElementById('justificativa-regra-txt');
-        const badgeRegra = document.getElementById('badge-status-regra');
+        const statExp = document.getElementById('stat-mae-expanding');
+        const statSeExp = document.getElementById('stat-se-expanding');
+        const statDelta = document.getElementById('stat-delta-m0');
+        const statSeDelta = document.getElementById('stat-se-delta');
+        const statLoeo = document.getElementById('stat-mae-loeo');
+        const badgeCfg = document.getElementById('badge-status-config');
+        const justifEl = document.getElementById('stat-justificativa');
 
-        if (mExp) mExp.textContent = formatNum(cfg.backtest_expanding.mae_medio, 4) + ' p.p.';
-        if (sExp) sExp.textContent = formatNum(cfg.backtest_expanding.se, 4) + ' p.p.';
-        if (dM0) {
+        if (statExp) statExp.textContent = ptBrNum(cfg.backtest_expanding.mae_medio, 4) + ' p.p.';
+        if (statSeExp) statSeExp.textContent = ptBrNum(cfg.backtest_expanding.se, 4) + ' p.p.';
+        if (statDelta) {
           const s = cfg.regra_decisao.delta_vs_m0 > 0 ? '+' : '';
-          dM0.textContent = s + formatNum(cfg.regra_decisao.delta_vs_m0, 4) + ' p.p.';
+          statDelta.textContent = s + ptBrNum(cfg.regra_decisao.delta_vs_m0, 4) + ' p.p.';
         }
-        if (sDelta) sDelta.textContent = formatNum(cfg.regra_decisao.se_delta, 4) + ' p.p.';
-        if (mLoeo) mLoeo.textContent = formatNum(cfg.backtest_loeo.mae_medio, 4) + ' p.p.';
+        if (statSeDelta) statSeDelta.textContent = ptBrNum(cfg.regra_decisao.se_delta, 4) + ' p.p.';
+        if (statLoeo) statLoeo.textContent = ptBrNum(cfg.backtest_loeo.mae_medio, 4) + ' p.p.';
 
-        if (badgeRegra) {
-          badgeRegra.textContent = cfg.status_regra;
+        if (badgeCfg) {
+          badgeCfg.textContent = cfg.status_regra;
           if (cfg.status_regra.includes('Aprovado')) {
-            badgeRegra.className = 'status-badge status-aprovado';
+            badgeCfg.className = 'tag-badge tag-aprovado';
           } else {
-            badgeRegra.className = 'status-badge status-preliminar';
+            badgeCfg.className = 'tag-badge tag-referencia';
           }
         }
 
-        if (justifTxt) justifTxt.textContent = cfg.justificativa;
+        if (justifEl) justifEl.textContent = cfg.justificativa;
 
-        // Tabela Expanding por Ano
-        const e14 = document.getElementById('exp-2014-val');
-        const e18 = document.getElementById('exp-2018-val');
-        const e22 = document.getElementById('exp-2022-val');
-        const eMed = document.getElementById('exp-med-val');
+        // Folds do expanding por eleicao
+        const c14 = document.getElementById('cell-exp-2014');
+        const c18 = document.getElementById('cell-exp-2018');
+        const c22 = document.getElementById('cell-exp-2022');
+        const cMed = document.getElementById('cell-exp-medio');
 
-        if (e14) e14.textContent = formatNum(cfg.backtest_expanding.erros['2014'], 4);
-        if (e18) e18.textContent = formatNum(cfg.backtest_expanding.erros['2018'], 4);
-        if (e22) e22.textContent = formatNum(cfg.backtest_expanding.erros['2022'], 4);
-        if (eMed) eMed.textContent = formatNum(cfg.backtest_expanding.mae_medio, 4);
+        if (c14) c14.textContent = ptBrNum(cfg.backtest_expanding.erros['2014'], 4);
+        if (c18) c18.textContent = ptBrNum(cfg.backtest_expanding.erros['2018'], 4);
+        if (c22) c22.textContent = ptBrNum(cfg.backtest_expanding.erros['2022'], 4);
+        if (cMed) cMed.textContent = ptBrNum(cfg.backtest_expanding.mae_medio, 4);
       }
 
-      // Renderiza Aba 2: Agregados Eleitorais e Contas de Desempate
+      // Renderiza Aba 2: Agregados Eleitorais e Contas Formais de Desempate
       function renderizarAba2(dadosAba2) {
-        const container = document.getElementById('container-variaveis-aba2');
+        const container = document.getElementById('container-aba2-variaveis');
         if (!container) return;
         container.innerHTML = '';
 
         Object.keys(dadosAba2).forEach(varKey => {
           const info = dadosAba2[varKey];
-          const cardVar = document.createElement('div');
-          cardVar.style.background = 'var(--bg-subtle)';
-          cardVar.style.border = '1px solid var(--border-terminal)';
-          cardVar.style.borderRadius = '6px';
-          cardVar.style.padding = '14px';
+          const bloco = document.createElement('div');
+          bloco.style.background = 'var(--bg-surface-alt)';
+          bloco.style.border = '1px solid var(--border-terminal)';
+          bloco.style.padding = '12px';
 
-          let rowsMetodos = '';
+          let rowsHtml = '';
           info.metodos_tabela.forEach(m => {
             const isSel = m.selecionado;
-            rowsMetodos += `
-              <tr style="${isSel ? 'background: rgba(0,255,102,0.06); font-weight: 700;' : ''}">
-                <td style="color: ${isSel ? 'var(--accent-green)' : 'var(--text-main)'};">
-                  ${isSel ? '✓ ' : ''}${m.metodo}
+            rowsHtml += `
+              <tr style="${isSel ? 'background: rgba(0,255,102,0.05); font-weight: 700;' : ''}">
+                <td style="color: ${isSel ? 'var(--accent-phosphor)' : 'var(--text-bright)'};">
+                  ${isSel ? '[X] ' : '[ ] '}${m.metodo}
                 </td>
-                <td style="text-align: right;">${formatNum(m.erro_2014, 3)}</td>
-                <td style="text-align: right;">${formatNum(m.erro_2018, 3)}</td>
-                <td style="text-align: right;">${formatNum(m.erro_2022, 3)}</td>
-                <td style="text-align: right; color: ${isSel ? 'var(--accent-green)' : 'var(--text-main)'};">
-                  ${formatNum(m.mae_medio, 4)} p.p.
+                <td style="text-align: right;">${ptBrNum(m.erro_2014, 3)}</td>
+                <td style="text-align: right;">${ptBrNum(m.erro_2018, 3)}</td>
+                <td style="text-align: right;">${ptBrNum(m.erro_2022, 3)}</td>
+                <td style="text-align: right; color: ${isSel ? 'var(--accent-phosphor)' : 'var(--text-normal)'};">
+                  ${ptBrNum(m.mae_medio, 4)} p.p.
                 </td>
-                <td style="text-align: right; font-weight: 700; color: ${isSel ? 'var(--accent-green)' : 'var(--text-main)'};">
-                  ${formatPct(m.projecao_2026, 1)}
+                <td style="text-align: right; font-weight: 700; color: ${isSel ? 'var(--accent-phosphor)' : 'var(--text-bright)'};">
+                  ${ptBrPct(m.projecao_2026, 1)}
                 </td>
               </tr>
             `;
           });
 
-          // Bloco com contas de desempate
           const cd = info.contas_desempate;
-          cardVar.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          bloco.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
               <div>
-                <strong style="font-size: 14px; color: #fff;">${info.nome}</strong>
-                <span style="font-size: 11px; color: var(--text-dim); margin-left: 8px;">(${info.denominador})</span>
+                <strong style="font-size: 13px; color: var(--text-bright); text-transform: uppercase;">${info.nome}</strong>
+                <span style="font-size: 11px; color: var(--text-dim); margin-left: 6px;">(${info.denominador})</span>
               </div>
-              <div class="status-badge status-aprovado">
-                Escolhido: ${info.vencedor} (${formatPct(info.projecao_oficial, 1)})
+              <div class="tag-badge tag-aprovado">
+                Modelo Oficial: ${info.vencedor} (${ptBrPct(info.projecao_oficial, 1)})
               </div>
             </div>
 
-            <div class="tabela-wrapper" style="margin-bottom: 10px;">
-              <table class="terminal-table">
+            <div class="table-container" style="margin-bottom: 8px;">
+              <table class="flat-table">
                 <thead>
                   <tr>
                     <th>Método Avaliado</th>
@@ -1231,58 +1235,58 @@
                   </tr>
                 </thead>
                 <tbody>
-                  ${rowsMetodos}
+                  ${rowsHtml}
                 </tbody>
               </table>
             </div>
 
-            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-terminal); border-radius: 4px; padding: 10px; font-size: 11px;">
-              <div style="display: flex; justify-content: space-between; color: var(--accent-green); font-weight: 700; margin-bottom: 4px;">
-                <span>DEMONSTRAÇÃO FORMAL DA REGRA DE EMPATE:</span>
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-terminal); padding: 8px 10px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; color: var(--accent-phosphor); font-weight: 700; margin-bottom: 3px;">
+                <span>DEMONSTRACAO FORMAL DA REGRA DE EMPATE:</span>
                 <span>${cd.comparacao}</span>
               </div>
-              <div style="display: flex; gap: 16px; margin-bottom: 4px; color: var(--text-main);">
-                <span>Δ Médio = <strong>${cd.delta > 0 ? '+' : ''}${formatNum(cd.delta, 4)} p.p.</strong></span>
-                <span>SE(Δ) = <strong>${formatNum(cd.se_delta, 4)} p.p.</strong></span>
+              <div style="display: flex; gap: 14px; margin-bottom: 3px; color: var(--text-bright);">
+                <span>Δ Médio = <strong>${cd.delta > 0 ? '+' : ''}${ptBrNum(cd.delta, 4)} p.p.</strong></span>
+                <span>SE(Δ) = <strong>${ptBrNum(cd.se_delta, 4)} p.p.</strong></span>
                 <span>Empate Técnico (|Δ| &le; SE): <strong>${cd.empate_tecnico ? 'SIM' : 'NÃO'}</strong></span>
               </div>
-              <div style="color: var(--text-muted);">${cd.criterio} ${info.justificativa}</div>
+              <div style="color: var(--text-muted); font-size: 11px;">${cd.criterio} ${info.justificativa}</div>
             </div>
           `;
 
-          container.appendChild(cardVar);
+          container.appendChild(bloco);
         });
       }
 
       // Renderiza Aba 3: Backtest Detalhado por Eleicao
       function renderizarBacktestAno(ano) {
-        if (!DADOS_ATUAIS || !DADOS_ATUAIS.backtest_por_eleicao) return;
-        const bData = DADOS_ATUAIS.backtest_por_eleicao[ano];
-        if (!bData) return;
+        if (!DADOS_MEM || !DADOS_MEM.backtest_por_eleicao) return;
+        const dadosAno = DADOS_MEM.backtest_por_eleicao[ano];
+        if (!dadosAno) return;
 
-        const labelAno = document.getElementById('backtest-ano-label');
-        const resumoEl = document.getElementById('backtest-mae-resumo');
-        const tbody = document.getElementById('tbody-backtest-ano');
+        const anoLabel = document.getElementById('label-ano-backtest');
+        const maesLabel = document.getElementById('label-maes-backtest');
+        const tbody = document.getElementById('tbody-backtest-detalhada');
 
-        if (labelAno) labelAno.textContent = ano;
-        if (resumoEl) {
-          resumoEl.innerHTML = `MAE M0: <strong>${formatNum(bData.mae_m0, 4)} p.p.</strong> | MAE Oficial: <strong style="color: var(--accent-green);">${formatNum(bData.mae_oficial, 4)} p.p.</strong> (Urna com ${bData.total_candidatos} concorrentes)`;
+        if (anoLabel) anoLabel.textContent = ano;
+        if (maesLabel) {
+          maesLabel.innerHTML = `MAE M0: <strong>${ptBrNum(dadosAno.mae_m0, 4)} p.p.</strong> | MAE Oficial: <strong style="color: var(--accent-phosphor);">${ptBrNum(dadosAno.mae_oficial, 4)} p.p.</strong> (Urna com ${dadosAno.total_candidatos} concorrentes)`;
         }
 
         if (tbody) {
           tbody.innerHTML = '';
-          bData.candidatos.forEach(c => {
+          dadosAno.candidatos.forEach(c => {
             const tr = document.createElement('tr');
-            const erroM0Sinal = c.erro_m0 > 0 ? '+' : '';
-            const erroOfSinal = c.erro_oficial > 0 ? '+' : '';
+            const sM0 = c.erro_m0 > 0 ? '+' : '';
+            const sOf = c.erro_oficial > 0 ? '+' : '';
 
             tr.innerHTML = `
-              <td style="font-weight: 600; color: #fff;">${c.candidato}</td>
-              <td style="text-align: right; font-weight: 700;">${formatPct(c.real_tse, 2)}</td>
-              <td style="text-align: right;">${formatPct(c.pred_m0, 2)}</td>
-              <td style="text-align: right; color: var(--text-muted);">${erroM0Sinal}${formatNum(c.erro_m0, 2)}</td>
-              <td style="text-align: right; font-weight: 700; color: var(--accent-green);">${formatPct(c.pred_oficial, 2)}</td>
-              <td style="text-align: right; color: var(--accent-green);">${erroOfSinal}${formatNum(c.erro_oficial, 2)}</td>
+              <td style="font-weight: 600; color: var(--text-bright);">${c.candidato}</td>
+              <td style="text-align: right; font-weight: 700;">${ptBrPct(c.real_tse, 2)}</td>
+              <td style="text-align: right;">${ptBrPct(c.pred_m0, 2)}</td>
+              <td style="text-align: right; color: var(--text-muted);">${sM0}${ptBrNum(c.erro_m0, 2)}</td>
+              <td style="text-align: right; font-weight: 700; color: var(--accent-phosphor);">${ptBrPct(c.pred_oficial, 2)}</td>
+              <td style="text-align: right; color: var(--accent-phosphor);">${sOf}${ptBrNum(c.erro_oficial, 2)}</td>
             `;
             tbody.appendChild(tr);
           });
@@ -1291,84 +1295,84 @@
 
       // Renderiza Aba 4: Protocolos PesqEle Sabado
       function renderizarProtocolosPesqEle(protocolos) {
-        const tbody = document.getElementById('tbody-pesqele-sabado');
+        const tbody = document.getElementById('tbody-protocolos-pesqele');
         if (!tbody || !protocolos) return;
         tbody.innerHTML = '';
 
         protocolos.forEach(p => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td style="font-weight: 700; color: #fff;">${p.instituto}</td>
-            <td><code style="color: var(--accent-cyan);">${p.protocolo}</code></td>
-            <td style="text-align: right; font-weight: 600;">${formatNum(p.amostra, 0)}</td>
+            <td style="font-weight: 700; color: var(--text-bright);">${p.instituto}</td>
+            <td><code style="color: var(--accent-blue);">${p.protocolo}</code></td>
+            <td style="text-align: right; font-weight: 600;">${ptBrNum(p.amostra, 0)}</td>
             <td style="color: var(--text-muted);">${p.campo}</td>
             <td style="color: var(--text-muted);">${p.divulgacao}</td>
-            <td><span class="status-badge status-aprovado" style="font-size: 10px;">Auditado</span></td>
+            <td><span class="tag-badge tag-aprovado" style="font-size: 9px;">Registrado</span></td>
           `;
           tbody.appendChild(tr);
         });
       }
 
-      // Inicializacao dos dados e eventos
-      function inicializar(dados) {
-        DADOS_ATUAIS = dados;
+      // Inicializacao dos dados e eventos da interface
+      function inicializarInterface(dados) {
+        DADOS_MEM = dados;
 
         // Metadados do cabecalho e rodape
         const meta = dados.metadata;
-        const commitEl = document.getElementById('footer-commit');
-        const timestampEl = document.getElementById('footer-timestamp');
-        const countPesquisas = document.getElementById('header-pesquisas-count');
+        const commitEl = document.getElementById('footer-commit-sha');
+        const timestampEl = document.getElementById('footer-timestamp-iso');
+        const countPesquisas = document.getElementById('prompt-pesquisas-count');
 
         if (commitEl) commitEl.textContent = meta.commit;
         if (timestampEl) timestampEl.textContent = meta.gerado_em;
         if (countPesquisas) countPesquisas.textContent = `${meta.total_pesquisas_2026} pesquisas de véspera analisadas`;
 
-        pushLog('&gt;', 'tse', `Carregados ${meta.total_pesquisas_2026} levantamentos de 2026 conferidos no PesqEle.`);
-        pushLog('&gt;', 'dados', `Base histórica com 5 eleições (2006-2022) e urna completa.`);
+        appendLog('dados', `Base histórica carregada: 5 eleições e urna completa.`);
+        appendLog('tse', `${meta.total_pesquisas_2026} pesquisas de 2026 com registro conferido no PesqEle.`);
 
-        // Renderiza componentes
-        renderizarSeletorConfigs(dados.configuracoes);
-        atualizarTelaConfiguracao();
+        // Renderiza seletor e telas
+        renderizarBotoesConfig(dados.configuracoes);
+        atualizarVisualizacao();
         renderizarAba2(dados.aba2_agregados);
-        renderizarBacktestAno(ANO_BACKTEST_SELECIONADO);
+        renderizarBacktestAno(ANO_BACKTEST);
         renderizarProtocolosPesqEle(meta.protocolos_sabado);
 
         // Eventos de navegacao por abas
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        document.querySelectorAll('.tab-trigger').forEach(btn => {
           btn.addEventListener('click', () => {
-            const targetId = btn.getAttribute('data-tab');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const target = btn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-trigger').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             btn.classList.add('active');
-            const targetContent = document.getElementById(targetId);
-            if (targetContent) targetContent.classList.add('active');
+            const targetPanel = document.getElementById(target);
+            if (targetPanel) targetPanel.classList.add('active');
           });
         });
 
         // Eventos do seletor de ano no backtest
-        document.querySelectorAll('.btn-ano-backtest').forEach(btn => {
+        document.querySelectorAll('.btn-ano-tab').forEach(btn => {
           btn.addEventListener('click', () => {
             const ano = btn.getAttribute('data-ano');
-            ANO_BACKTEST_SELECIONADO = ano;
-            document.querySelectorAll('.btn-ano-backtest').forEach(b => b.classList.remove('active'));
+            ANO_BACKTEST = ano;
+            document.querySelectorAll('.btn-ano-tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderizarBacktestAno(ano);
           });
         });
 
-        pushLog('&gt;', 'pronto', 'Terminal operacional. Selecione uma configuração para comparar.');
+        appendLog('ready', 'Terminal operacional. Selecione uma configuração para comparar.');
       }
 
-      // Boot: Verifica window.DADOS ou tenta fetch('dados.json')
+      // BOOT: Prioriza window.DADOS (sincrono de dados.js) com fallback para fetch('dados.json')
       if (typeof window.DADOS !== 'undefined' && window.DADOS) {
-        inicializar(window.DADOS);
+        inicializarInterface(window.DADOS);
       } else {
         fetch('dados.json')
           .then(res => res.json())
-          .then(dados => inicializar(dados))
+          .then(dados => inicializarInterface(dados))
           .catch(err => {
-            console.error('Erro ao carregar dados:', err);
-            pushLog('!', 'erro', 'Falha ao carregar dados.js e dados.json: ' + err.message);
+            console.error('Falha ao carregar dados:', err);
+            appendLog('error', 'Falha ao carregar dados.js / dados.json: ' + err.message);
           });
       }
     })();
