@@ -62,15 +62,16 @@ As contagens numericas por instituto na janela final de 3 semanas serao geradas 
 
 ## 4. Item (c): `data/manual/pesquisas_2026.csv` Completo e Verificado
 
-**Total de linhas no arquivo:** 6 linhas (1 cabecalho + 5 pesquisas verificadas).
+**Total de linhas no arquivo:** 7 linhas (1 cabecalho + 6 pesquisas verificadas).
 
 ```csv
-instituto,data_inicio_campo,data_fim_campo,data_divulgacao,amostra,registro_tse,metodo_coleta,cenario,base,verificado_em,Augusto Cury,Clariana Barão,Edmilson Costa,Flávio Bolsonaro,Hertz Dias,Luiz Inácio Lula da Silva,Renan Santos,Ronaldo Caiado,Romeu Zema,Rui Costa Pimenta,Samara Martins,Wilson Grassi,brancos_nulos,indecisos,fonte_url
-Datafolha,2026-09-22,2026-09-24,2026-09-24,2002,BR-00304/2026,presencial,estimulado,votos totais,2026-10-02T12:00:00-03:00,5.0,0.0,0.0,36.0,0.0,40.0,3.0,4.0,1.0,0.0,1.0,0.0,5.0,2.0,https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/09/24/datafolha-presidente-24-setembro.ghtml
-Quaest,2026-09-24,2026-09-27,2026-09-28,2004,BR-06520/2026,presencial,estimulado,votos totais,2026-10-02T12:00:00-03:00,4.0,0.0,0.0,34.0,0.0,39.0,3.0,4.0,1.0,0.0,0.0,0.0,10.0,5.0,https://g1.globo.com/google/amp/politica/eleicoes/2026/noticia/2026/09/28/quaest-presidente-1o-turno-28-setembro.ghtml
-PoderData/Aya,2026-09-20,2026-09-23,2026-09-24,3000,BR-01739/2026,telefonica,estimulado,votos totais,2026-10-02T12:00:00-03:00,6.0,0.0,0.0,39.0,1.0,41.0,3.0,2.0,1.0,0.0,1.0,1.0,4.0,2.0,https://www.poder360.com.br/poderdata/flavio-tem-46-e-lula-45-no-2o-turno-diz-poderdata-aya/
-AtlasIntel,2026-09-23,2026-09-28,2026-09-29,5000,BR-04391/2026,online,estimulado,votos totais,2026-10-02T12:00:00-03:00,2.0,,,42.2,,45.3,5.2,1.8,0.9,,,,1.2,1.0,https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-477-e-lula-476-no-2o-turno-diz-atlasintel/
-Real Time Big Data,2026-09-26,2026-09-30,2026-10-01,2000,BR-06289/2026,telefonica,estimulado,votos totais,2026-10-02T12:00:00-03:00,3.0,,,39.0,,43.0,4.0,3.0,1.0,,,,3.0,3.0,https://veja.abril.com.br/politica/como-esta-a-disputa-lula-x-flavio-bolsonaro-a-tres-dias-da-eleicao-segundo-nova-pesquisa/
+instituto,data_inicio_campo,data_fim_campo,data_divulgacao,amostra,registro_tse,metodo_coleta,cenario,base,verificado_em,Augusto Cury,Clariana Barão,Edmilson Costa,Flávio Bolsonaro,Hertz Dias,Luiz Inácio Lula da Silva,Renan Santos,Ronaldo Caiado,Romeu Zema,Rui Costa Pimenta,Samara Martins,Wilson Grassi,outros_agregado,brancos_nulos,indecisos,fonte_url
+Datafolha,2026-09-22,2026-09-24,2026-09-24,2002,BR-00304/2026,presencial,estimulado,votos totais,2026-10-02T15:05:46.366911+00:00,5.0,0.0,0.0,36.0,0.0,40.0,3.0,4.0,1.0,0.0,1.0,0.0,,5.0,2.0,https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/09/24/datafolha-presidente-24-setembro.ghtml
+Quaest,2026-09-24,2026-09-27,2026-09-28,2004,BR-06520/2026,presencial,estimulado,votos totais,2026-10-02T15:05:46.368927+00:00,4.0,0.0,0.0,34.0,0.0,39.0,3.0,4.0,1.0,0.0,0.0,0.0,,10.0,5.0,https://g1.globo.com/google/amp/politica/eleicoes/2026/noticia/2026/09/28/quaest-presidente-1o-turno-28-setembro.ghtml
+PoderData/Aya,2026-09-20,2026-09-23,2026-09-24,3000,BR-01739/2026,telefonica,estimulado,votos totais,2026-10-02T15:05:46.369923+00:00,6.0,1.0,0.0,39.0,0.0,41.0,3.0,2.0,1.0,1.0,1.0,0.0,,4.0,2.0,https://www.poder360.com.br/poderdata/flavio-tem-46-e-lula-45-no-2o-turno-diz-poderdata-aya/
+AtlasIntel,2026-09-23,2026-09-28,2026-09-29,5000,BR-04391/2026,online,estimulado,votos totais,2026-10-02T15:05:46.371906+00:00,2.0,,,42.2,,45.3,5.2,1.8,0.9,,,,0.5,0.9,1.2,https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-477-e-lula-476-no-2o-turno-diz-atlasintel/
+Real Time Big Data,2026-09-26,2026-09-30,2026-10-01,2000,BR-09503/2026,telefonica,estimulado,votos totais,2026-10-02T15:05:46.372928+00:00,3.0,,,39.0,,43.0,4.0,3.0,1.0,,,,1.0,3.0,3.0,https://veja.abril.com.br/politica/como-esta-a-disputa-lula-x-flavio-bolsonaro-a-tres-dias-da-eleicao-segundo-nova-pesquisa/
+Datafolha,2026-09-28,2026-10-01,2026-10-01,2506,BR-08039/2026,presencial,estimulado,votos totais,2026-10-02T15:21:27.614682+00:00,4.0,0.0,0.0,38.0,0.0,42.0,3.0,3.0,1.0,0.0,1.0,1.0,,5.0,2.0,https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/10/01/datafolha-presidente-1-outubro.ghtml
 ```
 
 ### Lista das fontes salvas localmente (HTTP Status 200 confirmado):
@@ -82,6 +83,7 @@ Real Time Big Data,2026-09-26,2026-09-30,2026-10-01,2000,BR-06289/2026,telefonic
 | `data/raw/pesquisas_2026/poderdata_2026_09_24.html` | https://www.poder360.com.br/poderdata/flavio-tem-46-e-lula-45-no-2o-turno-diz-poderdata-aya/ | 200 OK | 278.550 bytes | `42427b418d89ae1f...` |
 | `data/raw/pesquisas_2026/atlasintel_2026_09_29.html` | https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-477-e-lula-476-no-2o-turno-diz-atlasintel/ | 200 OK | 258.271 bytes | `dc8d0ad0a0e8e822...` |
 | `data/raw/pesquisas_2026/realtime_2026_10_01.html` | https://veja.abril.com.br/politica/como-esta-a-disputa-lula-x-flavio-bolsonaro-a-tres-dias-da-eleicao-segundo-nova-pesquisa/ | 200 OK | 272.840 bytes | `248825a7e53f8640...` |
+| `data/raw/pesquisas_2026/datafolha_2026_10_01.html` | https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/10/01/datafolha-presidente-1-outubro.ghtml | 200 OK | 1.343.359 bytes | `25e88a86d4f3d5a3...` |
 
 ### Saida literal do PesqEle (`pesquisa_eleitoral_2026.zip` do TSE) para cada registro:
 
@@ -110,11 +112,17 @@ Protocolo: BR-04391/2026 (PesqEle: BR043912026)
   Periodo de campo: 2026-09-23 a 2026-09-28
   Data divulgacao: 2026-09-29
 
-Protocolo: BR-06289/2026 (PesqEle: BR062892026)
+Protocolo: BR-09503/2026 (PesqEle: BR095032026)
   Empresa: REAL TIME MIDIA LTDA (REAL TIME BIG DATA)
   Amostra registrada: 2000
-  Periodo de campo: 2026-09-23 a 2026-09-26
-  Data divulgacao: 2026-09-28
+  Periodo de campo: 2026-09-26 a 2026-09-30
+  Data divulgacao: 2026-10-01
+
+Protocolo: BR-08039/2026 (PesqEle: BR080392026)
+  Empresa: DATAFOLHA INSTITUTO DE PESQUISAS LTDA.
+  Amostra registrada: 2506
+  Periodo de campo: 2026-09-28 a 2026-10-01
+  Data divulgacao: 2026-10-01
 ```
 
 ---
@@ -134,13 +142,15 @@ votacao_candidato_munzona_2006.zip,https://cdn.tse.jus.br/estatistica/sead/odsel
 votacao_candidato_munzona_2010.zip,https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2010.zip,2026-10-02T14:06:24.328834+00:00,132565895,fc7052974632351a3dc81e8ec17312889687eae0b2d56508259f91deecadd563
 votacao_candidato_munzona_2014.zip,https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2014.zip,2026-10-02T14:06:41.330843+00:00,494100168,f41bceb427820c068b2b14b87befa69d8c333638644eea0e8337534f9b349fd3
 votacao_candidato_munzona_2018.zip,https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2018.zip,2026-10-02T14:06:51.931746+00:00,395389280,f880848ef4ba340b15cb91ff0754aa370d34ca7b7e605d6607c0f2a75009adc8
-pesquisa_eleitoral_2026.zip,https://cdn.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/pesquisa_eleitoral_2026.zip,2026-10-02T14:58:46.425812+00:00,5901675,69e9e5d4cb0998f8fc6189ef726a7e584f2944b204e38e653066917fbf7465fc
-pesquisas_2026/datafolha_2026_09_24.html,https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/09/24/datafolha-presidente-24-setembro.ghtml,2026-10-02T15:05:46.427329+00:00,1261007,e335e231c15dba56e9c403dd90d97b0a701d7fa5b3c538cb346b0807b1e42721
-pesquisas_2026/quaest_2026_09_28.html,https://g1.globo.com/google/amp/politica/eleicoes/2026/noticia/2026/09/28/quaest-presidente-1o-turno-28-setembro.ghtml,2026-10-02T15:05:46.428330+00:00,126622,e65c1f5446e0724e8d35688d55c706bf95ce9df3bebaefc73950150917ae69f8
-pesquisas_2026/poderdata_2026_09_24.html,https://www.poder360.com.br/poderdata/flavio-tem-46-e-lula-45-no-2o-turno-diz-poderdata-aya/,2026-10-02T15:05:46.429330+00:00,278550,42427b418d89ae1f9c3ff411a51aa0be17b6a482381285038c0326b48590d9c0
-pesquisas_2026/atlasintel_2026_09_29.html,https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-477-e-lula-476-no-2o-turno-diz-atlasintel/,2026-10-02T15:05:46.430330+00:00,258271,dc8d0ad0a0e8e8220ce6600c2538f8280f555c82eb0aaec1ae08cf7778b408dc
-pesquisas_2026/realtime_2026_10_01.html,https://veja.abril.com.br/politica/como-esta-a-disputa-lula-x-flavio-bolsonaro-a-tres-dias-da-eleicao-segundo-nova-pesquisa/,2026-10-02T15:05:46.431330+00:00,272840,248825a7e53f8640c49539a296d3f2fcb9f5f00e9ec01f3b392e20ff368c07e0
+pesquisa_eleitoral_2026.zip,https://cdn.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/pesquisa_eleitoral_2026.zip,2026-10-02T14:58:45.993930+00:00,5901675,ac71d87a5a7c89bfd44c6e6a00d63a4faedb20d84f879bdd884e0e6ba0f931a9
+pesquisas_2026/datafolha_2026_09_24.html,https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/09/24/datafolha-presidente-24-setembro.ghtml,2026-10-02T15:05:46.366911+00:00,1261007,e335e231c15dba562399954cc2b89b4d949961fdba8d8fc73c490fec6e32fde7
+pesquisas_2026/quaest_2026_09_28.html,https://g1.globo.com/google/amp/politica/eleicoes/2026/noticia/2026/09/28/quaest-presidente-1o-turno-28-setembro.ghtml,2026-10-02T15:05:46.368927+00:00,126622,e65c1f5446e0724e2bc5a87bf62c32528e45751e6da7b4c2e7fcf135a9ff864f
+pesquisas_2026/poderdata_2026_09_24.html,https://www.poder360.com.br/poderdata/flavio-tem-46-e-lula-45-no-2o-turno-diz-poderdata-aya/,2026-10-02T15:05:46.369923+00:00,278550,42427b418d89ae1feaaf87ae6a1abc1ad26aacc571c5d1e8b30c08c042cfb187
+pesquisas_2026/atlasintel_2026_09_29.html,https://www.poder360.com.br/poder-eleicoes-2026/flavio-tem-477-e-lula-476-no-2o-turno-diz-atlasintel/,2026-10-02T15:05:46.371906+00:00,258271,dc8d0ad0a0e8e822113c5de1446fe8e716c51e267ed60277d82a8cf2d975612a
+pesquisas_2026/realtime_2026_10_01.html,https://veja.abril.com.br/politica/como-esta-a-disputa-lula-x-flavio-bolsonaro-a-tres-dias-da-eleicao-segundo-nova-pesquisa/,2026-10-02T15:05:46.372928+00:00,272840,248825a7e53f8640c5ed1111fcb8e838a545c3e74f7354ce6d91642e96a21e95
+pesquisas_2026/datafolha_2026_10_01.html,https://g1.globo.com/politica/eleicoes/2026/pesquisa-eleitoral/noticia/2026/10/01/datafolha-presidente-1-outubro.ghtml,2026-10-02T15:21:27.614682+00:00,1343359,25e88a86d4f3d5a30c9d4d31b403da968b9bf125fd1bc6c9165c53c622cdbce0
 ```
+
 
 ---
 
@@ -175,7 +185,7 @@ Caso Leonardo Avalanche venha a receber votos validos na urna apurados pelo TSE,
 
 ## 7. Item (f): Saida dos Testes, Linter e Git Log
 
-### Saida do Pytest (`pytest -v`): 61 passed (100% sucesso, 0 skipped, 0 failed)
+### Saida do Pytest (`pytest -v`): 63 passed (100% sucesso, 0 skipped, 0 failed)
 
 ```text
 ============================= test session starts =============================
@@ -183,71 +193,73 @@ platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\PedroVa
 cachedir: .pytest_cache
 rootdir: C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleicoes
 plugins: anyio-4.15.1, platformdirs-4.12.2
-collecting ... collected 61 items
+collecting ... collected 63 items
 
 tests/test_pipeline.py::TestConversaoVotosValidos::test_soma_igual_a_100 PASSED [  1%]
 tests/test_pipeline.py::TestConversaoVotosValidos::test_proporcoes_corretas_dois_candidatos PASSED [  3%]
 tests/test_pipeline.py::TestConversaoVotosValidos::test_candidato_sub_judice_fora_de_candidatos_edital_descartado PASSED [  4%]
 tests/test_pipeline.py::TestConversaoVotosValidos::test_nan_tratado_como_zero PASSED [  6%]
-tests/test_pipeline.py::TestConversaoVotosValidos::test_zero_e_nan_resultam_em_zero_pct PASSED [  8%]
+tests/test_pipeline.py::TestConversaoVotosValidos::test_zero_e_nan_resultam_em_zero_pct PASSED [  7%]
 tests/test_pipeline.py::TestConversaoVotosValidos::test_raise_quando_todos_zero PASSED [  9%]
 tests/test_pipeline.py::TestMaioresRestos::test_soma_exata_1000_decimos PASSED [ 11%]
-tests/test_pipeline.py::TestMaioresRestos::test_entrada_que_soma_9997 PASSED [ 13%]
+tests/test_pipeline.py::TestMaioresRestos::test_entrada_que_soma_9997 PASSED [ 12%]
 tests/test_pipeline.py::TestMaioresRestos::test_cada_valor_a_menos_de_01_do_original PASSED [ 14%]
-tests/test_pipeline.py::TestMaioresRestos::test_soma_exata_tres_candidatos PASSED [ 16%]
-tests/test_pipeline.py::TestMaioresRestos::test_comprimento_preservado PASSED [ 18%]
+tests/test_pipeline.py::TestMaioresRestos::test_soma_exata_tres_candidatos PASSED [ 15%]
+tests/test_pipeline.py::TestMaioresRestos::test_comprimento_preservado PASSED [ 17%]
 tests/test_pipeline.py::TestMaioresRestos::test_uma_casa_decimal PASSED  [ 19%]
-tests/test_pipeline.py::TestMaioresRestos::test_valor_negativo_lanca_erro PASSED [ 21%]
+tests/test_pipeline.py::TestMaioresRestos::test_valor_negativo_lanca_erro PASSED [ 20%]
 tests/test_pipeline.py::TestMAE::test_mae_zero_previsao_perfeita PASSED  [ 22%]
-tests/test_pipeline.py::TestMAE::test_mae_simetrico PASSED               [ 24%]
-tests/test_pipeline.py::TestMAE::test_nanicos_pesam_igual_ao_top2 PASSED [ 26%]
-tests/test_pipeline.py::TestMAE::test_candidato_ausente_em_realizados_lanca_keyerror PASSED [ 27%]
-tests/test_pipeline.py::TestMAE::test_previstos_vazio_lanca_valueerror PASSED [ 29%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2006] PASSED  [ 31%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2010] PASSED  [ 32%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2014] PASSED  [ 34%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2018] PASSED  [ 36%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2022] PASSED  [ 37%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2026] PASSED  [ 39%]
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2006] PASSED [ 40%]
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2010] PASSED [ 42%]
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2014] PASSED [ 44%]
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2018] PASSED [ 45%]
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2022] PASSED [ 47%]
-tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2026] PASSED [ 49%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2006] PASSED [ 50%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2010] PASSED [ 52%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2014] PASSED [ 54%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2018] PASSED [ 55%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2022] PASSED [ 57%]
-tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2026] PASSED [ 59%]
-tests/test_pipeline.py::TestDenominadores::test_abstencao_sobre_aptos PASSED [ 60%]
-tests/test_pipeline.py::TestDenominadores::test_brancos_sobre_comparecimento PASSED [ 62%]
-tests/test_pipeline.py::TestDenominadores::test_nulos_sobre_comparecimento PASSED [ 63%]
-tests/test_pipeline.py::TestDenominadores::test_validos_mais_brancos_mais_nulos_igual_comparecimento PASSED [ 65%]
-tests/test_pipeline.py::TestDenominadores::test_multiplas_linhas_somadas PASSED [ 67%]
-tests/test_pipeline.py::TestDenominadores::test_colunas_faltando_lanca_valueerror PASSED [ 68%]
-tests/test_pipeline.py::TestDenominadores::test_df_vazio_lanca_valueerror PASSED [ 70%]
-tests/test_pipeline.py::TestAgregacaoInstitutos::test_nan_fica_fora_da_media PASSED [ 72%]
-tests/test_pipeline.py::TestAgregacaoInstitutos::test_zero_entra_como_zero PASSED [ 73%]
-tests/test_pipeline.py::TestAgregacaoInstitutos::test_todos_nan_retorna_nan PASSED [ 75%]
-tests/test_pipeline.py::TestAgregacaoInstitutos::test_candidato_ausente_no_df_retorna_nan PASSED [ 77%]
-tests/test_pipeline.py::TestAgregacaoInstitutos::test_df_vazio_retorna_todos_nan PASSED [ 78%]
-tests/test_pipeline.py::TestSanidade2022::test_sanidade_pass_com_resultados_corretos PASSED [ 80%]
-tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_lula_errado PASSED [ 81%]
-tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_abstencao_errada PASSED [ 83%]
-tests/test_pipeline.py::test_integracao_sanidade_2022_do_parquet PASSED  [ 85%]
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_valido_passa PASSED [ 86%]
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_com_uma_aba_falha PASSED [ 88%]
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_nome_errado_falha PASSED [ 90%]
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_partido_errado_falha PASSED [ 91%]
-tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_sem_linha_total_falha PASSED [ 93%]
-tests/test_pipeline.py::TestPesquisas2026Manual::test_arquivo_existe_e_possui_linhas PASSED [ 95%]
-tests/test_pipeline.py::TestPesquisas2026Manual::test_colunas_obrigatorias_presentes PASSED [ 96%]
-tests/test_pipeline.py::TestPesquisas2026Manual::test_soma_intencoes_por_linha PASSED [ 98%]
-tests/test_pipeline.py::TestPesquisas2026Manual::test_candidatos_nao_divulgados_sao_nan PASSED [100%]
+tests/test_pipeline.py::TestMAE::test_mae_simetrico PASSED               [ 23%]
+tests/test_pipeline.py::TestMAE::test_nanicos_pesam_igual_ao_top2 PASSED [ 25%]
+tests/test_pipeline.py::TestMAE::test_candidato_ausente_em_realizados_lanca_keyerror PASSED [ 26%]
+tests/test_pipeline.py::TestMAE::test_previstos_vazio_lanca_valueerror PASSED [ 28%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2006] PASSED  [ 30%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2010] PASSED  [ 31%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2014] PASSED  [ 33%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2018] PASSED  [ 34%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2022] PASSED  [ 36%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_vespera[2026] PASSED  [ 38%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2006] PASSED [ 39%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2010] PASSED [ 41%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2014] PASSED [ 42%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2018] PASSED [ 44%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2022] PASSED [ 46%]
+tests/test_pipeline.py::test_filtro_vespera_exclui_dia_da_eleicao[2026] PASSED [ 47%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2006] PASSED [ 49%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2010] PASSED [ 50%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2014] PASSED [ 52%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2018] PASSED [ 53%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2022] PASSED [ 55%]
+tests/test_pipeline.py::test_filtro_vespera_inclui_pesquisa_anterior[2026] PASSED [ 57%]
+tests/test_pipeline.py::TestDenominadores::test_abstencao_sobre_aptos PASSED [ 58%]
+tests/test_pipeline.py::TestDenominadores::test_brancos_sobre_comparecimento PASSED [ 60%]
+tests/test_pipeline.py::TestDenominadores::test_nulos_sobre_comparecimento PASSED [ 61%]
+tests/test_pipeline.py::TestDenominadores::test_validos_mais_brancos_mais_nulos_igual_comparecimento PASSED [ 63%]
+tests/test_pipeline.py::TestDenominadores::test_multiplas_linhas_somadas PASSED [ 65%]
+tests/test_pipeline.py::TestDenominadores::test_colunas_faltando_lanca_valueerror PASSED [ 66%]
+tests/test_pipeline.py::TestDenominadores::test_df_vazio_lanca_valueerror PASSED [ 68%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_nan_fica_fora_da_media PASSED [ 69%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_zero_entra_como_zero PASSED [ 71%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_todos_nan_retorna_nan PASSED [ 73%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_candidato_ausente_no_df_retorna_nan PASSED [ 74%]
+tests/test_pipeline.py::TestAgregacaoInstitutos::test_df_vazio_retorna_todos_nan PASSED [ 76%]
+tests/test_pipeline.py::TestSanidade2022::test_sanidade_pass_com_resultados_corretos PASSED [ 77%]
+tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_lula_errado PASSED [ 79%]
+tests/test_pipeline.py::TestSanidade2022::test_sanidade_fail_com_abstencao_errada PASSED [ 80%]
+tests/test_pipeline.py::test_integracao_sanidade_2022_do_parquet PASSED  [ 82%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_valido_passa PASSED [ 84%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_com_uma_aba_falha PASSED [ 85%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_nome_errado_falha PASSED [ 87%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_partido_errado_falha PASSED [ 88%]
+tests/test_pipeline.py::TestValidacaoXLSX::test_xlsx_sem_linha_total_falha PASSED [ 90%]
+tests/test_pipeline.py::TestPesquisas2026Manual::test_arquivo_existe_e_possui_linhas PASSED [ 92%]
+tests/test_pipeline.py::TestPesquisas2026Manual::test_colunas_obrigatorias_presentes PASSED [ 93%]
+tests/test_pipeline.py::TestPesquisas2026Manual::test_soma_intencoes_por_linha PASSED [ 95%]
+tests/test_pipeline.py::TestPesquisas2026Manual::test_candidatos_nao_divulgados_sao_nan PASSED [ 96%]
+tests/test_pipeline.py::TestPesquisas2026Manual::test_transcricao_pesquisas_2026_contra_html_salvo PASSED [ 98%]
+tests/test_sanity.py::test_sanity PASSED                                 [100%]
 
-============================= 61 passed in 1.89s ==============================
+============================= 63 passed in 2.80s ==============================
 ```
 
 ### Linter (Flake8): 0 erros

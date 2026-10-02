@@ -155,7 +155,7 @@ PESQUISAS_2026_SCHEMA = (
         "verificado_em",
     ]
     + CANDIDATOS_EDITAL
-    + ["brancos_nulos", "indecisos", "fonte_url"]
+    + ["outros_agregado", "brancos_nulos", "indecisos", "fonte_url"]
 )
 
 # --------------------------------------------------------------------------- #

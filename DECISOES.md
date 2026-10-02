@@ -53,3 +53,18 @@ Este documento registra todas as decisoes tomadas ao longo do projeto de previsa
 
 - **Decisao:** Proibido o uso de `git push --force` na branch `main`. Atualizacoes forcadas sao restritas exclusivamente a movimentacao de tags de checkpoint (`git tag -f <tag> && git push -f origin <tag>`).
 - **Motivo:** Preservar a integridade linear do historico do repositorio no GitHub, evitando sobrescrita acidental de commits.
+
+---
+
+## 2026-10-02: Tratamento e Transcricao Verificada das Pesquisas de 2026
+
+- **Decisao:** Toda e qualquer linha em `data/manual/pesquisas_2026.csv` deve possuir pagina HTML correspondente salva em `data/raw/pesquisas_2026/`, registrada no `data/MANIFEST.csv` com SHA-256 e timestamp ISO real de download utilizado no campo `verificado_em`.
+- **Regra para Nanicos e Agregados:**
+  1. Candidatos nao divulgados individualmente pelo instituto recebem valor vazio (`NaN`), e nao `0.0`. O valor `0.0` e estritamente reservado para casos em que o instituto publicou explicitamente 0% ou declarou que o candidato nao pontuou.
+  2. Adicionada a coluna `outros_agregado` para acomodar o percentual de institutos que agrupam os demais concorrentes em bloco (ex.: AtlasIntel com 0,5% e Real Time Big Data com 1,0%).
+- **Conferencia Pontual dos Institutos:**
+  1. **AtlasIntel (29/09, BR-04391/2026):** Votos brancos/nulos ajustados para 0,9% e indecisos para 1,2%. Nanicos individuais nao discriminados como `NaN`, com `outros_agregado = 0.5%`.
+  2. **PoderData/Aya (24/09, BR-01739/2026):** Frase literal da reportagem: "Romeu Zema (Novo), Rui Costa Pimenta (PCO), Samara Martins (UP) e Clariana Barão (Democracia Cristã) registram 1% cada um. Wilson Grassi (Democrata), Leonardo Avalanche (PRTB), Hertz Dias (PSTU) e Edmilson Costa (PCB) não pontuam. Outros 4% afirmaram que pretendem votar em branco ou anular, enquanto 2% não souberam responder." Atribuidos: Zema 1%, Rui 1%, Samara 1%, Clariana 1%, Wilson 0%, Hertz 0%, Edmilson 0%, e `outros_agregado` vazio.
+  3. **Real Time Big Data (01/10):** Resolucao do numero de registro. A materia da Veja cita textualmente "A pesquisa foi registrada no sistema do Tribunal Superior Eleitoral (TSE) pelo código BR-09503/2026." No PesqEle, `BR095032026` corresponde a REAL TIME BIG DATA, cargo Presidente, campo 26 a 30 de setembro, divulgacao em 01/10/2026 e amostra de 2.000 eleitores. Registrado `outros_agregado = 1.0%` e nanicos individuais como `NaN`.
+  4. **Datafolha (01/10, BR-08039/2026):** Inclusa a rodada final de 28/09 a 01/10 com amostra de 2.506 eleitores, mantendo a rodada de 22-24/09 como observacao separada.
+- **Teste Automatizado de Transcricao:** Criado teste no pipeline (`test_transcricao_pesquisas_2026_contra_html_salvo`) que valida que cada celula numerica nao-NaN de `pesquisas_2026.csv` existe comprovadamente no texto do arquivo HTML bruto correspondente.

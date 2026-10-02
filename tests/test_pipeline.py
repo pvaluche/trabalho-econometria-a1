@@ -20,10 +20,12 @@ from scripts.validar_entrega import validar_xlsx
 from src.arredondamento import maiores_restos
 from src.config import (
     CANDIDATOS_EDITAL,
+    MANIFEST_PATH,
     PARTIDOS_EDITAL,
     PESQUISAS_2026_PATH,
     PESQUISAS_2026_SCHEMA,
     PROCESSED_DIR,
+    RAW_DIR,
     verificar_sanidade_2022,
 )
 from src.conversao import converter_para_votos_validos
@@ -512,7 +514,7 @@ class TestPesquisas2026Manual:
     def test_arquivo_existe_e_possui_linhas(self):
         assert PESQUISAS_2026_PATH.exists()
         df = pd.read_csv(PESQUISAS_2026_PATH)
-        assert len(df) >= 5
+        assert len(df) >= 6
 
     def test_colunas_obrigatorias_presentes(self):
         df = pd.read_csv(PESQUISAS_2026_PATH)
@@ -521,15 +523,20 @@ class TestPesquisas2026Manual:
 
     def test_soma_intencoes_por_linha(self):
         """
-        Soma dos candidatos detalhados + brancos/nulos + indecisos
+        Soma dos candidatos detalhados + outros_agregado + brancos/nulos + indecisos
         deve estar entre 97.0 e 101.5% por linha.
         """
         df = pd.read_csv(PESQUISAS_2026_PATH)
         for idx, row in df.iterrows():
             cand_vals = [row[c] for c in CANDIDATOS_EDITAL if pd.notna(row[c])]
+            outros = (
+                row["outros_agregado"]
+                if "outros_agregado" in df.columns and pd.notna(row["outros_agregado"])
+                else 0.0
+            )
             bn = row["brancos_nulos"] if pd.notna(row["brancos_nulos"]) else 0.0
             ind = row["indecisos"] if pd.notna(row["indecisos"]) else 0.0
-            soma = sum(cand_vals) + bn + ind
+            soma = sum(cand_vals) + outros + bn + ind
             assert 97.0 <= soma <= 101.5, (
                 f"Linha {idx} ({row['instituto']}) tem soma={soma:.1f} fora de [97, 101.5]"
             )
@@ -544,3 +551,70 @@ class TestPesquisas2026Manual:
         if not atlas.empty:
             assert pd.isna(atlas.iloc[0]["Clariana Barão"])
             assert pd.isna(atlas.iloc[0]["Edmilson Costa"])
+
+    def test_transcricao_pesquisas_2026_contra_html_salvo(self):
+        """
+        Para cada celula numerica nao-NaN de pesquisas_2026.csv, o valor
+        deve aparecer comprovadamente no texto do HTML bruto salvo correspondente.
+        """
+        import csv
+        import re
+        from bs4 import BeautifulSoup
+
+        assert MANIFEST_PATH.exists()
+        manifest_map = {}
+        with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                manifest_map[row["url"]] = row["arquivo"]
+
+        df = pd.read_csv(PESQUISAS_2026_PATH)
+        assert len(df) >= 6
+
+        for idx, row in df.iterrows():
+            url = row["fonte_url"]
+            assert url in manifest_map, f"URL {url} nao encontrada no MANIFEST.csv"
+            rel_file = manifest_map[url]
+            html_path = RAW_DIR / rel_file
+            assert html_path.exists(), f"Arquivo HTML {html_path} nao existe"
+
+            with open(html_path, "r", encoding="utf-8", errors="ignore") as f:
+                text = BeautifulSoup(f.read(), "html.parser").get_text()
+
+            colunas_numericas = (
+                ["amostra"]
+                + CANDIDATOS_EDITAL
+                + ["outros_agregado", "brancos_nulos", "indecisos"]
+            )
+            for col in colunas_numericas:
+                val = row[col]
+                if pd.isna(val) or val == "":
+                    continue
+                num = float(val)
+                num_int = int(num) if num.is_integer() else None
+
+                if col == "amostra":
+                    pats = [f"{num_int:,}".replace(",", "."), str(num_int)]
+                elif num == 0.0:
+                    pats = [
+                        "0%", " 0 ", "(0)", "zero", "não pontuou", "não pontua",
+                        "não pontuam", "0,0%"
+                    ]
+                elif num_int is not None:
+                    pats = [
+                        f"{num_int}%", f"{num_int} %", f"{num_int},0%",
+                        f"{num_int}.0%", f"{num_int}"
+                    ]
+                else:
+                    s_virg = f"{num:.1f}".replace(".", ",")
+                    s_ponto = f"{num:.1f}"
+                    pats = [
+                        f"{s_virg}%", f"{s_virg} %", f"{s_ponto}%",
+                        f"{s_ponto} %", s_virg, s_ponto
+                    ]
+
+                found = any(re.search(re.escape(p), text, re.IGNORECASE) for p in pats)
+                assert found, (
+                    f"Falha de transcricao na linha {idx} ({row['instituto']}): "
+                    f"coluna '{col}'={val} nao encontrada no HTML {html_path} "
+                    f"(padroes testados: {pats[:4]})"
+                )
