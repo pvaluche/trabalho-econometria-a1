@@ -1126,3 +1126,56 @@ class TestBacktestHistorico:
             assert abs(mae_ofic_rep - media_erros_ofic) < 0.001, (
                 f"Ano {ano} Oficial: MAE reportado ({mae_ofic_rep}) difere da media da tabela ({media_erros_ofic:.4f})"
             )
+
+
+class TestMetodologiaPDF:
+    """Testes de conformidade estrita para o PDF oficial docs/metodologia.pdf."""
+
+    def test_metodologia_pdf_existe_e_tem_exatamente_duas_paginas(self):
+        import pypdf
+        from src.config import DOCS_DIR
+
+        pdf_path = DOCS_DIR / "metodologia.pdf"
+        assert pdf_path.exists(), "docs/metodologia.pdf deve existir"
+        reader = pypdf.PdfReader(pdf_path)
+        assert len(reader.pages) == 2, f"docs/metodologia.pdf deve ter exatamente 2 paginas, tem {len(reader.pages)}"
+
+    def test_metodologia_pdf_contem_todos_percentuais_com_virgula_e_sem_preliminar(self):
+        import openpyxl
+        import pypdf
+        from src.config import DOCS_DIR, OUTPUTS_DIR
+
+        pdf_path = DOCS_DIR / "metodologia.pdf"
+        assert pdf_path.exists()
+        reader = pypdf.PdfReader(pdf_path)
+        texto = "\n".join(p.extract_text() for p in reader.pages)
+
+        # Regra: palavra PRELIMINAR proibida no PDF final
+        assert "PRELIMINAR" not in texto.upper(), "A palavra PRELIMINAR nao pode aparecer no PDF final"
+
+        # Regra: todos os percentuais do xlsx devem constar com virgula no PDF
+        xlsx_path = OUTPUTS_DIR / "previsao_2026.xlsx"
+        assert xlsx_path.exists()
+        wb = openpyxl.load_workbook(xlsx_path, data_only=True)
+        ws1 = wb["Candidatos"]
+        ws2 = wb["Adicionais"]
+
+        faltantes = []
+        for row in ws1.iter_rows(min_row=2, values_only=True):
+            nome = str(row[0] or "").strip()
+            if nome and nome.lower() != "total":
+                val = float(row[2])
+                v_str = f"{val:.1f}%".replace(".", ",")
+                if v_str not in texto:
+                    faltantes.append(f"Aba 1 ({nome}): {v_str}")
+
+        for row in ws2.iter_rows(min_row=2, values_only=True):
+            lbl = str(row[0] or "").strip()
+            if lbl:
+                val = float(row[1])
+                v_str = f"{val:.1f}%".replace(".", ",")
+                if v_str not in texto:
+                    faltantes.append(f"Aba 2 ({lbl}): {v_str}")
+
+        assert not faltantes, f"Percentuais do XLSX nao encontrados no PDF: {faltantes}"
+

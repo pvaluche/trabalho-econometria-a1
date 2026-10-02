@@ -130,7 +130,7 @@ def calcular_m0_dict(df_2026: pd.DataFrame) -> dict[str, float]:
 
 
 def gerar_conteudo_latex(
-    status_previsao: str = "FINAL (corte 03/10/2026 20h00)",
+    status_previsao: str = "FINAL (pesquisas até 03/10/2026, 20h00)",
 ) -> str:
     """Gera o texto completo para docs/numeros_finais.tex."""
     csv_path = MANUAL_DIR / "pesquisas_2026.csv"
@@ -194,7 +194,7 @@ def main():
     parser = argparse.ArgumentParser(description="Gera docs/numeros_finais.tex a partir do pipeline.")
     parser.add_argument(
         "--status",
-        default="FINAL (corte 03/10/2026 20h00)",
+        default="FINAL (pesquisas até 03/10/2026, 20h00)",
         help="Texto do macro statusprevisao.",
     )
     args = parser.parse_args()

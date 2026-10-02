@@ -121,10 +121,10 @@ Write-Host "[OK] Relatorio reports/checkpoint_4.md gerado e sincronizado." -Fore
 Write-Host ""
 
 # ------------------------------------------------------------------------------
-# ETAPA 7: Geracao dos Numeros em LaTeX e Compilacao do PDF (docs/metodologia.tex)
+# ETAPA 7: Geracao dos Numeros em LaTeX, Compilacao do PDF e Auditoria Estrita
 # ------------------------------------------------------------------------------
 Write-Host "--------------------------------------------------------------------------------" -ForegroundColor Yellow
-Write-Host "[ETAPA 7/7] Gerando docs/numeros_finais.tex e compilando docs/metodologia.tex..." -ForegroundColor Yellow
+Write-Host "[ETAPA 7/7] Gerando docs/numeros_finais.tex, compilando PDF e auditando conteudo..." -ForegroundColor Yellow
 Write-Host "--------------------------------------------------------------------------------" -ForegroundColor Yellow
 
 & $PYTHON scripts/gerar_numeros_latex.py
@@ -135,7 +135,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "[OK] docs/numeros_finais.tex gerado com sucesso." -ForegroundColor Green
 
 if (Get-Command pdflatex -ErrorAction SilentlyContinue) {
-    Write-Host "[INFO] Executando pdflatex docs/metodologia.tex (passo 1/2)..." -ForegroundColor Cyan
+    Write-Host "[INFO] pdflatex detectado. Compilando docs/metodologia.tex (passo 1/2)..." -ForegroundColor Cyan
     Push-Location docs
     try {
         & pdflatex -interaction=nonstopmode metodologia.tex
@@ -143,7 +143,7 @@ if (Get-Command pdflatex -ErrorAction SilentlyContinue) {
             Write-Host "[FALHA NA ETAPA 7] Erro na primeira compilacao de metodologia.tex!" -ForegroundColor Red
             exit 1
         }
-        Write-Host "[INFO] Executando pdflatex docs/metodologia.tex (passo 2/2)..." -ForegroundColor Cyan
+        Write-Host "[INFO] Compilando docs/metodologia.tex (passo 2/2)..." -ForegroundColor Cyan
         & pdflatex -interaction=nonstopmode metodologia.tex
         if ($LASTEXITCODE -ne 0) {
             Write-Host "[FALHA NA ETAPA 7] Erro na segunda compilacao de metodologia.tex!" -ForegroundColor Red
@@ -154,21 +154,65 @@ if (Get-Command pdflatex -ErrorAction SilentlyContinue) {
         Pop-Location
     }
 } else {
-    Write-Host "[AVISO] pdflatex nao encontrado no PATH do sistema. Mantendo docs/metodologia.pdf existente." -ForegroundColor Yellow
-}
-
-# Conferencia estrita: o PDF nao pode ter mais de 2 paginas
-if (Test-Path "docs/metodologia.pdf") {
-    $NUM_PAGINAS = [int](& $PYTHON -c "import pypdf; reader = pypdf.PdfReader('docs/metodologia.pdf'); print(len(reader.pages))")
-    if ($NUM_PAGINAS -gt 2) {
-        Write-Host "[FALHA CRITICA NA ETAPA 7] docs/metodologia.pdf tem $NUM_PAGINAS paginas! Exige-se no maximo 2 paginas." -ForegroundColor Red
+    Write-Host "[INFO] pdflatex nao disponivel no ambiente local. Gerando docs/metodologia.pdf via motor Python..." -ForegroundColor Cyan
+    & $PYTHON scripts/gerar_pdf_metodologia.py
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[FALHA CRITICA NA ETAPA 7] Erro ao gerar docs/metodologia.pdf via Python!" -ForegroundColor Red
         exit 1
     }
-    Write-Host "[OK] docs/metodologia.pdf conferido com sucesso ($NUM_PAGINAS paginas, limite maximo = 2)." -ForegroundColor Green
-} else {
-    Write-Host "[FALHA CRITICA NA ETAPA 7] docs/metodologia.pdf nao encontrado!" -ForegroundColor Red
+}
+
+# Auditoria estrita do PDF com pypdf
+Write-Host "[INFO] Executando auditoria estrita de docs/metodologia.pdf via pypdf..." -ForegroundColor Cyan
+& $PYTHON -c "
+import sys
+import pypdf
+import openpyxl
+
+reader = pypdf.PdfReader('docs/metodologia.pdf')
+num_pags = len(reader.pages)
+if num_pags != 2:
+    print(f'[ERRO FATAL] PDF possui {num_pags} paginas! Exige-se exatamente 2.')
+    sys.exit(1)
+
+texto_completo = '\n'.join(p.extract_text() for p in reader.pages)
+
+if 'PRELIMINAR' in texto_completo.upper():
+    print('[ERRO FATAL] Palavra PRELIMINAR detectada no PDF final!')
+    sys.exit(1)
+
+wb = openpyxl.load_workbook('outputs/previsao_2026.xlsx', data_only=True)
+ws1 = wb['Candidatos']
+ws2 = wb['Adicionais']
+
+faltantes = []
+for row in ws1.iter_rows(min_row=2, values_only=True):
+    nome = str(row[0] or '').strip()
+    if nome and nome.lower() != 'total':
+        val = float(row[2])
+        v_str = f'{val:.1f}%'.replace('.', ',')
+        if v_str not in texto_completo:
+            faltantes.append(f'Aba 1 ({nome}): {v_str}')
+
+for row in ws2.iter_rows(min_row=2, values_only=True):
+    lbl = str(row[0] or '').strip()
+    if lbl:
+        val = float(row[1])
+        v_str = f'{val:.1f}%'.replace('.', ',')
+        if v_str not in texto_completo:
+            faltantes.append(f'Aba 2 ({lbl}): {v_str}')
+
+if faltantes:
+    print(f'[ERRO FATAL] Valores do XLSX ausentes no PDF: {faltantes}')
+    sys.exit(1)
+
+print('[OK] PDF auditado: 2 paginas, sem PRELIMINAR, 100% dos percentuais conferidos.')
+"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[FALHA CRITICA NA ETAPA 7] Auditoria de conformidade de docs/metodologia.pdf falhou!" -ForegroundColor Red
     exit 1
 }
+Write-Host "[OK] docs/metodologia.pdf aprovado em todas as checagens estritas." -ForegroundColor Green
 Write-Host ""
 
 # ------------------------------------------------------------------------------
