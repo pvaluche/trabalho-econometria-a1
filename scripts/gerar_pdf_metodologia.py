@@ -59,7 +59,7 @@ class NumberedCanvas(canvas.Canvas):
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor("#555555"))
         self.drawString(
-            48, 24, "Desafio de Estatistica e Econometria, FGV EPGE"
+            48, 24, "Desafio de Estatística e Econometria, FGV EPGE"
         )
         self.drawRightString(A4[0] - 48, 24, f"{self._pageNumber}/{page_count}")
         self.restoreState()
@@ -108,7 +108,7 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
     m0_dict = {c: round(v, 1) for c, v in zip(CANDIDATOS_EDITAL, r_m0)}
 
     if status_texto is None:
-        status_texto = "FINAL (pesquisas ate 03/10/2026, 20h00)"
+        status_texto = "FINAL (pesquisas até 03/10/2026, 20h00)"
 
     doc = SimpleDocTemplate(
         str(caminho_saida),
@@ -474,7 +474,10 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
         Paragraph(
             "Todo o pipeline é implementado em Python com testes automatizados, dados brutos com hash de integridade "
             "e decisões metodológicas pré-registradas. As tabelas deste documento e a planilha de entrega são geradas "
-            "diretamente a partir dos dados pelo mesmo pipeline, e não digitadas.",
+            "diretamente a partir dos dados pelo mesmo pipeline, e não digitadas. "
+            'Código, dados, pré-registro e testes disponíveis em '
+            '<a href="https://github.com/pvaluche/trabalho-econometria-a1/tree/entrega-final">'
+            '<font color="#1F3A5F"><u>https://github.com/pvaluche/trabalho-econometria-a1/tree/entrega-final</u></font></a>.',
             estilo_corpo,
         )
     )
