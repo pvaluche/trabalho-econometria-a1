@@ -2,6 +2,9 @@
 config.py
 Parametros centrais do projeto de previsao eleitoral 2026.
 Todos os caminhos sao derivados de ROOT -- nunca hardcode caminhos absolutos fora deste arquivo.
+
+FONTE UNICA DE VERDADE para nomes e partidos dos candidatos do edital.
+Pipeline, testes e xlsx usam CANDIDATOS_EDITAL e PARTIDOS_EDITAL.
 """
 
 from pathlib import Path
@@ -27,10 +30,9 @@ INTERFACE_DIR = ROOT / "interface"
 NOTEBOOKS_DIR = ROOT / "notebooks"
 
 # --------------------------------------------------------------------------- #
-# Horario de corte (a ser confirmado pelo usuario)
+# Horario de corte (a ser confirmado pelo usuario antes do pre-registro)
 # --------------------------------------------------------------------------- #
-# Sabado 03/10/2026 -- horario exato a definir. Altere aqui SOMENTE ANTES
-# de rodar qualquer previsao de 2026 e documente em DECISOES.md.
+# Sabado 03/10/2026 -- horario exato a definir e registrar em PRE_REGISTRO.md.
 # Formato ISO 8601 com fuso -03:00.
 HORARIO_CORTE = "2026-10-03T20:00:00-03:00"
 
@@ -40,31 +42,33 @@ HORARIO_CORTE = "2026-10-03T20:00:00-03:00"
 ANOS_HISTORICO = [2006, 2010, 2014, 2018, 2022]
 
 # --------------------------------------------------------------------------- #
-# Candidatos oficiais do 1o turno de 2026 (fonte: edital FGV EPGE)
+# Candidatos oficiais do 1o turno de 2026 -- EXATAMENTE como no edital FGV EPGE
+# (com acentos). Esta e a UNICA fonte de verdade para nomes e partidos.
+# Pipeline, testes e arquivo xlsx usam esta lista.
 # --------------------------------------------------------------------------- #
-CANDIDATOS_2026 = [
-    "Augusto Cury",        # Avante
-    "Clariana Barao",      # DC
-    "Edmilson Costa",      # PCB
-    "Flavio Bolsonaro",    # PL
-    "Hertz Dias",          # PSTU
-    "Luiz Inacio Lula da Silva",  # PT
-    "Renan Santos",        # Missao
-    "Ronaldo Caiado",      # PSD
-    "Romeu Zema",          # Novo
-    "Rui Costa Pimenta",   # PCO
-    "Samara Martins",      # UP
-    "Wilson Grassi",       # Democrata
+CANDIDATOS_EDITAL = [
+    "Augusto Cury",
+    "Clariana Barão",
+    "Edmilson Costa",
+    "Flávio Bolsonaro",
+    "Hertz Dias",
+    "Luiz Inácio Lula da Silva",
+    "Renan Santos",
+    "Ronaldo Caiado",
+    "Romeu Zema",
+    "Rui Costa Pimenta",
+    "Samara Martins",
+    "Wilson Grassi",
 ]
 
-PARTIDOS_2026 = {
+PARTIDOS_EDITAL = {
     "Augusto Cury": "Avante",
-    "Clariana Barao": "DC",
+    "Clariana Barão": "DC",
     "Edmilson Costa": "PCB",
-    "Flavio Bolsonaro": "PL",
+    "Flávio Bolsonaro": "PL",
     "Hertz Dias": "PSTU",
-    "Luiz Inacio Lula da Silva": "PT",
-    "Renan Santos": "Missao",
+    "Luiz Inácio Lula da Silva": "PT",
+    "Renan Santos": "Missão",
     "Ronaldo Caiado": "PSD",
     "Romeu Zema": "Novo",
     "Rui Costa Pimenta": "PCO",
@@ -72,10 +76,13 @@ PARTIDOS_2026 = {
     "Wilson Grassi": "Democrata",
 }
 
+# Alias para compatibilidade com codigo existente
+CANDIDATOS_2026 = CANDIDATOS_EDITAL
+
 # Candidatos nanicos (esperado << 5% com base em historico)
 CANDIDATOS_NANICOS = [
     "Augusto Cury",
-    "Clariana Barao",
+    "Clariana Barão",
     "Edmilson Costa",
     "Hertz Dias",
     "Renan Santos",
@@ -98,7 +105,6 @@ M1_MEIASVIDAS_GRID = [7, 14, 21]
 M1_MEIAVIDA_DEFAULT = 14
 
 # M2: parametro de regularizacao do house effect (shrinkage para zero)
-# Estimado via validacao interna nas eleicoes de treino
 M2_SHRINKAGE_GRID = [0.1, 0.5, 1.0]
 
 # M3: Ridge regression -- alpha escolhido por CV interno
@@ -135,38 +141,25 @@ TSE_CANDIDATOS_2026_URL = (
 # --------------------------------------------------------------------------- #
 PESQUISAS_2026_PATH = MANUAL_DIR / "pesquisas_2026.csv"
 
-PESQUISAS_2026_SCHEMA = [
-    "instituto",
-    "data_inicio_campo",
-    "data_fim_campo",
-    "data_divulgacao",
-    "amostra",
-    "registro_tse",
-    "metodo_coleta",
-    # Uma coluna por candidato (nomes em CANDIDATOS_2026)
-    "Augusto Cury",
-    "Clariana Barao",
-    "Edmilson Costa",
-    "Flavio Bolsonaro",
-    "Hertz Dias",
-    "Luiz Inacio Lula da Silva",
-    "Renan Santos",
-    "Ronaldo Caiado",
-    "Romeu Zema",
-    "Rui Costa Pimenta",
-    "Samara Martins",
-    "Wilson Grassi",
-    # Totais complementares
-    "brancos_nulos",
-    "indecisos",
-    "fonte_url",
-]
+PESQUISAS_2026_SCHEMA = (
+    [
+        "instituto",
+        "data_inicio_campo",
+        "data_fim_campo",
+        "data_divulgacao",
+        "amostra",
+        "registro_tse",
+        "metodo_coleta",
+    ]
+    + CANDIDATOS_EDITAL
+    + ["brancos_nulos", "indecisos", "fonte_url"]
+)
 
 # --------------------------------------------------------------------------- #
 # Verificacoes de sanidade para backtest 2022 (valores oficiais TSE)
 # --------------------------------------------------------------------------- #
 SANIDADE_2022 = {
-    "Luiz Inacio Lula da Silva": 48.43,
+    "Luiz Inácio Lula da Silva": 48.43,
     "Jair Messias Bolsonaro": 43.20,
     "abstencao_pct": 20.95,
 }

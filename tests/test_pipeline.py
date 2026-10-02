@@ -1,15 +1,9 @@
 """
-Testes unitarios para os modulos criticos do pipeline eleitoral.
+Testes unitarios e de integracao para os modulos criticos do pipeline eleitoral.
+FGV EPGE -- Desafio de Estatistica e Econometria 2026.
 
-Cobre (conforme auditoria Checkpoint 0):
-- Conversao para votos validos (incluindo sub judice)
-- Arredondamento por maiores restos (soma exata, tolerancia, round)
-- MAE identico ao criterio do edital (importado de src/, 12 candidatos)
-- Filtro por data_divulgacao no backtest (funcao real, todas as vesperas 2006-2022)
-- Sanidade dos resultados de 2022 (TSE oficial)
-- Denominadores corretos de abstencao e brancos/nulos
-- Tratamento de 0 vs NaN nas pesquisas
-- Validacao do xlsx (2 abas, 12 nomes do edital, soma 100,0%)
+Todas as funcoes de negocio sao IMPORTADAS de src/ ou scripts/.
+Nenhuma logica de negocio e definida neste arquivo.
 """
 
 from __future__ import annotations
@@ -17,42 +11,24 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
+import numpy as np
 import openpyxl
 import pandas as pd
 import pytest
 
+from scripts.validar_entrega import validar_xlsx
 from src.arredondamento import maiores_restos
 from src.config import (
-    CANDIDATOS_2026,
-    SANIDADE_2022,
-    SANIDADE_TOLERANCIA,
+    CANDIDATOS_EDITAL,
+    PARTIDOS_EDITAL,
+    PROCESSED_DIR,
+    verificar_sanidade_2022,
 )
 from src.conversao import converter_para_votos_validos
-
-
-# ============================================================
-# Funcao auxiliar de MAE -- importada de src/ (sem redefinir)
-# ============================================================
-
-
-def _calcular_mae(
-    previstos: dict[str, float],
-    realizados: dict[str, float],
-) -> float:
-    """
-    MAE com peso igual por candidato, conforme criterio do edital.
-    Lanca KeyError se algum candidato estiver ausente em qualquer dicionario.
-    """
-    candidatos = list(previstos.keys())
-    if len(candidatos) == 0:
-        raise ValueError("Nenhum candidato fornecido.")
-    erros = [abs(previstos[c] - realizados[c]) for c in candidatos]
-    return sum(erros) / len(erros)
-
-
-def _filtrar_por_vespera(df: pd.DataFrame, vespera: pd.Timestamp) -> pd.DataFrame:
-    """Funcao real de filtro de pesquisas -- usada pelo pipeline."""
-    return df[df["data_divulgacao"] <= vespera].copy()
+from src.filtros import DIAS_ELEICAO, VESPERAS, filtrar_por_vespera
+from src.metricas import calcular_mae
+from src.pesquisas import agregar_institutos
+from src.tse import calcular_denominadores
 
 
 # ============================================================
@@ -62,7 +38,7 @@ def _filtrar_por_vespera(df: pd.DataFrame, vespera: pd.Timestamp) -> pd.DataFram
 
 class TestConversaoVotosValidos:
     def _linha_completa(self, **kwargs) -> dict:
-        base = {c: 10.0 for c in CANDIDATOS_2026}
+        base = {c: 10.0 for c in CANDIDATOS_EDITAL}
         base["brancos_nulos"] = 5.0
         base["indecisos"] = 5.0
         base.update(kwargs)
@@ -73,70 +49,54 @@ class TestConversaoVotosValidos:
         assert abs(sum(resultado.values()) - 100.0) < 1e-9
 
     def test_proporcoes_corretas_dois_candidatos(self):
-        cands = ["Luiz Inacio Lula da Silva", "Flavio Bolsonaro"]
+        cands = ["Luiz Inácio Lula da Silva", "Flávio Bolsonaro"]
         linha = {
-            "Luiz Inacio Lula da Silva": 40.0,
-            "Flavio Bolsonaro": 40.0,
+            "Luiz Inácio Lula da Silva": 40.0,
+            "Flávio Bolsonaro": 40.0,
             "brancos_nulos": 10.0,
             "indecisos": 10.0,
         }
         resultado = converter_para_votos_validos(linha, candidatos=cands)
-        assert abs(resultado["Luiz Inacio Lula da Silva"] - 50.0) < 1e-9
-        assert abs(resultado["Flavio Bolsonaro"] - 50.0) < 1e-9
+        assert abs(resultado["Luiz Inácio Lula da Silva"] - 50.0) < 1e-9
+        assert abs(resultado["Flávio Bolsonaro"] - 50.0) < 1e-9
 
-    def test_candidato_sub_judice_fora_da_lista_e_descartado(self):
+    def test_candidato_sub_judice_fora_de_candidatos_edital_descartado(self):
         """
-        Candidato sub judice presente na linha mas ausente em CANDIDATOS_2026
-        deve ser descartado antes da renormalizacao.
-        Os 12 candidatos do edital devem somar 100%.
+        Candidato sub judice presente na linha mas ausente em CANDIDATOS_EDITAL
+        deve ser ignorado antes da renormalizacao; os 12 do edital somam 100%.
         """
-        linha = {c: 10.0 for c in CANDIDATOS_2026}
-        linha["Candidato Sub Judice"] = 99.0  # alto peso -- deve ser ignorado
+        linha = {c: 10.0 for c in CANDIDATOS_EDITAL}
+        linha["Candidato Sub Judice"] = 99.0
         linha["brancos_nulos"] = 5.0
         linha["indecisos"] = 5.0
-
-        resultado = converter_para_votos_validos(linha, candidatos=CANDIDATOS_2026)
-
-        # Sub judice nao deve aparecer no resultado
+        resultado = converter_para_votos_validos(linha, candidatos=CANDIDATOS_EDITAL)
         assert "Candidato Sub Judice" not in resultado
-        # Os 12 do edital somam 100%
         assert abs(sum(resultado.values()) - 100.0) < 1e-9
         assert len(resultado) == 12
 
     def test_nan_tratado_como_zero(self):
-        """NaN em candidato nanico e tratado como 0 (ausente na pesquisa)."""
-        import numpy as np
-
-        linha = {c: 10.0 for c in CANDIDATOS_2026}
-        linha["Augusto Cury"] = float("nan")  # nanico ausente
+        linha = {c: 10.0 for c in CANDIDATOS_EDITAL}
+        linha["Augusto Cury"] = float("nan")
         linha["brancos_nulos"] = 5.0
         linha["indecisos"] = 5.0
         resultado = converter_para_votos_validos(linha)
         assert abs(sum(resultado.values()) - 100.0) < 1e-9
         assert resultado["Augusto Cury"] == pytest.approx(0.0)
 
-    def test_zero_e_nan_sao_distintos_mas_ambos_validos(self):
-        """
-        Candidato com intencao 0 deve resultar em 0% dos votos validos.
-        Candidato com intencao NaN deve resultar em 0% dos votos validos.
-        Ambos sao tratados identicamente na renormalizacao.
-        """
-        import numpy as np
-
-        cands = ["Luiz Inacio Lula da Silva", "Flavio Bolsonaro", "Romeu Zema"]
-        linha_zero = {"Luiz Inacio Lula da Silva": 60.0, "Flavio Bolsonaro": 40.0, "Romeu Zema": 0.0}
-        linha_nan = {"Luiz Inacio Lula da Silva": 60.0, "Flavio Bolsonaro": 40.0, "Romeu Zema": float("nan")}
-        r_zero = converter_para_votos_validos(linha_zero, candidatos=cands)
-        r_nan = converter_para_votos_validos(linha_nan, candidatos=cands)
+    def test_zero_e_nan_resultam_em_zero_pct(self):
+        cands = ["Luiz Inácio Lula da Silva", "Flávio Bolsonaro", "Romeu Zema"]
+        l_zero = {"Luiz Inácio Lula da Silva": 60.0, "Flávio Bolsonaro": 40.0, "Romeu Zema": 0.0}
+        l_nan = {"Luiz Inácio Lula da Silva": 60.0, "Flávio Bolsonaro": 40.0, "Romeu Zema": float("nan")}
+        r_zero = converter_para_votos_validos(l_zero, candidatos=cands)
+        r_nan = converter_para_votos_validos(l_nan, candidatos=cands)
         assert abs(r_zero["Romeu Zema"] - 0.0) < 1e-9
         assert abs(r_nan["Romeu Zema"] - 0.0) < 1e-9
-        assert abs(r_zero["Luiz Inacio Lula da Silva"] - r_nan["Luiz Inacio Lula da Silva"]) < 1e-9
+        assert abs(r_zero["Luiz Inácio Lula da Silva"] - r_nan["Luiz Inácio Lula da Silva"]) < 1e-9
 
     def test_raise_quando_todos_zero(self):
         cands = ["A", "B"]
-        linha = {"A": 0.0, "B": 0.0}
         with pytest.raises(ValueError):
-            converter_para_votos_validos(linha, candidatos=cands)
+            converter_para_votos_validos({"A": 0.0, "B": 0.0}, candidatos=cands)
 
 
 # ============================================================
@@ -146,30 +106,20 @@ class TestConversaoVotosValidos:
 
 class TestMaioresRestos:
     def test_soma_exata_1000_decimos(self):
-        """A soma dos resultados * 10 deve ser exatamente 1000 (inteiro)."""
         vals = [48.43, 43.20, 4.1, 1.5, 0.8, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1, 0.1]
-        arred = maiores_restos(vals)
-        soma_int = round(sum(arred) * 10)
-        assert soma_int == 1000
+        assert round(sum(maiores_restos(vals)) * 10) == 1000
 
     def test_entrada_que_soma_9997(self):
-        """Entrada que soma 99.97 (nao 100) deve resultar em soma 100.0."""
-        vals = [33.0, 33.0, 33.97]  # soma = 99.97
-        arred = maiores_restos(vals)
-        assert round(sum(arred) * 10) == 1000
+        assert round(sum(maiores_restos([33.0, 33.0, 33.97])) * 10) == 1000
 
     def test_cada_valor_a_menos_de_01_do_original(self):
-        """Cada valor arredondado deve diferir do original por menos de 0.1 p.p."""
         vals = [48.43, 43.20, 4.1, 1.5, 0.8, 0.6, 0.5, 0.4, 0.3, 0.3, 0.1, 0.1]
         total = sum(vals)
-        arred = maiores_restos(vals)
-        for orig, arr in zip(vals, arred):
-            orig_norm = orig * 100.0 / total
-            assert abs(arr - orig_norm) < 0.1, f"orig_norm={orig_norm:.4f}, arred={arr:.1f}"
+        for orig, arr in zip(vals, maiores_restos(vals)):
+            assert abs(arr - orig * 100.0 / total) < 0.1
 
     def test_soma_exata_tres_candidatos(self):
-        arred = maiores_restos([33.3333, 33.3333, 33.3334])
-        assert round(sum(arred) * 10) == 1000
+        assert round(sum(maiores_restos([33.3333, 33.3333, 33.3334])) * 10) == 1000
 
     def test_comprimento_preservado(self):
         assert len(maiores_restos([10.0, 20.0, 70.0])) == 3
@@ -184,210 +134,269 @@ class TestMaioresRestos:
 
 
 # ============================================================
-# 3. MAE -- importado de src/, 12 candidatos
+# 3. MAE -- importado de src/metricas.py
 # ============================================================
 
 
 class TestMAE:
     def test_mae_zero_previsao_perfeita(self):
-        prev = {c: 100.0 / 12 for c in CANDIDATOS_2026}
-        real = {c: 100.0 / 12 for c in CANDIDATOS_2026}
-        assert _calcular_mae(prev, real) == pytest.approx(0.0)
+        prev = {c: 100.0 / 12 for c in CANDIDATOS_EDITAL}
+        real = {c: 100.0 / 12 for c in CANDIDATOS_EDITAL}
+        assert calcular_mae(prev, real) == pytest.approx(0.0)
 
     def test_mae_simetrico(self):
-        prev = {c: 10.0 for c in CANDIDATOS_2026}
-        real = {c: 10.0 for c in CANDIDATOS_2026}
-        real[CANDIDATOS_2026[0]] = 20.0
-        # erro de 10 p.p. em 1 de 12 candidatos -> MAE = 10/12
-        assert _calcular_mae(prev, real) == pytest.approx(10.0 / 12, rel=1e-6)
+        prev = {c: 10.0 for c in CANDIDATOS_EDITAL}
+        real = {c: 10.0 for c in CANDIDATOS_EDITAL}
+        real[CANDIDATOS_EDITAL[0]] = 20.0
+        assert calcular_mae(prev, real) == pytest.approx(10.0 / 12, rel=1e-6)
 
     def test_nanicos_pesam_igual_ao_top2(self):
-        prev = {c: 10.0 for c in CANDIDATOS_2026}
-        real = {c: 10.0 for c in CANDIDATOS_2026}
-        real[CANDIDATOS_2026[-1]] = 20.0  # erro em candidato nanico
-        mae = _calcular_mae(prev, real)
-        assert mae == pytest.approx(10.0 / 12, rel=1e-6)
+        prev = {c: 10.0 for c in CANDIDATOS_EDITAL}
+        real = {c: 10.0 for c in CANDIDATOS_EDITAL}
+        real[CANDIDATOS_EDITAL[-1]] = 20.0
+        assert calcular_mae(prev, real) == pytest.approx(10.0 / 12, rel=1e-6)
 
-    def test_candidato_ausente_lanca_keyerror(self):
-        """Falta de um candidato nos realizados deve lancar KeyError."""
-        prev = {c: 100.0 / 12 for c in CANDIDATOS_2026}
-        real = {c: 100.0 / 12 for c in CANDIDATOS_2026}
-        del real[CANDIDATOS_2026[0]]  # remove um candidato
+    def test_candidato_ausente_em_realizados_lanca_keyerror(self):
+        prev = {c: 100.0 / 12 for c in CANDIDATOS_EDITAL}
+        real = {c: 100.0 / 12 for c in CANDIDATOS_EDITAL}
+        del real[CANDIDATOS_EDITAL[0]]
         with pytest.raises(KeyError):
-            _calcular_mae(prev, real)
+            calcular_mae(prev, real)
+
+    def test_previstos_vazio_lanca_valueerror(self):
+        with pytest.raises(ValueError):
+            calcular_mae({}, {})
 
 
 # ============================================================
-# 4. Filtro por data_divulgacao (funcao real do pipeline)
-#    Parametrizado com as vesperas de todas as eleicoes
+# 4. Filtro por data_divulgacao -- importado de src/filtros.py
 # ============================================================
-
-
-VESPERAS_HISTORICAS = {
-    2006: pd.Timestamp("2006-09-30"),
-    2010: pd.Timestamp("2010-10-02"),
-    2014: pd.Timestamp("2014-10-04"),
-    2018: pd.Timestamp("2018-10-06"),
-    2022: pd.Timestamp("2022-10-01"),
-    2026: pd.Timestamp("2026-10-03"),
-}
-
-DIAS_ELEICAO = {
-    2006: pd.Timestamp("2006-10-01"),
-    2010: pd.Timestamp("2010-10-03"),
-    2014: pd.Timestamp("2014-10-05"),
-    2018: pd.Timestamp("2018-10-07"),
-    2022: pd.Timestamp("2022-10-02"),  # corrigido: 2022-10-02, nao 2022-10-03
-    2026: pd.Timestamp("2026-10-04"),
-}
-
-
-def _pesquisas_para_eleicao(ano: int) -> pd.DataFrame:
-    """Cria DataFrame de pesquisas ficticias para testar o filtro de data."""
-    vespera = VESPERAS_HISTORICAS[ano]
-    dia_eleicao = DIAS_ELEICAO[ano]
-    antes = vespera - pd.Timedelta(days=1)
-    return pd.DataFrame(
-        {
-            "data_divulgacao": [antes, vespera, dia_eleicao],
-            "nota": ["antes", "vespera", "dia_eleicao"],
-        }
-    )
 
 
 @pytest.mark.parametrize("ano", [2006, 2010, 2014, 2018, 2022, 2026])
 def test_filtro_vespera_inclui_vespera(ano):
-    df = _pesquisas_para_eleicao(ano)
-    vespera = VESPERAS_HISTORICAS[ano]
-    filtrado = _filtrar_por_vespera(df, vespera)
-    assert any(filtrado["data_divulgacao"] == vespera)
+    vespera = VESPERAS[ano]
+    dia_eleicao = DIAS_ELEICAO[ano]
+    df = pd.DataFrame(
+        {"data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
+         "nota": ["antes", "vespera", "dia_eleicao"]}
+    )
+    filtrado = filtrar_por_vespera(df, vespera)
+    assert any(filtrado["nota"] == "vespera")
 
 
 @pytest.mark.parametrize("ano", [2006, 2010, 2014, 2018, 2022, 2026])
 def test_filtro_vespera_exclui_dia_da_eleicao(ano):
-    df = _pesquisas_para_eleicao(ano)
-    vespera = VESPERAS_HISTORICAS[ano]
-    filtrado = _filtrar_por_vespera(df, vespera)
+    vespera = VESPERAS[ano]
+    dia_eleicao = DIAS_ELEICAO[ano]
+    df = pd.DataFrame(
+        {"data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
+         "nota": ["antes", "vespera", "dia_eleicao"]}
+    )
+    filtrado = filtrar_por_vespera(df, vespera)
     assert not any(filtrado["nota"] == "dia_eleicao")
 
 
 @pytest.mark.parametrize("ano", [2006, 2010, 2014, 2018, 2022, 2026])
 def test_filtro_vespera_inclui_pesquisa_anterior(ano):
-    df = _pesquisas_para_eleicao(ano)
-    vespera = VESPERAS_HISTORICAS[ano]
-    filtrado = _filtrar_por_vespera(df, vespera)
+    vespera = VESPERAS[ano]
+    dia_eleicao = DIAS_ELEICAO[ano]
+    df = pd.DataFrame(
+        {"data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
+         "nota": ["antes", "vespera", "dia_eleicao"]}
+    )
+    filtrado = filtrar_por_vespera(df, vespera)
     assert any(filtrado["nota"] == "antes")
 
 
 # ============================================================
-# 5. Sanidade dos resultados de 2022 (dados oficiais TSE)
+# 5. Denominadores -- importado de src/tse.py
+# ============================================================
+
+
+class TestDenominadores:
+    """
+    Testa a funcao calcular_denominadores com DataFrame no formato
+    detalhe_votacao_munzona do TSE.
+    """
+
+    def _df_urna(
+        self,
+        aptos=1_000_000,
+        comparecimento=790_500,
+        votos_validos=740_000,
+        votos_brancos=25_250,
+        votos_nulos=25_250,
+    ) -> pd.DataFrame:
+        abstencoes = aptos - comparecimento
+        return pd.DataFrame({
+            "QT_APTOS": [aptos],
+            "QT_COMPARECIMENTO": [comparecimento],
+            "QT_ABSTENCOES": [abstencoes],
+            "QT_VOTOS_VALIDOS": [votos_validos],
+            "QT_VOTOS_BRANCOS": [votos_brancos],
+            "QT_VOTOS_NULOS": [votos_nulos],
+        })
+
+    def test_abstencao_sobre_aptos(self):
+        res = calcular_denominadores(self._df_urna())
+        assert abs(res["abstencao_pct"] - 20.95) < 0.01
+
+    def test_brancos_sobre_comparecimento(self):
+        res = calcular_denominadores(self._df_urna())
+        assert abs(res["brancos_pct"] - 25_250 / 790_500 * 100) < 0.01
+
+    def test_nulos_sobre_comparecimento(self):
+        res = calcular_denominadores(self._df_urna())
+        assert abs(res["nulos_pct"] - 25_250 / 790_500 * 100) < 0.01
+
+    def test_validos_mais_brancos_mais_nulos_igual_comparecimento(self):
+        df = self._df_urna()
+        res = calcular_denominadores(df)
+        assert res["votos_validos"] + res["votos_brancos"] + res["votos_nulos"] == res["comparecimento"]
+
+    def test_multiplas_linhas_somadas(self):
+        """Verifica que linhas de zonas/municipios sao somadas antes do calculo."""
+        df = pd.DataFrame({
+            "QT_APTOS": [500_000, 500_000],
+            "QT_COMPARECIMENTO": [395_250, 395_250],
+            "QT_ABSTENCOES": [104_750, 104_750],
+            "QT_VOTOS_VALIDOS": [370_000, 370_000],
+            "QT_VOTOS_BRANCOS": [12_625, 12_625],
+            "QT_VOTOS_NULOS": [12_625, 12_625],
+        })
+        res = calcular_denominadores(df)
+        assert res["aptos"] == 1_000_000
+        assert abs(res["abstencao_pct"] - 20.95) < 0.01
+
+    def test_colunas_faltando_lanca_valueerror(self):
+        df = pd.DataFrame({"QT_APTOS": [100]})
+        with pytest.raises(ValueError, match="ausentes"):
+            calcular_denominadores(df)
+
+    def test_df_vazio_lanca_valueerror(self):
+        df = pd.DataFrame(columns=[
+            "QT_APTOS", "QT_COMPARECIMENTO", "QT_ABSTENCOES",
+            "QT_VOTOS_VALIDOS", "QT_VOTOS_BRANCOS", "QT_VOTOS_NULOS",
+        ])
+        with pytest.raises(ValueError, match="vazio"):
+            calcular_denominadores(df)
+
+
+# ============================================================
+# 6. Agregacao entre institutos -- importado de src/pesquisas.py
+# ============================================================
+
+
+class TestAgregacaoInstitutos:
+    def test_nan_fica_fora_da_media(self):
+        """NaN (ausente) nao conta no denominador da media."""
+        df = pd.DataFrame({
+            "Luiz Inácio Lula da Silva": [48.0, 50.0, float("nan")],
+            "Flávio Bolsonaro": [36.0, 38.0, 40.0],
+        })
+        res = agregar_institutos(df, candidatos=["Luiz Inácio Lula da Silva", "Flávio Bolsonaro"])
+        # Lula: media de [48, 50] = 49; Bolsonaro: media de [36, 38, 40] = 38
+        assert abs(res["Luiz Inácio Lula da Silva"] - 49.0) < 1e-9
+        assert abs(res["Flávio Bolsonaro"] - 38.0) < 1e-9
+
+    def test_zero_entra_como_zero(self):
+        """0 (medido como zero) entra no denominador da media."""
+        df = pd.DataFrame({
+            "Augusto Cury": [1.0, 0.0],
+        })
+        res = agregar_institutos(df, candidatos=["Augusto Cury"])
+        assert abs(res["Augusto Cury"] - 0.5) < 1e-9  # media de [1, 0]
+
+    def test_todos_nan_retorna_nan(self):
+        df = pd.DataFrame({"Wilson Grassi": [float("nan"), float("nan")]})
+        res = agregar_institutos(df, candidatos=["Wilson Grassi"])
+        assert np.isnan(res["Wilson Grassi"])
+
+    def test_candidato_ausente_no_df_retorna_nan(self):
+        df = pd.DataFrame({"Luiz Inácio Lula da Silva": [48.0]})
+        res = agregar_institutos(df, candidatos=["Luiz Inácio Lula da Silva", "Inexistente"])
+        assert np.isnan(res["Inexistente"])
+
+    def test_df_vazio_retorna_todos_nan(self):
+        df = pd.DataFrame(columns=CANDIDATOS_EDITAL)
+        res = agregar_institutos(df)
+        assert all(np.isnan(v) for v in res.values())
+
+
+# ============================================================
+# 7. Sanidade TSE 2022 -- importado de src/config.py
 # ============================================================
 
 
 class TestSanidade2022:
     def _resultados_corretos(self) -> dict:
         return {
-            "Luiz Inacio Lula da Silva": 48.43,
+            "Luiz Inácio Lula da Silva": 48.43,
             "Jair Messias Bolsonaro": 43.20,
             "abstencao_pct": 20.95,
         }
 
     def test_sanidade_pass_com_resultados_corretos(self):
-        from src.config import verificar_sanidade_2022
         assert verificar_sanidade_2022(self._resultados_corretos()) is True
 
     def test_sanidade_fail_com_lula_errado(self):
-        from src.config import verificar_sanidade_2022
         res = self._resultados_corretos()
-        res["Luiz Inacio Lula da Silva"] = 45.0  # errado
+        res["Luiz Inácio Lula da Silva"] = 45.0
         assert verificar_sanidade_2022(res) is False
 
     def test_sanidade_fail_com_abstencao_errada(self):
-        from src.config import verificar_sanidade_2022
         res = self._resultados_corretos()
-        res["abstencao_pct"] = 15.0  # muito distante do real
+        res["abstencao_pct"] = 15.0
         assert verificar_sanidade_2022(res) is False
 
 
 # ============================================================
-# 6. Denominadores de abstencao e brancos/nulos
+# 8. Integracao: sanidade 2022 lendo data/processed
+#    (skipif se o arquivo nao existir -- dados ainda nao baixados)
 # ============================================================
 
+_PARQUET_2022 = PROCESSED_DIR / "detalhe_votacao_2022.parquet"
 
-class TestDenominadores:
+
+@pytest.mark.skipif(
+    not _PARQUET_2022.exists(),
+    reason="data/processed/detalhe_votacao_2022.parquet nao existe (Checkpoint 1 pendente)",
+)
+def test_integracao_sanidade_2022_do_parquet():
     """
-    Abstencao = (aptos - comparecimento) / aptos
-    Brancos e nulos = votos brancos ou nulos / votos registrados (comparecimento)
+    Teste de integracao: le o parquet processado do TSE 2022,
+    calcula denominadores e verifica sanidade.
+    Executa apenas apos o Checkpoint 1.
     """
+    import pandas as pd
 
-    def _dados_urna(self):
-        return {
-            "aptos": 1_000_000,
-            "comparecimento": 790_500,  # = 79.05% de comparecimento
-            "votos_validos": 740_000,
-            "votos_brancos": 25_250,
-            "votos_nulos": 25_250,
-        }
-
-    def test_abstencao_calculada_sobre_aptos(self):
-        d = self._dados_urna()
-        abstencao = (d["aptos"] - d["comparecimento"]) / d["aptos"] * 100
-        assert abs(abstencao - 20.95) < 0.01
-
-    def test_brancos_calculados_sobre_comparecimento(self):
-        d = self._dados_urna()
-        pct_brancos = d["votos_brancos"] / d["comparecimento"] * 100
-        assert abs(pct_brancos - 3.194) < 0.01
-
-    def test_nulos_calculados_sobre_comparecimento(self):
-        d = self._dados_urna()
-        pct_nulos = d["votos_nulos"] / d["comparecimento"] * 100
-        assert abs(pct_nulos - 3.194) < 0.01
-
-    def test_validos_mais_brancos_mais_nulos_igual_comparecimento(self):
-        d = self._dados_urna()
-        assert (
-            d["votos_validos"] + d["votos_brancos"] + d["votos_nulos"]
-            == d["comparecimento"]
-        )
+    df = pd.read_parquet(_PARQUET_2022)
+    res_denominadores = calcular_denominadores(df)
+    assert verificar_sanidade_2022({
+        "Luiz Inácio Lula da Silva": res_denominadores.get("lula_pct", 0.0),
+        "Jair Messias Bolsonaro": res_denominadores.get("bolsonaro_pct", 0.0),
+        "abstencao_pct": res_denominadores["abstencao_pct"],
+    })
 
 
 # ============================================================
-# 7. Validacao do arquivo XLSX de entrega
+# 9. Validacao do XLSX -- importado de scripts/validar_entrega.py
 # ============================================================
-
-NOMES_EDITAL = [
-    "Augusto Cury",
-    "Clariana Barão",
-    "Edmilson Costa",
-    "Flávio Bolsonaro",
-    "Hertz Dias",
-    "Luiz Inácio Lula da Silva",
-    "Renan Santos",
-    "Ronaldo Caiado",
-    "Romeu Zema",
-    "Rui Costa Pimenta",
-    "Samara Martins",
-    "Wilson Grassi",
-]
 
 
 def _criar_xlsx_valido() -> bytes:
-    """Cria um XLSX de exemplo valido para os testes."""
+    """XLSX de exemplo conforme requisitos do edital."""
     wb = openpyxl.Workbook()
-
-    # Aba 1 -- candidatos
     ws1 = wb.active
     ws1.title = "Candidatos"
     ws1.append(["Candidato(a)", "Partido", "Previsao de votos validos (%)"])
-    partidos = ["Avante", "DC", "PCB", "PL", "PSTU", "PT",
-                "Missao", "PSD", "Novo", "PCO", "UP", "Democrata"]
-    # distribui 100% igualmente para o teste
-    pct_base = [8.34, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.33, 8.34, 8.33, 8.33, 8.33]
-    for nome, partido, pct in zip(NOMES_EDITAL, partidos, pct_base):
-        ws1.append([nome, partido, pct])
+    # Distribui igualmente (maiores restos) para que soma seja exatamente 100,0%
+    pcts = maiores_restos([100.0 / 12] * 12)
+    for nome, pct in zip(CANDIDATOS_EDITAL, pcts):
+        ws1.append([nome, PARTIDOS_EDITAL[nome], pct])
+    ws1.append(["Total", "", 100.0])
 
-    # Aba 2 -- adicionais
     ws2 = wb.create_sheet("Adicionais")
     ws2.append(["Resultado", "Previsao (%)"])
     ws2.append(["Abstencao", 20.95])
@@ -399,70 +408,85 @@ def _criar_xlsx_valido() -> bytes:
     return buf.getvalue()
 
 
-def _criar_xlsx_invalido_uma_aba() -> bytes:
-    wb = openpyxl.Workbook()
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()
+def _salvar_xlsx_temporario(conteudo: bytes, tmp_path: Path) -> Path:
+    p = tmp_path / "previsao.xlsx"
+    p.write_bytes(conteudo)
+    return p
 
 
 class TestValidacaoXLSX:
-    def _validar(self, xlsx_bytes: bytes) -> dict:
-        """
-        Funcao minima de validacao (replica logica de scripts/validar_entrega.py).
-        Retorna dicionario com flags de erro.
-        """
-        wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
-        erros = []
+    def test_xlsx_valido_passa(self, tmp_path):
+        p = _salvar_xlsx_temporario(_criar_xlsx_valido(), tmp_path)
+        res = validar_xlsx(p)
+        assert res["valido"], res["erros"]
 
-        # Regra 1: exatamente 2 abas
-        if len(wb.sheetnames) != 2:
-            erros.append(f"esperado 2 abas, encontrado {len(wb.sheetnames)}")
+    def test_xlsx_com_uma_aba_falha(self, tmp_path):
+        wb = openpyxl.Workbook()
+        buf = io.BytesIO()
+        wb.save(buf)
+        p = tmp_path / "invalido.xlsx"
+        p.write_bytes(buf.getvalue())
+        res = validar_xlsx(p)
+        assert not res["valido"]
+        assert any("2 abas" in e for e in res["erros"])
 
-        # Regra 2: nomes do edital presentes na aba 1
-        if len(wb.sheetnames) >= 1:
-            ws = wb.worksheets[0]
-            nomes_encontrados = [
-                str(ws.cell(row=r, column=1).value or "").strip()
-                for r in range(2, ws.max_row + 1)
-                if ws.cell(row=r, column=1).value
-            ]
-            for nome in NOMES_EDITAL:
-                if nome not in nomes_encontrados:
-                    erros.append(f"candidato ausente na aba 1: {nome}")
-
-            # Regra 3: soma 100.0%
-            if len(wb.sheetnames) >= 1:
-                percentuais = []
-                for r in range(2, ws.max_row + 1):
-                    v = ws.cell(row=r, column=3).value
-                    if isinstance(v, (int, float)):
-                        percentuais.append(float(v))
-                if percentuais:
-                    soma = sum(percentuais)
-                    if abs(soma - 100.0) > 0.05:
-                        erros.append(f"soma nao e 100.0%: {soma:.2f}")
-
-        return {"valido": len(erros) == 0, "erros": erros}
-
-    def test_xlsx_valido_passa(self):
-        resultado = self._validar(_criar_xlsx_valido())
-        assert resultado["valido"], resultado["erros"]
-
-    def test_xlsx_com_uma_aba_falha(self):
-        resultado = self._validar(_criar_xlsx_invalido_uma_aba())
-        assert not resultado["valido"]
-        assert any("2 abas" in e for e in resultado["erros"])
-
-    def test_xlsx_sem_candidato_do_edital_falha(self):
+    def test_xlsx_nome_errado_falha(self, tmp_path):
         wb = openpyxl.Workbook()
         ws1 = wb.active
         ws1.title = "Candidatos"
         ws1.append(["Candidato(a)", "Partido", "Previsao (%)"])
-        ws1.append(["Candidato Errado", "Partido X", 100.0])
+        ws1.append(["Nome Errado", "Partido X", 100.0])
         ws2 = wb.create_sheet("Adicionais")
         ws2.append(["Abstencao", 20.0])
         buf = io.BytesIO()
         wb.save(buf)
-        resultado = self._validar(buf.getvalue())
-        assert not resultado["valido"]
+        p = tmp_path / "nome_errado.xlsx"
+        p.write_bytes(buf.getvalue())
+        res = validar_xlsx(p)
+        assert not res["valido"]
+        assert any("extra" in e or "faltando" in e for e in res["erros"])
+
+    def test_xlsx_partido_errado_falha(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws1 = wb.active
+        ws1.title = "Candidatos"
+        ws1.append(["Candidato(a)", "Partido", "Previsao (%)"])
+        pcts = maiores_restos([100.0 / 12] * 12)
+        for nome, pct in zip(CANDIDATOS_EDITAL, pcts):
+            partido = PARTIDOS_EDITAL[nome] if nome != "Augusto Cury" else "PARTIDO_ERRADO"
+            ws1.append([nome, partido, pct])
+        ws1.append(["Total", "", 100.0])
+        ws2 = wb.create_sheet("Adicionais")
+        ws2.append(["Resultado", "Previsao (%)"])
+        ws2.append(["Abstencao", 21.0])
+        ws2.append(["Votos brancos", 2.0])
+        ws2.append(["Votos nulos", 2.0])
+        buf = io.BytesIO()
+        wb.save(buf)
+        p = tmp_path / "partido_errado.xlsx"
+        p.write_bytes(buf.getvalue())
+        res = validar_xlsx(p)
+        assert not res["valido"]
+        assert any("Partido errado" in e for e in res["erros"])
+
+    def test_xlsx_sem_linha_total_falha(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws1 = wb.active
+        ws1.title = "Candidatos"
+        ws1.append(["Candidato(a)", "Partido", "Previsao (%)"])
+        pcts = maiores_restos([100.0 / 12] * 12)
+        for nome, pct in zip(CANDIDATOS_EDITAL, pcts):
+            ws1.append([nome, PARTIDOS_EDITAL[nome], pct])
+        # Sem linha Total
+        ws2 = wb.create_sheet("Adicionais")
+        ws2.append(["Resultado", "Previsao (%)"])
+        ws2.append(["Abstencao", 21.0])
+        ws2.append(["Votos brancos", 2.0])
+        ws2.append(["Votos nulos", 2.0])
+        buf = io.BytesIO()
+        wb.save(buf)
+        p = tmp_path / "sem_total.xlsx"
+        p.write_bytes(buf.getvalue())
+        res = validar_xlsx(p)
+        assert not res["valido"]
+        assert any("Total" in e for e in res["erros"])
