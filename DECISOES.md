@@ -73,7 +73,7 @@ Este documento registra todas as decisoes tomadas ao longo do projeto de previsa
 
 ### Decisao 7: Auditoria do Checkpoint 2 (Ajustes de Pesquisas Historicas, Transcricao Estrita e Emenda 1)
 **Data:** 02/10/2026  
-**Contexto:** Parecer da auditoria externa (Claude) exigindo:
+**Contexto:** Parecer da revisão interna do grupo exigindo:
 1. Endurecimento do teste de transcricao para exigir que o valor numerico apareca em uma janela maxima de 80 caracteres do nome do candidato ou rotulo correspondente, e validacao estrita de zero;
 2. Tratamento agregado dos nanicos no PoderData/Aya (coluna outros_agregado = 4.0 e nanicos individuais como NaN);
 3. Verificacao da amostra de 2.506 no PesqEle para o Datafolha BR-08039/2026;
