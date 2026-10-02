@@ -314,3 +314,17 @@ tests/test_sanity.py::test_sanity PASSED                                 [100%]
 PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> .venv\Scripts\python -m flake8 --exclude=.venv --max-line-length=110 --ignore=E501,W503,E402 src/ tests/ scripts/
 (Sem saídas: 100% em conformidade PEP 8)
 ```
+
+### c) `git log --oneline -8`
+```
+PS C:\Users\PedroValuchedeAndrad\Desktop\university\modelagem eleições> git log --oneline -8
+f06c1e5 fix: emenda 2 ao pre-registro, ajuste tracking vox populi 2010 e reversao poderdata
+b49ba8f docs: registra git log no relatorio do checkpoint 2 revisao 2
+affd344 fix: correcoes da auditoria do checkpoint 2: transcricao estrita, emenda 1 no pre-registro, sanidade das vesperas e contratantes
+af5774b docs: registra git log no relatorio do checkpoint 2
+7c42ff0 feat: checkpoint 2: pesquisas historicas 2006-2022 compiladas e pre-registro congelado
+81f59b1 fix: correcoes da auditoria do checkpoint 1 rodada 2 -- transcricao verificada, protocolo realtime, outros_agregado e datafolha final
+f208e5e docs: registra git log oficial no relatorio do checkpoint 1
+67f5662 fix: revisao 2 do checkpoint 1 -- fontes de pesquisas_2026 verificadas, pesqele validado, candidatos consulta_cand listados
+```
+
