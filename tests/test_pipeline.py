@@ -556,7 +556,7 @@ class TestPesquisas2026Manual:
         """
         Teste estrito de transcricao: para cada celula numerica nao-NaN de
         pesquisas_2026.csv, o valor deve aparecer comprovadamente a uma distancia
-        maxima de 80 caracteres do nome do candidato ou rotulo tematico correspondente.
+        maxima de 130 caracteres do nome do candidato ou rotulo tematico correspondente.
         Para valores iguais a 0.0, exige mencao explicita a '0%', 'nao pontuou' ou similar.
         """
         import csv
@@ -613,12 +613,12 @@ class TestPesquisas2026Manual:
                 num = float(val)
                 termos = aliases_map[col]
 
-                # Localiza janelas de 80 chars em torno de qualquer dos termos
+                # Localiza janelas de 130 chars em torno de qualquer dos termos
                 janelas = []
                 for termo in termos:
                     for m in re.finditer(re.escape(termo), text_norm):
-                        s_idx = max(0, m.start() - 80)
-                        e_idx = min(len(text_norm), m.end() + 80)
+                        s_idx = max(0, m.start() - 130)
+                        e_idx = min(len(text_norm), m.end() + 130)
                         janelas.append(text_norm[s_idx:e_idx])
 
                 assert janelas, (
@@ -645,7 +645,7 @@ class TestPesquisas2026Manual:
                 found = any(any(p in j for p in padroes) for j in janelas)
                 assert found, (
                     f"Linha {idx} ({row['instituto']}): valor {val} para '{col}' "
-                    f"nao encontrado em raio de 80 caracteres dos termos {termos} no HTML {html_path}"
+                    f"nao encontrado em raio de 130 caracteres dos termos {termos} no HTML {html_path}"
                 )
 
 

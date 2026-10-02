@@ -148,3 +148,89 @@ Embora a entrega da planilha XLSX seja estritamente pontual, a faixa de incertez
    - **2022:** Lula 50,0% | Bolsonaro 36,0%
    - **2018:** Bolsonaro 40,0% | Haddad 25,0%
    - **2014:** Dilma 44,0% | Aécio 26,0% | Marina 24,0%
+
+---
+
+## 10. Emenda 2 (Data: 02/10/2026)
+
+**Origem e Motivação:** Auditoria externa do Checkpoint 2 (Claude). Formalização definitiva das equações, regras de decisão, hiperparâmetros e protocolos de validação antes do início do backtest histórico (Checkpoint 3).
+
+### 1. House Effect por Instituto x Bloco Temático
+O viés de instituto (house effect) no modelo M2 não é estimado candidato a candidato de forma livre, mas sim particionado estritamente por blocos políticos funcionais comparáveis entre eleições:
+- **Bloco PT ($B_1$):** Candidato apoiado pela legenda do Partido dos Trabalhadores (2006 Lula, 2010 Dilma, 2014 Dilma, 2018 Haddad, 2022 Lula, 2026 Lula).
+- **Bloco Principal Adversário do PT ($B_2$):** Principal competidor polarizado da eleição (2006 Geraldo Alckmin, 2010 José Serra, 2014 Aécio Neves, 2018 Jair Bolsonaro, 2022 Jair Bolsonaro, 2026 Flávio Bolsonaro).
+- **Bloco Demais Candidatos ($B_3$):** Candidatos intermediários e nanicos (3º colocado em diante).
+
+O erro de cada pesquisa $i$ do instituto $j$ no bloco $b$ sobre a eleição $t$ é definido em **votos válidos**:
+$$e_{i, c, t} = \hat{v}_{i, c} - v_{c, t}^{\text{TSE}}$$
+onde $\hat{v}_{i, c}$ representa o percentual do candidato $c$ na pesquisa recalculado sobre os votos válidos (após descarte de brancos, nulos e indecisos) e $v_{c, t}^{\text{TSE}}$ é o resultado oficial do 1º turno apurado pelo TSE.
+
+O erro médio histórico bruto do instituto $j$ no bloco $b$ ao longo das eleições de treino é:
+$$\bar{\beta}_{j, b} = \frac{1}{|S_{j, b}|} \sum_{(i, c, t) \in S_{j, b}} (\hat{v}_{i, c} - v_{c, t}^{\text{TSE}})$$
+onde $S_{j, b}$ é o conjunto de observações históricas do instituto $j$ para candidatos do bloco $b$.
+
+### 2. Shrinkage Empírico Dependente do Histórico ($n_j$)
+Para institutos com poucas eleições no histórico, a estimativa pontual $\bar{\beta}_{j, b}$ é encolhida em direção a zero via credibilidade empírica Bayesiana:
+$$\beta_{j, b} = \frac{n_j}{n_j + k} \cdot \bar{\beta}_{j, b}$$
+onde:
+- $n_j \in \{0, 1, 2, 3, 4, 5\}$ é o número de eleições prévias em que o instituto $j$ realizou pesquisas na base de treino.
+- $k \in \{1, 3, 10\}$ é a constante de regularização (hiperparâmetro a ser avaliado no expanding window).
+- Se $n_j = 0$ (instituto estreante, sem histórico no conjunto de treino), $\beta_{j, b} = 0$, garantindo que nenhuma correção arbitrária seja aplicada a institutos novos.
+
+### 3. Decisão Metodológica Única: Ibope e Ipec
+- **Decisão Oficial:** Adota-se a **série unificada (Ibope -> Ipec)** como especificação principal. O Ipec é tratado como continuador institucional e metodológico do Ibope Inteligência (mesma diretoria executiva, equipe estatística e desenho amostral presencial domiciliar estratificado por cotas).
+- A especificação com séries estritamente separadas será calculada e apresentada no relatório técnico exclusivamente a título de análise de sensibilidade.
+
+### 4. Critério Numérico de Empate Técnico e Regra de Parcimônia
+Sejam $M_A$ e $M_B$ dois modelos concorrentes (com $M_A$ mais complexo que $M_B$). Define-se a diferença de MAE na eleição de teste $t \in \{2014, 2018, 2022\}$ como $\Delta_t = \text{MAE}_{M_A, t} - \text{MAE}_{M_B, t}$.
+- Média das diferenças: $\bar{\Delta} = \frac{1}{3} \sum_{t} \Delta_t$.
+- Desvio-padrão amostral das diferenças: $s_\Delta = \sqrt{\frac{1}{2} \sum_{t=1}^{3} (\Delta_t - \bar{\Delta})^2}$.
+- Erro-padrão da média das diferenças: $\text{SE}(\Delta) = \frac{s_\Delta}{\sqrt{3}}$.
+- **Critério de Empate:** Se $|\bar{\Delta}| < \text{SE}(\Delta)$, conclui-se que não há evidência empírica de superioridade preditiva do modelo mais complexo.
+- **Hierarquia de Parcimônia:** Havendo empate técnico, adota-se compulsoriamente o modelo mais simples, conforme a ordem formal:
+  $$\text{M0} \prec \text{M1} \prec \text{M2} \prec \text{M3}$$
+
+### 5. Especificação Objetiva de Features do Modelo M3
+Elimina-se categoricamente qualquer classificação baseada em "campo ideológico", prevenindo taxonomias subjetivas ou arbitrárias. O modelo M3 utiliza exclusivamente covariáveis observáveis:
+1. $X_{1, c}$: Previsão preliminar de votos válidos do candidato $c$ obtida pela média ponderada das pesquisas recentes (saída do modelo M1).
+2. $X_{2, c} \in \{0, 1\}$: Indicadora binária de incumbência governista ($1$ para candidato apoiado pela situação federal em exercício; $0$ para oposição).
+3. $X_{3, c} \in \{1, 2, \dots, 12\}$: Posição ordinal (ranking) do candidato na média das pesquisas na data de corte (1º, 2º, ..., 12º colocado).
+
+### 6. Viés Comum da Eleição (Common Election Bias)
+O viés comum mede o desvio médio compartilhado por todos os institutos em relação à apuração oficial da urna em determinada eleição:
+$$\bar{\mu}_b = \frac{1}{|E_{\text{treino}}|} \sum_{t \in E_{\text{treino}}} \left( \bar{v}_{b, t}^{\text{pesquisas}} - v_{b, t}^{\text{TSE}} \right)$$
+onde $\bar{v}_{b, t}^{\text{pesquisas}}$ é a média agregada de todas as pesquisas no bloco $b$ na eleição $t$.
+O ajuste regularizado é dado por:
+$$\hat{\mu}_b = \frac{N_{\text{eleic}}}{N_{\text{eleic}} + k_{\mu}} \cdot \bar{\mu}_b, \quad \text{com } k_{\mu} \in \{1, 3\}$$
+**Regra de Ativação:** O termo $\hat{\mu}_b$ só será incorporado ao modelo final se demonstrar redução estrita do MAE médio no backtest expanding window. Caso contrário, $\hat{\mu}_b = 0$.
+
+### 7. Hipótese e Modelagem do Voto Útil de Reta Final
+A perda de fôlego de candidaturas de terceira via na véspera em favor da polarização é modelada pela perda histórica agregada do 3º e 4º colocados entre a pesquisa de corte e o resultado do TSE:
+$$\delta_t = \max\left(0, \sum_{c \in \{3^\circ, 4^\circ\}} (\hat{v}_{c, t} - v_{c, t}^{\text{TSE}})\right)$$
+com média histórica nas eleições de treino $\bar{\delta} = \frac{1}{|E_{\text{treino}}|} \sum_{t} \delta_t$.
+No teste ou na projeção de 2026, subtrai-se a fração calibrada $\gamma \cdot \bar{\delta}$ do 3º e 4º colocados e transfere-se para os dois líderes (Top-2):
+$$\hat{v}_{k}^{\text{util}} = \max\left(0.0, \, \hat{v}_k - \gamma \cdot \bar{\delta} \cdot \frac{\hat{v}_k}{\hat{v}_3 + \hat{v}_4}\right), \quad \text{para } k \in \{3, 4\}$$
+$$\hat{v}_{m}^{\text{util}} = \hat{v}_m + \gamma \cdot \bar{\delta} \cdot \frac{\hat{v}_m}{\hat{v}_1 + \hat{v}_2}, \quad \text{para } m \in \{1, 2\}$$
+com $\gamma \in \{0.0, 0.5, 1.0\}$.
+**Regra de Ativação:** A migração de voto útil entra no modelo final apenas se reduzir o MAE médio no expanding window. Caso contrário, fixa-se $\gamma = 0$.
+
+### 8. Prior Histórico para Candidatos Nanicos
+Para candidaturas com intenção residual nas pesquisas, adota-se a calibragem com o desempenho histórico de legendas equivalentes no TSE (2006-2022):
+
+| Candidato 2026 | Partido 2026 | Legendas Históricas TSE Equivalentes (2006-2022) | Mediana Histórica TSE (%) |
+| :--- | :--- | :--- | :--- |
+| Clariana Barão | Democracia Cristã (DC) | PSDC / DC | 0,15% |
+| Edmilson Costa | PCB | PCB | 0,08% |
+| Hertz Dias | PSTU | PSTU | 0,12% |
+| Rui Costa Pimenta | PCO | PCO | 0,03% |
+| Samara Martins | UP | UP (2022) / PCR / PGT | 0,07% |
+| Wilson Grassi | Democrata | PRTB / PEN / PHS | 0,10% |
+
+A projeção calibrada do candidato nanico é dada pela combinação convexa:
+$$\hat{y}_c = (1 - w) \cdot \hat{v}_c^{\text{pesquisas}} + w \cdot \text{Prior}_c^{\text{hist}}$$
+com $w \in \{0.0, 0.5, 1.0\}$. O peso $w$ é computado no teto formal de hiperparâmetros do modelo (máximo de 2 hiperparâmetros livres por modelo).
+
+### 9. Protocolo Oficial de Decisão e Nota de Limitação Amostral ($n=3$)
+- **Protocolo de Decisão Soberano:** O modelo que definirá as previsões oficiais de 2026 será selecionado exclusivamente com base no **menor MAE médio nas 3 janelas prospectivas temporais da validação por expanding window** (2014 com treino 2006-2010; 2018 com treino 2006-2014; 2022 com treino 2006-2018).
+- A validação Leave-One-Election-Out (LOEO) será calculada e reportada integralmente no relatório como protocolo complementar e de sensibilidade, ressaltando explicitamente sua natureza acausal (utilização de eleições cronologicamente futuras no treino).
+- **Nota Formal de Limitação Amostral ($n=3$):** Registra-se com rigor a limitação amostral de dispormos de exatamente 3 pontos de validação prospectiva ($n = 3$). Em decorrência do tamanho amostral reduzido, a aplicação da regra de parcimônia definida na Seção 4 desta Emenda é mandatória para evitar a escolha de modelos sobreajustados.

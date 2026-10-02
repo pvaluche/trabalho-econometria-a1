@@ -408,6 +408,7 @@ def coletar_pesquisas_2010() -> list[dict]:
     pesquisas = []
     vespera = VESPERAS[2010].date()
     inicio_janela = JANELAS_INICIO[2010]
+    ultimo_vox_date = None
 
     for tr in t.find_all("tr")[1:]:
         tds = [td.get_text().strip().replace("\n", " ") for td in tr.find_all(["td", "th"])]
@@ -422,12 +423,22 @@ def coletar_pesquisas_2010() -> list[dict]:
         if dt_div < inicio_janela or dt_div > vespera:
             continue
 
+        inst, contr = padronizar_instituto_e_contratante(inst_raw)
+
+        # O tracking diario Vox Populi/Band/iG em 2010 utilizava janela movel de 4 dias
+        # (amostra de 2.000 com renovacao de 500 entrevistas/dia). Para evitar sobreposicao
+        # amostral e correlacao serial artificial, mantem-se apenas rodadas espacadas em
+        # pelo menos 4 dias a partir da rodada final (particao sem sobreposicao de campo).
+        if inst == "Vox Populi":
+            if ultimo_vox_date is not None and (ultimo_vox_date - dt_div).days < 4:
+                continue
+            ultimo_vox_date = dt_div
+
         dilma = clean_cand_pct(tds[2])
         serra = clean_cand_pct(tds[3])
         marina = clean_cand_pct(tds[4])
         outros_ind = clean_cand_pct(tds[7]) if len(tds) > 7 else None
 
-        inst, contr = padronizar_instituto_e_contratante(inst_raw)
         pesquisas.append({
             "eleicao": 2010,
             "instituto": inst,
