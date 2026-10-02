@@ -513,7 +513,20 @@ def gerar_dados():
     out_js.write_text(js_content, encoding="utf-8")
     print(f"OK: dados.js gerado em {out_js} ({out_js.stat().st_size} bytes)")
 
+    # Salva previsao_2026.html autocontido (arquivo unico standalone para envio facil)
+    idx_path = ROOT / "interface" / "index.html"
+    out_standalone = ROOT / "interface" / "previsao_2026.html"
+    if idx_path.exists():
+        idx_html = idx_path.read_text(encoding="utf-8")
+        standalone_html = idx_html.replace(
+            '<script src="dados.js"></script>',
+            f"<script>\nwindow.DADOS = {json_str};\n</script>",
+        )
+        out_standalone.write_text(standalone_html, encoding="utf-8")
+        print(f"OK: previsao_2026.html (standalone) gerado em {out_standalone} ({out_standalone.stat().st_size} bytes)")
+
     return out_json, out_js
+
 
 
 if __name__ == "__main__":
