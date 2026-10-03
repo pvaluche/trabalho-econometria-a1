@@ -139,7 +139,7 @@ Usamos somente pesquisas com registro conferido no PesqEle/TSE. Cada número foi
 \IfFileExists{tabela_pesquisas_2026.tex}{\CatchFileDef{\tabpesq}{tabela_pesquisas_2026.tex}{}%
 \begin{table}[h]
 \centering\small
-\caption{Pesquisas de 2026 usadas (\% dos votos totais, como divulgadas). Na média entra a mais recente de cada instituto.}
+\caption{Pesquisas de 2026 usadas, como divulgadas: \% dos votos totais, exceto quando o instituto divulgou os candidatos só em votos válidos (B+N e indecisos aparecem como --). Na média entra a mais recente de cada instituto.}
 \label{tab:pesq26}
 \footnotesize\setlength{\tabcolsep}{3pt}
 \begin{tabular}{llcrcccccccc}
@@ -530,6 +530,63 @@ Previsões para 2026: abstenção de \pAbst\% do eleitorado apto, brancos de \pB
 \item \textbf{Blocos políticos.} A correção usa três blocos fixos (PT, principal adversário, demais). Em 2026 o principal adversário é Flávio Bolsonaro, o que supõe que o padrão de 2018 e 2022 se mantém para o mesmo campo político.
 \item \textbf{Nanicos.} Quando nenhuma pesquisa divulga um candidato, a previsão dele é próxima de zero. O erro esperado é pequeno por candidato, mas soma em sete candidatos.
 \end{itemize}
+
+%================= HISTORIA =================
+\section{Como o projeto foi construído}
+
+Organizamos o trabalho em etapas, cada uma com um relatório e uma revisão antes de seguir para a próxima. A regra era simples: nenhuma etapa usa informação que só aparece numa etapa posterior.
+
+\begin{table}[h]
+\centering\small
+\caption{Etapas do projeto.}
+\begin{tabularx}{\linewidth}{@{}lp{3.3cm}X@{}}
+\toprule
+Quando & Etapa & O que foi feito \\
+\midrule
+02/10, manhã & Entendimento & Leitura das regras, definição da métrica (MAE sobre todos os candidatos), estrutura do código e primeiros testes. \\
+02/10, manhã & Dados do TSE & Resultados de 2006 a 2022 baixados, processados e conferidos contra os números oficiais de 2022. Pesquisas de 2026 transcritas e conferidas no PesqEle. \\
+02/10, início da tarde & Pesquisas históricas e pré-registro & 109 pesquisas de véspera compiladas. Modelos, grades e regra de decisão escritos e congelados, com três emendas antes do backtest. \\
+02/10, tarde & Backtest & Validação temporal de todos os modelos e ajustes, LOEO, erro da margem e escolha do modelo final pela regra. \\
+02/10, fim da tarde & Entrega & Planilha com validador, nota metodológica em \LaTeX\ com números gerados pelo código e roteiro automático do corte. \\
+03/10 & Corte & Transcrição das pesquisas da véspera até 20h00 e geração dos arquivos finais. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Controles de qualidade}
+Cada número que entra na previsão passa por pelo menos um controle automático:
+\begin{itemize}
+\item \textbf{Transcrição.} Cada pesquisa de 2026 tem a página original salva com hash SHA-256; um teste procura cada número transcrito junto ao nome do candidato na página.
+\item \textbf{Sanidade.} O código reproduz o resultado oficial de 2022 e as pesquisas de véspera do Datafolha em 2014, 2018 e 2022, com tolerância de 1 ponto.
+\item \textbf{Consistência.} Um teste recalcula o MAE candidato a candidato e confere com as tabelas deste relatório.
+\item \textbf{Formato.} Um validador confere as duas abas da planilha, os rótulos, o formato numérico e a soma exata de 100,0.
+\end{itemize}
+
+\subsection{O que corrigimos no caminho}
+As revisões entre etapas encontraram e corrigiram problemas que teriam mudado o resultado:
+\begin{itemize}
+\item a primeira versão do MAE ignorava os candidatos que as pesquisas não divulgavam; passamos a calcular sobre toda a urna, como exige a métrica;
+\item a média simples de 2022 aparecia com dois valores diferentes em tabelas distintas (Lula 48,32\% e 46,88\%); unificamos tudo num único script de tabelas, com teste de consistência;
+\item partidos de 2026 estavam desatualizados (Caiado no PSD, Zema no Novo) e foram alinhados à lista oficial;
+\item a âncora histórica dos nanicos chegou a ser mantida no modelo apesar de não passar na regra; voltou a $w=0$;
+\item o erro-padrão do modelo final estava calculado como 0,04; o valor correto é 0,09 (o modelo continua passando na regra, com redução média de 0,26);
+\item números de pesquisas sem fonte verificável foram descartados; só ficou o que tem registro no PesqEle e página salva.
+\end{itemize}
+
+\section{Glossário}
+\begin{description}[leftmargin=1em,itemsep=3pt]
+\item[Votos válidos] Votos dados a candidatos, excluindo brancos e nulos. É a base do resultado oficial do 1º turno.
+\item[MAE] Erro absoluto médio: a média, sobre os candidatos, da distância entre previsão e resultado, em pontos percentuais.
+\item[\emph{House effect}] Desvio sistemático de um instituto em relação aos demais.
+\item[Viés comum] Erro que todos os institutos cometem na mesma direção numa eleição.
+\item[Voto útil] Migração de eleitores de candidatos sem chance de 2º turno para um dos dois primeiros.
+\item[Encolhimento] Multiplicar uma estimativa por um fator menor que 1 quando há poucas observações, para não reagir demais ao ruído.
+\item[\emph{Expanding window}] Validação em que cada eleição é prevista apenas com as eleições anteriores.
+\item[LOEO] \emph{Leave-one-election-out}: cada eleição é deixada de fora uma vez e prevista com as demais.
+\item[Erro-padrão (EP)] Medida da incerteza de uma média; aqui, da redução média do MAE entre eleições.
+\item[Pré-registro] Documento que fixa modelos e regras de decisão antes de ver os resultados da validação.
+\item[Maiores restos] Método de arredondamento que garante soma exata de 100,0.
+\end{description}
 
 %================= 11 =================
 \section{Reprodutibilidade}
