@@ -18,12 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.arredondamento import maiores_restos
-from src.backtest import (
-    aplicar_ajuste_priors_nanicos,
-    aplicar_ajuste_vies_comum,
-    aplicar_ajuste_voto_util,
-    estimar_m0,
-)
+from src.backtest import estimar_m0
 from src.config import CANDIDATOS_EDITAL, DOCS_DIR, MANUAL_DIR, OUTPUTS_DIR
 
 MAPA_MACROS_OFICIAL = {
@@ -134,26 +129,6 @@ def calcular_m0_dict(df_2026: pd.DataFrame) -> dict[str, float]:
     return {c: round(v, 1) for c, v in zip(CANDIDATOS_EDITAL, r_m0)}
 
 
-def calcular_sensibilidade_dict(df_2026: pd.DataFrame) -> dict[str, dict[str, float]]:
-    """Calcula os cenarios de sensibilidade do Checkpoint 3 fechados por maiores restos."""
-    tr_all = [2006, 2010, 2014, 2018, 2022]
-    p0 = estimar_m0(df_2026, 2026)
-    p_vies3 = aplicar_ajuste_vies_comum(p0, 2026, tr_all, k_mu=3.0)
-    p_util10 = aplicar_ajuste_voto_util(p0, 2026, tr_all, gamma=1.0)
-    p_final_oficial = aplicar_ajuste_voto_util(p_vies3, 2026, tr_all, gamma=1.0)
-    p_sens_w05 = aplicar_ajuste_priors_nanicos(p_final_oficial, 2026, w=0.5)
-
-    def fechar(d: dict[str, float]) -> dict[str, float]:
-        arr = maiores_restos([d[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1)
-        return {c: round(v, 1) for c, v in zip(CANDIDATOS_EDITAL, arr)}
-
-    return {
-        "vies3": fechar(p_vies3),
-        "util10": fechar(p_util10),
-        "nan05": fechar(p_sens_w05),
-    }
-
-
 def gerar_conteudo_latex(
     status_previsao: str = "FINAL (pesquisas até 03/10/2026, 20h00)",
 ) -> str:
@@ -166,7 +141,6 @@ def gerar_conteudo_latex(
 
     candidatos_vals, aba2_vals = carregar_valores_xlsx()
     m0_dict = calcular_m0_dict(df_2026)
-    sens_dict = calcular_sensibilidade_dict(df_2026)
 
     linhas = [
         "% =====================================================================",
@@ -191,16 +165,6 @@ def gerar_conteudo_latex(
     for cand, macro in MAPA_MACROS_M0.items():
         val = m0_dict.get(cand, 0.0)
         linhas.append(f"\\newcommand{{\\{macro}}}{{{fmt_virgula(val, 1)}}}")
-
-    # Sensibilidade adicional (Checkpoint 3)
-    linhas.append("")
-    linhas.append("% Sensibilidade adicional (Checkpoint 3)")
-    linhas.append(f"\\newcommand{{\\sViesLula}}{{{fmt_virgula(sens_dict['vies3']['Luiz Inácio Lula da Silva'], 1)}}}")
-    linhas.append(f"\\newcommand{{\\sViesFlavio}}{{{fmt_virgula(sens_dict['vies3']['Flávio Bolsonaro'], 1)}}}")
-    linhas.append(f"\\newcommand{{\\sUtilLula}}{{{fmt_virgula(sens_dict['util10']['Luiz Inácio Lula da Silva'], 1)}}}")
-    linhas.append(f"\\newcommand{{\\sUtilFlavio}}{{{fmt_virgula(sens_dict['util10']['Flávio Bolsonaro'], 1)}}}")
-    linhas.append(f"\\newcommand{{\\sNanLula}}{{{fmt_virgula(sens_dict['nan05']['Luiz Inácio Lula da Silva'], 1)}}}")
-    linhas.append(f"\\newcommand{{\\sNanFlavio}}{{{fmt_virgula(sens_dict['nan05']['Flávio Bolsonaro'], 1)}}}")
 
     # Aba 2: Abstencao, Brancos, Nulos
     # Localiza com flexibilidade nas chaves de aba2_vals
