@@ -623,7 +623,7 @@ def gerar_relatorio_completo() -> str:
         "1. **Vies Comum ($k_\\mu=3$):** Reduz o MAE medio em **0,1834 p.p.** superando $1 \\text{ SE}(\\Delta) = 0,1026$ p.p. Ganho expressivo em 2014 (cai de 1,33 para 0,95) e em 2022 (cai de 0,83 para 0,71). **Aprovado.**",
         "2. **Voto Util ($\\gamma=1.0$):** Reduz o MAE medio em **0,1301 p.p.** superando $1 \\text{ SE}(\\Delta) = 0,0889$ p.p. Em 2022, o erro desaba para 0,5284 p.p. **Aprovado.**",
         "3. **Prior de Nanicos ($w=0.5$):** Obteve $\\bar{\\Delta} = +0,0040$ p.p. com $\\text{SE}(\\Delta) = 0,0067$ p.p. Como $\\bar{\\Delta} \\le \\text{SE}(\\Delta)$, o ganho e estatisticamente indistinguivel de zero. Pela regra formal, o ajuste nao e incorporado ao modelo principal, fixando-se **$w=0.0$ no Modelo Oficial Aprovado**.",
-        "4. **Modelo Combinado Oficial:** Integrando Vies Comum ($k_\\mu=3$) e Voto Util ($\\gamma=1.0$) com $w=0.0$, o MAE medio consolidado cai para **0,9640 p.p.**, com $\\bar{\\Delta} = +0,2568$ p.p. e $\\text{SE}(\\Delta) = 0,0373$ p.p. (reducao superior a $6 \\times \\text{SE}$).",
+        "4. **Modelo Combinado Oficial:** Integrando Vies Comum ($k_\\mu=3$) e Voto Util ($\\gamma=1.0$) com $w=0.0$, o MAE medio consolidado cai para **0,9640 p.p.**, com $\\bar{\\Delta} = +0,2568$ p.p. e $\\text{SE}(\\Delta) = 0,0856$ p.p. (reducao de cerca de $3 \\times \\text{SE}$).",
         "",
         "---",
         "",
