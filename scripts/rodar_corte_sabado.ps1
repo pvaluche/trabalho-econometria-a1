@@ -134,6 +134,13 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "[OK] docs/numeros_finais.tex gerado com sucesso." -ForegroundColor Green
 
+& $PYTHON scripts/gerar_tabela_pesquisas_tex.py
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[FALHA NA ETAPA 7] Erro ao gerar docs/tabela_pesquisas_2026.tex!" -ForegroundColor Red
+    exit 1
+}
+Write-Host "[OK] docs/tabela_pesquisas_2026.tex gerado com sucesso." -ForegroundColor Green
+
 if (Get-Command pdflatex -ErrorAction SilentlyContinue) {
     Write-Host "[INFO] pdflatex detectado. Compilando docs/metodologia.tex (passo 1/2)..." -ForegroundColor Cyan
     Push-Location docs
