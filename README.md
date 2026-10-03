@@ -93,6 +93,7 @@ O repositório está organizado em torno dos quatro pilares metodológicos do pr
 ### 4. Entrega
 - `outputs/previsao_2026.xlsx`: Planilha oficial pontual do edital com duas abas ("Candidatos" e "Adicionais"), formato numérico '0.0', soma fechada em 100,0% e sem campos vazios.
 - `docs/metodologia.pdf`: Nota metodológica oficial em formato PDF com exatamente 2 páginas, contendo formulações matemáticas, tabelas de backtest, sensibilidade e link para o repositório público.
+- `docs/relatorio_tecnico.pdf`: Relatório técnico completo detalhando a formulação teórica, validação temporal no backtest, tabelas completas e notas de implementação (com código-fonte em `docs/relatorio_tecnico.tex`).
 - `docs/metodologia.tex` e `docs/numeros_finais.tex`: Fontes em LaTeX da nota metodológica com injeção automática de macros gerados a partir da planilha oficial.
 - `scripts/validar_entrega.py`: Script de validação automática contra as exigências do edital.
 - `scripts/rodar_corte_sabado.ps1`: Script de orquestração do corte final de dados de sábado às 20h00 e auditoria estrita dos artefatos.
