@@ -1,6 +1,6 @@
 # Status das pesquisas do sábado (03/10/2026)
 
-Última verificação: 03/10/2026, 11h20 (horário de Brasília). Corte: 20h00.
+Última verificação: 03/10/2026, 14h40 (horário de Brasília). Corte: 20h00.
 
 | instituto | registro | divulgada (sim/nao) | horario da divulgacao | URL | Lula | Flavio |
 |---|---|---|---|---|---|---|
