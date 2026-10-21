@@ -99,8 +99,6 @@ def obter_semi_erros_margem_1t(ano: int) -> dict[str, float]:
             for _, r in df_extra.iterrows():
                 v_lula = float(r["Luiz Inácio Lula da Silva"])
                 v_flavio = float(r["Flávio Bolsonaro"])
-                soma_top2 = v_lula + v_flavio
-                # Se a base for votos validos mas com outros candidatos (~90-91% somado no top-2), usa a margem reportada
                 erros[r["inst"]] = ((v_lula - v_flavio) - margem_real) / 2.0
         return erros
 
