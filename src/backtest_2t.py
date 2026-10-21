@@ -80,7 +80,7 @@ def obter_semi_erros_margem_1t(ano: int) -> dict[str, float]:
     margem_real = tse_pt - tse_adv
 
     if ano == 2026:
-        # Usa data/manual/pesquisas_2026.csv + pesquisas de vespera auditadas de 03/10/2026
+        # Usa data/manual/pesquisas_2026.csv + data/manual/vespera_extra_2026.csv
         df_1t = pd.read_csv(MANUAL_DIR / "pesquisas_2026.csv")
         df_1t["inst"] = df_1t["instituto"].apply(padronizar_nome_instituto)
         df_last = df_1t.sort_values("data_divulgacao", ascending=False).drop_duplicates("inst")
@@ -91,14 +91,17 @@ def obter_semi_erros_margem_1t(ano: int) -> dict[str, float]:
             m_hat = val["Luiz Inácio Lula da Silva"] - val["Flávio Bolsonaro"]
             erros[r["inst"]] = (m_hat - margem_real) / 2.0
 
-        # Completa com as 3 pesquisas de vespera de 03/10/2026 auditadas com protocolo PesqEle
-        vespera_extra_2026 = {
-            "Quaest": (46.0, 45.0),       # BR-02197/2026 (03/10)
-            "AtlasIntel": (47.0, 44.1),   # BR-00999/2026 (03/10)
-            "CNT/MDA": (47.8, 42.1),      # BR-07386/2026 (03/10)
-        }
-        for inst, (v_lula, v_flavio) in vespera_extra_2026.items():
-            erros[inst] = ((v_lula - v_flavio) - margem_real) / 2.0
+        # Carrega pesquisas de vespera pós-corte de 03/10/2026 auditadas em data/manual/vespera_extra_2026.csv
+        path_extra = MANUAL_DIR / "vespera_extra_2026.csv"
+        if path_extra.exists():
+            df_extra = pd.read_csv(path_extra)
+            df_extra["inst"] = df_extra["instituto"].apply(padronizar_nome_instituto)
+            for _, r in df_extra.iterrows():
+                v_lula = float(r["Luiz Inácio Lula da Silva"])
+                v_flavio = float(r["Flávio Bolsonaro"])
+                soma_top2 = v_lula + v_flavio
+                # Se a base for votos validos mas com outros candidatos (~90-91% somado no top-2), usa a margem reportada
+                erros[r["inst"]] = ((v_lula - v_flavio) - margem_real) / 2.0
         return erros
 
     df_1t = obter_pesquisas_eleicao(ano)
@@ -239,27 +242,47 @@ def aplicar_ajuste_vies_comum_2t(
     return float(pred_pt_base - mu_hat)
 
 
-def calcular_prior_estrutural_1t(ano: int, anos_treino: list[int]) -> float:
+def calcular_taus_historicos(anos: list[int] | None = None) -> dict[int, float]:
     """
-    Calcula o prior estrutural do 2o turno a partir do resultado oficial do 1o turno:
-    Estima nos anos de treino a fracao media `tau_pt` dos votos de terceiros colocados
-    que migra para o candidato do PT entre o 1o e o 2o turno:
-        pct_pt_2t = pct_pt_1t + tau_pt * pct_terceiros_1t
-    Para 2026, pondera tambem pelo perfil ideologico dos candidatos eliminados (ou usa
-    a transferencia empirica).
+    Retorna a fracao aparente `tau_t` dos votos de terceiros colocados do 1o turno
+    capturada pelo candidato do PT entre o 1o e o 2o turno:
+        tau_t = (V_{PT,2T,t} - V_{PT,1T,t}) / (100 - V_{PT,1T,t} - V_{Adv,1T,t})
+    Nota: em 2006, tau = 1.2530 (> 1.0) e um outlier porque o adversario (Alckmin)
+    perdeu votos validos do 1o turno (41.64%) para o 2o turno (39.17%).
     """
-    taus = []
-    for a in anos_treino:
+    if anos is None:
+        anos = [2006, 2010, 2014, 2018, 2022]
+    taus = {}
+    for a in anos:
         v_pt_1t, v_adv_1t = TSE_1T_TOP2[a]
         terc = 100.0 - v_pt_1t - v_adv_1t
         if terc > 0:
-            tau = (TSE_2T_PT[a] - v_pt_1t) / terc
-            taus.append(tau)
-    tau_medio = float(np.mean(taus)) if taus else 0.38
+            taus[a] = (TSE_2T_PT[a] - v_pt_1t) / terc
+    return taus
+
+
+def calcular_prior_estrutural_1t(
+    ano: int,
+    anos_treino: list[int],
+    estatistica: str = "media",
+) -> float:
+    """
+    Calcula o prior estrutural do 2o turno a partir do resultado oficial do 1o turno:
+        pct_pt_2t = pct_pt_1t + tau * pct_terceiros_1t
+    onde `tau` pode ser a `"media"` ou a `"mediana"` dos `tau_t` nos anos de treino.
+    """
+    taus_map = calcular_taus_historicos(anos_treino)
+    taus = list(taus_map.values())
+    if not taus:
+        tau_ref = 0.45
+    elif estatistica == "mediana":
+        tau_ref = float(np.median(taus))
+    else:
+        tau_ref = float(np.mean(taus))
 
     v_pt_1t, v_adv_1t = TSE_1T_TOP2[ano]
     terc = 100.0 - v_pt_1t - v_adv_1t
-    return float(np.clip(v_pt_1t + tau_medio * terc, 0.0, 100.0))
+    return float(np.clip(v_pt_1t + tau_ref * terc, 0.0, 100.0))
 
 
 def calcular_mae_2t(pred_pt: float, ano: int) -> float:

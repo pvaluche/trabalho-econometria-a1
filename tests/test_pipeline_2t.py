@@ -14,13 +14,15 @@ from src.backtest_2t import (
     DATAS_CORTE_2T,
     TSE_2T_PT,
     aplicar_ajuste_persistencia_1t,
+    calcular_prior_estrutural_1t,
+    calcular_taus_historicos,
     carregar_pesquisas_2026_2t,
     carregar_pesquisas_2t_historicas,
     estimar_m0_2t,
     estimar_m1_2t,
     estimar_m2_2t_peso_1t,
 )
-from src.config import MANUAL_DIR, OUTPUTS_DIR, PROCESSED_DIR
+from src.config import MANUAL_DIR, OUTPUTS_DIR, PROCESSED_DIR, REPORTS_DIR
 from src.entrega_2t import CANDIDATOS_2T_EDITAL, PARTIDOS_2T_EDITAL, gerar_planilha_entrega_2t
 
 
@@ -30,6 +32,17 @@ def test_arquivos_processados_2t_existem():
     assert (PROCESSED_DIR / "tse_uf_historico_2t.parquet").exists()
     assert (PROCESSED_DIR / "tse_2026_1t_oficial.json").exists()
     assert (MANUAL_DIR / "pesquisas_2026_2t.csv").exists()
+    assert (MANUAL_DIR / "vespera_extra_2026.csv").exists()
+
+
+def test_vespera_extra_2026_csv_integridade():
+    df_extra = pd.read_csv(MANUAL_DIR / "vespera_extra_2026.csv")
+    assert set(df_extra["instituto"]) == {"Quaest", "AtlasIntel", "CNT/MDA"}
+    for col in ["registro_tse", "fonte_url", "Flávio Bolsonaro", "Luiz Inácio Lula da Silva"]:
+        assert col in df_extra.columns
+        assert df_extra[col].notna().all()
+    assert df_extra["registro_tse"].str.startswith("BR-").all()
+    assert df_extra["fonte_url"].str.startswith("https://").all()
 
 
 def test_zero_vazamento_temporal_pesquisas_2t():
@@ -62,7 +75,7 @@ def test_sanidade_tse_2026_1t_oficial():
     assert abs(soma_validos - 100.0) < 1e-4
 
 
-def test_modelos_2t_limites_e_consistencia():
+def test_modelos_2t_e_taus_historicos():
     df_2026 = carregar_pesquisas_2026_2t()
     p0 = estimar_m0_2t(df_2026)
     p1 = estimar_m1_2t(df_2026, 2026, meia_vida=5.0)
@@ -72,12 +85,18 @@ def test_modelos_2t_limites_e_consistencia():
     for p in [p0, p1, p2, p_adj]:
         assert 40.0 <= p <= 60.0
 
+    taus = calcular_taus_historicos([2006, 2010, 2014, 2018, 2022])
+    assert abs(taus[2006] - 1.2530) < 0.01
+    p_prior_med = calcular_prior_estrutural_1t(2026, [2006, 2010, 2014, 2018, 2022], estatistica="media")
+    p_prior_mdn = calcular_prior_estrutural_1t(2026, [2006, 2010, 2014, 2018, 2022], estatistica="mediana")
+    assert p_prior_med > p_prior_mdn
 
-def test_planilha_entrega_2t_formato_edital(tmp_path):
+
+def test_planilha_entrega_2t_formato_e_erros_sem_defaults(tmp_path):
     caminho = tmp_path / "teste_2t.xlsx"
     gerar_planilha_entrega_2t(
         {"Flávio Bolsonaro": 51.44, "Luiz Inácio Lula da Silva": 48.56},
-        {"abstencao": 21.1, "brancos": 1.4, "nulos": 2.9},
+        {"abstencao": 21.1, "brancos": 1.8, "nulos": 2.9},
         caminho_saida=caminho,
     )
     assert caminho.exists()
@@ -105,3 +124,27 @@ def test_planilha_entrega_2t_formato_edital(tmp_path):
     for r in range(2, 5):
         val = float(ws2.cell(r, 2).value)
         assert 0.0 <= val <= 100.0
+
+    # Verifica que falta de qualquer campo levanta ValueError (sem defaults hardcoded)
+    with pytest.raises(ValueError):
+        gerar_planilha_entrega_2t(
+            {"Flávio Bolsonaro": 51.3, "Luiz Inácio Lula da Silva": 48.7},
+            {"brancos": 1.8, "nulos": 2.9},
+            caminho_saida=tmp_path / "err1.xlsx",
+        )
+    with pytest.raises(ValueError):
+        gerar_planilha_entrega_2t(
+            {"Flávio Bolsonaro": 51.3},
+            {"abstencao": 21.1, "brancos": 1.8, "nulos": 2.9},
+            caminho_saida=tmp_path / "err2.xlsx",
+        )
+
+
+def test_relatorio_backtest_2t_gerado_pelo_script():
+    rel = (REPORTS_DIR / "relatorio_backtest_2t.md").read_text(encoding="utf-8")
+    assert "Arquivo gerado 100% automaticamente por `scripts/executar_backtest_2t.py`" in rel
+    assert "Prior transferência com tau médio" in rel
+    assert "Prior transferência com tau mediano" in rel
+    assert "1,2530" in rel
+    assert "7,92%" in rel
+    assert "Gerp no peso 1T" not in rel

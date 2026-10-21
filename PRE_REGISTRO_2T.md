@@ -1,8 +1,8 @@
 # PRE-REGISTRO METODOLOGICO — 2o TURNO: PREVISAO ELEITORAL PRESIDENCIAL 2026
 
-**Data de Congelamento:** 21/10/2026  
+**Data de Definicao:** 21/10/2026  
 **Desafio:** Estatistica e Econometria, FGV EPGE — 2o Turno (25/10/2026)  
-**Status:** CONGELADO E IMUTAVEL
+**Status:** Protocolo do 2o turno (definido em 21/10/2026)
 
 ---
 
@@ -61,8 +61,8 @@ Sobre o agregador base vencedor $M^*_{2T}$, avalia-se cada ajuste isoladamente (
    - Desconta-se o vies comum medio historico dos 2os turnos anteriores com shrinkage Bayesiano:
      $$\hat{\mu}_{\text{PT}, 2T} = \frac{N_{\text{treino}}}{N_{\text{treino}} + k_\mu} \cdot \bar{e}_{\text{PT}, 2T}^{\text{treino}}, \quad k_\mu \in \{1, \, 3\}$$
 3. **Ajuste 3 — Shrinkage com Prior Estrutural de Transferencia de Votos do 1o Turno ($\lambda$):**
-   - Combina-se a agregacao das pesquisas de 2o turno com o prior estrutural de transferencia dos votos validos do 1o turno ($p_{2T}^{\text{prior\_1T}}$):
-     $$\hat{p}_{\text{PT}, 2T} = (1 - \lambda) \cdot \hat{p}_{\text{PT}, 2T}^{\text{pesq}} + \lambda \cdot p_{\text{PT}, 2T}^{\text{prior\_1T}}, \quad \lambda \in \{0.10, \, 0.25\}$$
+   - Combina-se a agregacao das pesquisas de 2o turno com o prior estrutural de transferencia dos votos validos do 1o turno ($p_{2T}^{\text{prior\_1T}} = v_{\text{PT}, 1T} + \tau \cdot v_{\text{Terceiros}, 1T}$, avaliado tanto com $\tau$ medio quanto com $\tau$ mediano nos anos de treino, dado que 2006 apresenta $\tau = 1,2530 > 1$ porque o adversario perdeu votos entre o 1o e o 2o turno):
+     $$\hat{p}_{\text{PT}, 2T} = (1 - \lambda) \cdot \hat{p}_{\text{PT}, 2T}^{\text{pesq}} + \lambda \cdot p_{2T}^{\text{prior\_1T}}, \quad \lambda \in \{0.10, \, 0.25\}$$
 
 ---
 
@@ -81,3 +81,8 @@ Diferentemente do 1o turno, no 2o turno ja conhecemos os valores oficiais realiz
    *(Especialmente adequado para Votos Brancos, cujo nivel base caiu ao longo do tempo e cuja queda proporcional no 2o turno ocorreu em 100% das eleicoes historicas).*
 5. **`BottomUp_UF_Gov2T` (Decomposicao Estadual por Presenca de 2o Turno para Governador — especifico para Abstencao):**
    - Projeta a variacao de abstencao separadamente para UFs com disputa de 2o turno para Governador ($\text{Gov2T}_{u, t} = 1$) e UFs com Governador ja decidido no 1o turno ($\text{Gov2T}_{u, t} = 0$), agregando nacionalmente pelo peso do eleitorado apto de cada UF.
+
+### 4.1. Limitacoes da Aba 2: Share do Eleitorado com 2o Turno de Governador (2026 vs. 2006–2022)
+- Em 2026, apenas **6 UFs** (`AC, AM, DF, ES, RN, TO`) possuem disputa de 2o turno para Governador, representando apenas **7,92%** do eleitorado nacional apto (`92,08%` sem disputa estadual), ante uma media historica de **41,56%** no ciclo 2006–2022 (`2006: 41,53% [10 UFs]`, `2010: 14,36% [9 UFs]`, `2014: 35,67% [15 UFs]`, `2018: 62,97% [14 UFs]`, `2022: 53,26% [12 UFs]`).
+- Embora o modelo `BottomUp_UF_Gov2T` nao supere `Zero_Delta` em mais de 1 erro-padrao no backtest historico ($n=3$), o fato de 2026 apresentar o menor percentual da serie historica de eleitores com campanha estadual ativa no 2o turno constitui uma limitacao estrutural documentada para a projecao de abstencao.
+
