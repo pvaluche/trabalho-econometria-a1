@@ -1,0 +1,284 @@
+{
+  "eleicao": 2026,
+  "turno": 1,
+  "data_eleicao": "2026-10-04",
+  "aptos": 158745502,
+  "comparecimento": 125275835,
+  "abstencoes": 33469244,
+  "votos_validos": 119300788,
+  "votos_brancos": 2300798,
+  "votos_nulos": 3669003,
+  "abstencao_pct": 21.08358572578642,
+  "brancos_pct": 1.836585643192879,
+  "nulos_pct": 2.928739608879877,
+  "candidatos": {
+    "Flávio Bolsonaro": {
+      "numero": 22,
+      "partido": "PL",
+      "votos": 56104503,
+      "pct_validos": 47.0277723563737
+    },
+    "Luiz Inácio Lula da Silva": {
+      "numero": 13,
+      "partido": "PT",
+      "votos": 53879538,
+      "pct_validos": 45.1627679106361
+    },
+    "Augusto Cury": {
+      "numero": 70,
+      "partido": "AVANTE",
+      "votos": 3448569,
+      "pct_validos": 2.8906506468339503
+    },
+    "Renan Santos": {
+      "numero": 14,
+      "partido": "MISSÃO",
+      "votos": 2675887,
+      "pct_validos": 2.2429751260318582
+    },
+    "Ronaldo Caiado": {
+      "numero": 55,
+      "partido": "PSD",
+      "votos": 2605148,
+      "pct_validos": 2.1836804632002935
+    },
+    "Romeu Zema": {
+      "numero": 30,
+      "partido": "NOVO",
+      "votos": 326488,
+      "pct_validos": 0.27366793252027805
+    },
+    "Samara Martins": {
+      "numero": 80,
+      "partido": "UP",
+      "votos": 122911,
+      "pct_validos": 0.1030261426269875
+    },
+    "Hertz Dias": {
+      "numero": 16,
+      "partido": "PSTU",
+      "votos": 43103,
+      "pct_validos": 0.03612968591624056
+    },
+    "Clariana Barão": {
+      "numero": 27,
+      "partido": "DC",
+      "votos": 40043,
+      "pct_validos": 0.03356474057824329
+    },
+    "Edmilson Costa": {
+      "numero": 21,
+      "partido": "PCB",
+      "votos": 22693,
+      "pct_validos": 0.019021668155284943
+    },
+    "Wilson Grassi": {
+      "numero": 35,
+      "partido": "DEMOCRATA",
+      "votos": 16881,
+      "pct_validos": 0.014149948447951576
+    },
+    "Rui Costa Pimenta": {
+      "numero": 29,
+      "partido": "PCO",
+      "votos": 15024,
+      "pct_validos": 0.012593378679108137
+    }
+  },
+  "ufs_com_gov2t": [
+    "AC",
+    "AM",
+    "DF",
+    "ES",
+    "RN",
+    "TO"
+  ],
+  "ufs_sem_gov2t": [
+    "AL",
+    "AP",
+    "BA",
+    "CE",
+    "GO",
+    "MA",
+    "MG",
+    "MS",
+    "MT",
+    "PA",
+    "PB",
+    "PE",
+    "PI",
+    "PR",
+    "RJ",
+    "RO",
+    "RR",
+    "RS",
+    "SC",
+    "SE",
+    "SP"
+  ],
+  "share_eleitorado_gov2t_pct": 7.922608351592339,
+  "uf_stats": {
+    "AC": {
+      "aptos": 613742,
+      "abstencoes": 125412,
+      "abstencao_1t_pct": 20.433993436981662,
+      "gov2t": 1
+    },
+    "AL": {
+      "aptos": 2442126,
+      "abstencoes": 503698,
+      "abstencao_1t_pct": 20.6253895171666,
+      "gov2t": 0
+    },
+    "AM": {
+      "aptos": 2798611,
+      "abstencoes": 564062,
+      "abstencao_1t_pct": 20.155069782831557,
+      "gov2t": 1
+    },
+    "AP": {
+      "aptos": 576988,
+      "abstencoes": 100426,
+      "abstencao_1t_pct": 17.40521466650953,
+      "gov2t": 0
+    },
+    "BA": {
+      "aptos": 11312752,
+      "abstencoes": 2259151,
+      "abstencao_1t_pct": 19.96995072463358,
+      "gov2t": 0
+    },
+    "CE": {
+      "aptos": 6996545,
+      "abstencoes": 1086074,
+      "abstencao_1t_pct": 15.523004568683543,
+      "gov2t": 0
+    },
+    "DF": {
+      "aptos": 2258320,
+      "abstencoes": 426924,
+      "abstencao_1t_pct": 18.904495377094477,
+      "gov2t": 1
+    },
+    "ES": {
+      "aptos": 2991650,
+      "abstencoes": 639368,
+      "abstencao_1t_pct": 21.37175137465947,
+      "gov2t": 1
+    },
+    "GO": {
+      "aptos": 5080590,
+      "abstencoes": 1109003,
+      "abstencao_1t_pct": 21.828232547794645,
+      "gov2t": 0
+    },
+    "MA": {
+      "aptos": 5183115,
+      "abstencoes": 1022772,
+      "abstencao_1t_pct": 19.732766878604853,
+      "gov2t": 0
+    },
+    "MG": {
+      "aptos": 16372372,
+      "abstencoes": 3735098,
+      "abstencao_1t_pct": 22.813420071325037,
+      "gov2t": 0
+    },
+    "MS": {
+      "aptos": 2024430,
+      "abstencoes": 483210,
+      "abstencao_1t_pct": 23.868940887064507,
+      "gov2t": 0
+    },
+    "MT": {
+      "aptos": 2637801,
+      "abstencoes": 585668,
+      "abstencao_1t_pct": 22.2028879358223,
+      "gov2t": 0
+    },
+    "PA": {
+      "aptos": 6262397,
+      "abstencoes": 1195893,
+      "abstencao_1t_pct": 19.096409889056858,
+      "gov2t": 0
+    },
+    "PB": {
+      "aptos": 3248531,
+      "abstencoes": 564543,
+      "abstencao_1t_pct": 17.378408886970757,
+      "gov2t": 0
+    },
+    "PE": {
+      "aptos": 7223450,
+      "abstencoes": 1312388,
+      "abstencao_1t_pct": 18.168437519467844,
+      "gov2t": 0
+    },
+    "PI": {
+      "aptos": 2704758,
+      "abstencoes": 463875,
+      "abstencao_1t_pct": 17.1503328578749,
+      "gov2t": 0
+    },
+    "PR": {
+      "aptos": 8613657,
+      "abstencoes": 1772200,
+      "abstencao_1t_pct": 20.57430427053225,
+      "gov2t": 0
+    },
+    "RJ": {
+      "aptos": 12857648,
+      "abstencoes": 2997846,
+      "abstencao_1t_pct": 23.315663953469564,
+      "gov2t": 0
+    },
+    "RN": {
+      "aptos": 2659825,
+      "abstencoes": 488812,
+      "abstencao_1t_pct": 18.37760003007717,
+      "gov2t": 1
+    },
+    "RO": {
+      "aptos": 1265893,
+      "abstencoes": 274813,
+      "abstencao_1t_pct": 21.709022800505256,
+      "gov2t": 0
+    },
+    "RR": {
+      "aptos": 401521,
+      "abstencoes": 68749,
+      "abstencao_1t_pct": 17.12214305104839,
+      "gov2t": 0
+    },
+    "RS": {
+      "aptos": 8522545,
+      "abstencoes": 1819642,
+      "abstencao_1t_pct": 21.350922758401392,
+      "gov2t": 0
+    },
+    "SC": {
+      "aptos": 5734651,
+      "abstencoes": 1086492,
+      "abstencao_1t_pct": 18.946087564875352,
+      "gov2t": 0
+    },
+    "SE": {
+      "aptos": 1740135,
+      "abstencoes": 301053,
+      "abstencao_1t_pct": 17.30055426734133,
+      "gov2t": 0
+    },
+    "SP": {
+      "aptos": 34122892,
+      "abstencoes": 7690900,
+      "abstencao_1t_pct": 22.538828186075204,
+      "gov2t": 0
+    },
+    "TO": {
+      "aptos": 1182023,
+      "abstencoes": 216827,
+      "abstencao_1t_pct": 18.34372089206386,
+      "gov2t": 1
+    }
+  }
+}
