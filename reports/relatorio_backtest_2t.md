@@ -2,7 +2,7 @@
 
 > **Arquivo gerado 100% automaticamente por `scripts/executar_backtest_2t.py` (sem edição manual).**
 
-- **Protocolo:** `PRE_REGISTRO_2T.md` (Protocolo do 2º turno definido em 21/10/2026)
+- **Protocolo:** `protocolo/PRE_REGISTRO_2T.md` (Protocolo do 2º turno definido em 21/10/2026)
 - **Script Reprodutível:** `scripts/executar_backtest_2t.py`
 - **Suíte de Testes:** `tests/test_pipeline_2t.py`
 

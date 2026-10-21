@@ -59,9 +59,7 @@ def converter_para_votos_validos(
     # Soma apenas das intencoes dos candidatos
     soma = sum(intencoes.values())
     if soma <= 0:
-        raise ValueError(
-            f"Soma das intencoes dos candidatos e zero ou negativa: {soma}"
-        )
+        raise ValueError(f"Soma das intencoes dos candidatos e zero ou negativa: {soma}")
 
     # Renormaliza para 100% em votos validos
     validos = {cand: (v / soma) * 100.0 for cand, v in intencoes.items()}

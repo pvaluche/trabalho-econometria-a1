@@ -65,7 +65,9 @@ def calcular_denominadores(df: pd.DataFrame) -> dict[str, float]:
         "QT_VOTOS_NULOS",
     }
     faltando = colunas_obrigatorias - set(df.columns)
-    col_validos = "QT_TOTAL_VOTOS_VALIDOS" if "QT_TOTAL_VOTOS_VALIDOS" in df.columns else "QT_VOTOS_VALIDOS"
+    col_validos = (
+        "QT_TOTAL_VOTOS_VALIDOS" if "QT_TOTAL_VOTOS_VALIDOS" in df.columns else "QT_VOTOS_VALIDOS"
+    )
     if col_validos not in df.columns:
         faltando.add("QT_TOTAL_VOTOS_VALIDOS")
     if faltando:
@@ -167,11 +169,7 @@ def calcular_votos_validos_candidatos(df: pd.DataFrame) -> dict[str, float]:
         raise ValueError("Coluna de contagem de votos nao encontrada.")
 
     # Agregacao nacional
-    votos_por_cand = (
-        df_filtrado.groupby(col_nome)[col_votos]
-        .sum()
-        .astype(float)
-    )
+    votos_por_cand = df_filtrado.groupby(col_nome)[col_votos].sum().astype(float)
 
     total_validos = votos_por_cand.sum()
     if total_validos <= 0:

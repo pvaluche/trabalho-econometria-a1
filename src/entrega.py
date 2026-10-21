@@ -7,6 +7,7 @@ Garante total conformidade com as regras do edital e scripts/validar_entrega.py.
 from __future__ import annotations
 
 from pathlib import Path
+
 import openpyxl
 
 from src.arredondamento import maiores_restos

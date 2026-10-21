@@ -1,15 +1,16 @@
 """
 scripts/gerar_numeros_latex.py
 Le a previsao final do pipeline (outputs/previsao_2026.xlsx e pesquisas_2026.csv)
-e reescreve docs/numeros_finais.tex com as definicoes de macros LaTeX (\newcommand).
+e reescreve docs/1t/numeros_finais.tex com as definicoes de macros LaTeX (\newcommand).
 Zero travessoes em todo o arquivo.
 """
 
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import openpyxl
 import pandas as pd
 
@@ -132,7 +133,7 @@ def calcular_m0_dict(df_2026: pd.DataFrame) -> dict[str, float]:
 def gerar_conteudo_latex(
     status_previsao: str = "FINAL (pesquisas até 03/10/2026, 20h00)",
 ) -> str:
-    """Gera o texto completo para docs/numeros_finais.tex."""
+    """Gera o texto completo para docs/1t/numeros_finais.tex."""
     csv_path = MANUAL_DIR / "pesquisas_2026.csv"
     df_2026 = pd.read_csv(csv_path)
 
@@ -191,7 +192,9 @@ def gerar_conteudo_latex(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Gera docs/numeros_finais.tex a partir do pipeline.")
+    parser = argparse.ArgumentParser(
+        description="Gera docs/1t/numeros_finais.tex a partir do pipeline."
+    )
     parser.add_argument(
         "--status",
         default="FINAL (pesquisas até 03/10/2026, 20h00)",

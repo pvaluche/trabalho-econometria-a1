@@ -1,13 +1,14 @@
 """
 src/backtest.py
 Motor econometrico de backtest historico e avaliacao de modelos (M0, M1, M2, M3 + Ajustes).
-Segue estritamente as regras de governanca do PRE_REGISTRO.md e Emendas 1, 2 e 3.
+Segue estritamente as regras de governanca do protocolo/PRE_REGISTRO_1T.md e Emendas 1, 2 e 3.
 """
 
 from __future__ import annotations
 
 import math
 from datetime import date
+
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
@@ -222,7 +223,9 @@ def estimar_m0(df_pesquisas: pd.DataFrame, eleicao: int) -> dict[str, float]:
     return renormalizar_votos(res)
 
 
-def estimar_m1(df_pesquisas: pd.DataFrame, eleicao: int, meia_vida: float = 14.0) -> dict[str, float]:
+def estimar_m1(
+    df_pesquisas: pd.DataFrame, eleicao: int, meia_vida: float = 14.0
+) -> dict[str, float]:
     """
     Modelo M1: Media ponderada por recencia (meia-vida exponencial) e tamanho de amostra.
     """
@@ -293,7 +296,9 @@ def calcular_house_effects_relativos(
                 b = identificar_bloco(t, c)
                 erros_bloco_todos[b].append(err)
 
-        e_bar_bloco_t = {b: float(np.mean(vals)) if vals else 0.0 for b, vals in erros_bloco_todos.items()}
+        e_bar_bloco_t = {
+            b: float(np.mean(vals)) if vals else 0.0 for b, vals in erros_bloco_todos.items()
+        }
 
         # Erro medio por instituto e bloco em t
         insts_na_eleicao = {inst for inst, _ in erros_por_pesquisa}

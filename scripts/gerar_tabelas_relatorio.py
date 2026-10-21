@@ -17,8 +17,9 @@ Zero travessoes em todo o arquivo.
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -226,21 +227,15 @@ def gerar_tabela_etapa1() -> str:
         ("M1 (h=21d)", lambda df, t, tr: estimar_m1(df, t, meia_vida=21.0)),
         (
             "M2 (k=1)",
-            lambda df, t, tr: estimar_m2(
-                df, t, tr, meia_vida=14.0, k_shrinkage=1.0
-            ),
+            lambda df, t, tr: estimar_m2(df, t, tr, meia_vida=14.0, k_shrinkage=1.0),
         ),
         (
             "M2 (k=3)",
-            lambda df, t, tr: estimar_m2(
-                df, t, tr, meia_vida=14.0, k_shrinkage=3.0
-            ),
+            lambda df, t, tr: estimar_m2(df, t, tr, meia_vida=14.0, k_shrinkage=3.0),
         ),
         (
             "M2 (k=10)",
-            lambda df, t, tr: estimar_m2(
-                df, t, tr, meia_vida=14.0, k_shrinkage=10.0
-            ),
+            lambda df, t, tr: estimar_m2(df, t, tr, meia_vida=14.0, k_shrinkage=10.0),
         ),
         (
             "M3 (alpha=0.1)",
@@ -252,9 +247,7 @@ def gerar_tabela_etapa1() -> str:
         ),
         (
             "M3 (alpha=10.0)",
-            lambda df, t, tr: estimar_m3(
-                df, t, tr, meia_vida=14.0, alpha=10.0
-            ),
+            lambda df, t, tr: estimar_m3(df, t, tr, meia_vida=14.0, alpha=10.0),
         ),
     ]
 
@@ -465,23 +458,15 @@ def gerar_tabela_projecao_2026() -> str:
     p_sens = obter_predicao("sensibilidade_nanicos", 2026, TODOS_LOEO)
 
     # Arredondamento maiores restos somando 100.0%
-    r_m0 = maiores_restos(
-        [p_m0[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1
-    )
-    r_ofic = maiores_restos(
-        [p_ofic[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1
-    )
-    r_sens = maiores_restos(
-        [p_sens[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1
-    )
+    r_m0 = maiores_restos([p_m0[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1)
+    r_ofic = maiores_restos([p_ofic[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1)
+    r_sens = maiores_restos([p_sens[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1)
 
     m0_dict = {c: v for c, v in zip(CANDIDATOS_EDITAL, r_m0)}
     ofic_dict = {c: v for c, v in zip(CANDIDATOS_EDITAL, r_ofic)}
     sens_dict = {c: v for c, v in zip(CANDIDATOS_EDITAL, r_sens)}
 
-    sorted_cands = sorted(
-        CANDIDATOS_EDITAL, key=lambda c: ofic_dict[c], reverse=True
-    )
+    sorted_cands = sorted(CANDIDATOS_EDITAL, key=lambda c: ofic_dict[c], reverse=True)
 
     linhas = [
         "| Candidato | Partido | M0 Puro (%) | Modelo Oficial Aprovado (%) (w=0.0) | Sensibilidade Nanicos (%) (w=0.5) |",
@@ -495,9 +480,7 @@ def gerar_tabela_projecao_2026() -> str:
             f"| {c_label} | {ptdo} | {fmt_pct(m0_dict[c], 1)} | **{fmt_pct(ofic_dict[c], 1)}** | {fmt_pct(sens_dict[c], 1)} |"
         )
 
-    linhas.append(
-        "| **TOTAL DE VOTOS VÁLIDOS** | | **100,0%** | **100,0%** | **100,0%** |"
-    )
+    linhas.append("| **TOTAL DE VOTOS VÁLIDOS** | | **100,0%** | **100,0%** | **100,0%** |")
     return "\n".join(linhas)
 
 
@@ -517,9 +500,7 @@ def gerar_tabela_sensibilidade_2026() -> str:
 
     for nome, cfg_id in configs:
         p = obter_predicao(cfg_id, 2026, TODOS_LOEO)
-        arr = maiores_restos(
-            [p[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1
-        )
+        arr = maiores_restos([p[c] for c in CANDIDATOS_EDITAL], total=100.0, casas=1)
         d = {c: v for c, v in zip(CANDIDATOS_EDITAL, arr)}
         lula = d["Luiz Inácio Lula da Silva"]
         flavio = d["Flávio Bolsonaro"]
