@@ -16,25 +16,45 @@ from __future__ import annotations
 import datetime
 import hashlib
 import re
-import urllib.request
 import sys
+import urllib.request
 from datetime import date
 from pathlib import Path
 
 # Garante raiz do projeto no sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
 
 from src.config import MANIFEST_PATH, PROCESSED_DIR, RAW_DIR
 from src.filtros import VESPERAS
 
 MESES = {
-    "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
-    "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12,
-    "janeiro": 1, "fevereiro": 2, "março": 3, "abril": 4, "maio": 5, "junho": 6,
-    "julho": 7, "agosto": 8, "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12,
+    "jan": 1,
+    "fev": 2,
+    "mar": 3,
+    "abr": 4,
+    "mai": 5,
+    "jun": 6,
+    "jul": 7,
+    "ago": 8,
+    "set": 9,
+    "out": 10,
+    "nov": 11,
+    "dez": 12,
+    "janeiro": 1,
+    "fevereiro": 2,
+    "março": 3,
+    "abril": 4,
+    "maio": 5,
+    "junho": 6,
+    "julho": 7,
+    "agosto": 8,
+    "setembro": 9,
+    "outubro": 10,
+    "novembro": 11,
+    "dezembro": 12,
 }
 
 JANELAS_INICIO = {
@@ -46,7 +66,9 @@ JANELAS_INICIO = {
 }
 
 
-def parse_intervalo_datas(texto: str, ano_default: int) -> tuple[date | None, date | None, date | None]:
+def parse_intervalo_datas(
+    texto: str, ano_default: int
+) -> tuple[date | None, date | None, date | None]:
     """Interpreta datas de campo e divulgacao a partir de strings em portugues."""
     texto = texto.lower().replace("\u2013", "-").replace("\u2014", "-").replace("\xa0", " ").strip()
     texto = re.sub(r"\[.*?\]", "", texto).strip()
@@ -66,7 +88,9 @@ def parse_intervalo_datas(texto: str, ano_default: int) -> tuple[date | None, da
             return date(ano, m1, d1), date(ano, m2, d2), date(ano, m2, d2)
 
     # 2. Um unico mes com intervalo: Ex '5-6 de outubro de 2018' ou '03 a 04 de outubro'
-    m = re.search(r"(\d{1,2})\s*(?:-|a|e|até)\s*(\d{1,2})\s*(?:de\s*)?([a-z]+)(?:\s*de\s*(\d{4}))?", texto)
+    m = re.search(
+        r"(\d{1,2})\s*(?:-|a|e|até)\s*(\d{1,2})\s*(?:de\s*)?([a-z]+)(?:\s*de\s*(\d{4}))?", texto
+    )
     if m:
         d1, d2 = int(m.group(1)), int(m.group(2))
         mes_str = m.group(3)[:3]
@@ -207,7 +231,7 @@ def baixar_e_registrar(url: str, nome_arquivo_local: str) -> Path:
 
         sha = hashlib.sha256(conteudo).hexdigest()
         tamanho = len(conteudo)
-        agora = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        agora = datetime.datetime.now(datetime.UTC).isoformat()
         rel_path = f"pesquisas_historicas/{nome_arquivo_local}"
 
         with open(MANIFEST_PATH, "a", encoding="utf-8") as f:
@@ -219,7 +243,7 @@ def baixar_e_registrar(url: str, nome_arquivo_local: str) -> Path:
 def coletar_pesquisas_2022() -> list[dict]:
     url = "https://pt.wikipedia.org/wiki/Pesquisas_de_opini%C3%A3o_para_a_elei%C3%A7%C3%A3o_presidencial_no_Brasil_em_2022"
     path = baixar_e_registrar(url, "wikipedia_pesquisas_2022.html")
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         soup = BeautifulSoup(f.read(), "html.parser")
 
     t = soup.find_all("table", {"class": "wikitable"})[2]
@@ -252,34 +276,36 @@ def coletar_pesquisas_2022() -> list[dict]:
         indecisos_abst = clean_cand_pct(tds[-1]) if len(tds) > 13 else None
 
         inst, contr = padronizar_instituto_e_contratante(inst_raw)
-        pesquisas.append({
-            "eleicao": 2022,
-            "instituto": inst,
-            "contratante": contr,
-            "data_inicio_campo": dt1.isoformat() if dt1 else None,
-            "data_fim_campo": dt2.isoformat() if dt2 else None,
-            "data_divulgacao": dt_div.isoformat(),
-            "amostra": limpar_numero(amostra_str),
-            "cenario": "estimulado",
-            "base": "votos totais",
-            "Luiz Inácio Lula da Silva": lula,
-            "Jair Bolsonaro": bols,
-            "Ciro Gomes": ciro,
-            "Simone Tebet": tebet,
-            "Soraya Thronicke": soraya,
-            "Felipe D'Avila": davila,
-            "brancos_nulos": None,
-            "indecisos": indecisos_abst,
-            "fonte": "Wikipédia",
-            "fonte_url": url,
-        })
+        pesquisas.append(
+            {
+                "eleicao": 2022,
+                "instituto": inst,
+                "contratante": contr,
+                "data_inicio_campo": dt1.isoformat() if dt1 else None,
+                "data_fim_campo": dt2.isoformat() if dt2 else None,
+                "data_divulgacao": dt_div.isoformat(),
+                "amostra": limpar_numero(amostra_str),
+                "cenario": "estimulado",
+                "base": "votos totais",
+                "Luiz Inácio Lula da Silva": lula,
+                "Jair Bolsonaro": bols,
+                "Ciro Gomes": ciro,
+                "Simone Tebet": tebet,
+                "Soraya Thronicke": soraya,
+                "Felipe D'Avila": davila,
+                "brancos_nulos": None,
+                "indecisos": indecisos_abst,
+                "fonte": "Wikipédia",
+                "fonte_url": url,
+            }
+        )
     return pesquisas
 
 
 def coletar_pesquisas_2018() -> list[dict]:
     url = "https://pt.wikipedia.org/wiki/Pesquisas_de_opini%C3%A3o_para_a_elei%C3%A7%C3%A3o_presidencial_no_Brasil_em_2018"
     path = baixar_e_registrar(url, "wikipedia_pesquisas_2018.html")
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         soup = BeautifulSoup(f.read(), "html.parser")
 
     t = soup.find_all("table", {"class": "wikitable"})[1]
@@ -313,37 +339,39 @@ def coletar_pesquisas_2018() -> list[dict]:
         abst = clean_cand_pct(tds[14]) if len(tds) > 14 else None
 
         inst, contr = padronizar_instituto_e_contratante(inst_raw)
-        pesquisas.append({
-            "eleicao": 2018,
-            "instituto": inst,
-            "contratante": contr,
-            "data_inicio_campo": dt1.isoformat() if dt1 else None,
-            "data_fim_campo": dt2.isoformat() if dt2 else None,
-            "data_divulgacao": dt_div.isoformat(),
-            "amostra": limpar_numero(amostra_str),
-            "cenario": "estimulado",
-            "base": "votos totais",
-            "Jair Bolsonaro": bolsonaro,
-            "Fernando Haddad": haddad,
-            "Ciro Gomes": ciro,
-            "Geraldo Alckmin": alckmin,
-            "João Amoêdo": amoedo,
-            "Henrique Meirelles": meirelles,
-            "Marina Silva": marina,
-            "Alvaro Dias": dias,
-            "outros_agregado": outros,
-            "brancos_nulos": None,
-            "indecisos": abst,
-            "fonte": "Wikipédia",
-            "fonte_url": url,
-        })
+        pesquisas.append(
+            {
+                "eleicao": 2018,
+                "instituto": inst,
+                "contratante": contr,
+                "data_inicio_campo": dt1.isoformat() if dt1 else None,
+                "data_fim_campo": dt2.isoformat() if dt2 else None,
+                "data_divulgacao": dt_div.isoformat(),
+                "amostra": limpar_numero(amostra_str),
+                "cenario": "estimulado",
+                "base": "votos totais",
+                "Jair Bolsonaro": bolsonaro,
+                "Fernando Haddad": haddad,
+                "Ciro Gomes": ciro,
+                "Geraldo Alckmin": alckmin,
+                "João Amoêdo": amoedo,
+                "Henrique Meirelles": meirelles,
+                "Marina Silva": marina,
+                "Alvaro Dias": dias,
+                "outros_agregado": outros,
+                "brancos_nulos": None,
+                "indecisos": abst,
+                "fonte": "Wikipédia",
+                "fonte_url": url,
+            }
+        )
     return pesquisas
 
 
 def coletar_pesquisas_2014() -> list[dict]:
     url = "https://pt.wikipedia.org/wiki/Pesquisas_de_opini%C3%A3o_para_a_elei%C3%A7%C3%A3o_presidencial_no_Brasil_em_2014"
     path = baixar_e_registrar(url, "wikipedia_pesquisas_2014.html")
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         soup = BeautifulSoup(f.read(), "html.parser")
 
     t = soup.find_all("table", {"class": "wikitable"})[0]
@@ -374,34 +402,36 @@ def coletar_pesquisas_2014() -> list[dict]:
         ind = clean_cand_pct(tds[-1]) if len(tds) > 16 else None
 
         inst, contr = padronizar_instituto_e_contratante(inst_raw)
-        pesquisas.append({
-            "eleicao": 2014,
-            "instituto": inst,
-            "contratante": contr,
-            "data_inicio_campo": dt1.isoformat() if dt1 else None,
-            "data_fim_campo": dt2.isoformat() if dt2 else None,
-            "data_divulgacao": dt_div.isoformat(),
-            "amostra": None,
-            "cenario": "estimulado",
-            "base": "votos totais",
-            "Dilma Rousseff": dilma,
-            "Aécio Neves": aecio,
-            "Marina Silva": marina,
-            "Luciana Genro": genro,
-            "Pastor Everaldo": everaldo,
-            "Eduardo Jorge": jorge,
-            "brancos_nulos": bn,
-            "indecisos": ind,
-            "fonte": "Wikipédia",
-            "fonte_url": url,
-        })
+        pesquisas.append(
+            {
+                "eleicao": 2014,
+                "instituto": inst,
+                "contratante": contr,
+                "data_inicio_campo": dt1.isoformat() if dt1 else None,
+                "data_fim_campo": dt2.isoformat() if dt2 else None,
+                "data_divulgacao": dt_div.isoformat(),
+                "amostra": None,
+                "cenario": "estimulado",
+                "base": "votos totais",
+                "Dilma Rousseff": dilma,
+                "Aécio Neves": aecio,
+                "Marina Silva": marina,
+                "Luciana Genro": genro,
+                "Pastor Everaldo": everaldo,
+                "Eduardo Jorge": jorge,
+                "brancos_nulos": bn,
+                "indecisos": ind,
+                "fonte": "Wikipédia",
+                "fonte_url": url,
+            }
+        )
     return pesquisas
 
 
 def coletar_pesquisas_2010() -> list[dict]:
     url = "https://pt.wikipedia.org/wiki/Pesquisas_de_opini%C3%A3o_para_a_elei%C3%A7%C3%A3o_presidencial_no_Brasil_em_2010"
     path = baixar_e_registrar(url, "wikipedia_pesquisas_2010.html")
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         soup = BeautifulSoup(f.read(), "html.parser")
 
     t = soup.find_all("table", {"class": "wikitable"})[1]
@@ -439,24 +469,26 @@ def coletar_pesquisas_2010() -> list[dict]:
         marina = clean_cand_pct(tds[4])
         outros_ind = clean_cand_pct(tds[7]) if len(tds) > 7 else None
 
-        pesquisas.append({
-            "eleicao": 2010,
-            "instituto": inst,
-            "contratante": contr,
-            "data_inicio_campo": dt1.isoformat() if dt1 else None,
-            "data_fim_campo": dt2.isoformat() if dt2 else None,
-            "data_divulgacao": dt_div.isoformat(),
-            "amostra": None,
-            "cenario": "estimulado",
-            "base": "votos totais",
-            "Dilma Rousseff": dilma,
-            "José Serra": serra,
-            "Marina Silva": marina,
-            "brancos_nulos": None,
-            "indecisos": outros_ind,
-            "fonte": "Wikipédia",
-            "fonte_url": url,
-        })
+        pesquisas.append(
+            {
+                "eleicao": 2010,
+                "instituto": inst,
+                "contratante": contr,
+                "data_inicio_campo": dt1.isoformat() if dt1 else None,
+                "data_fim_campo": dt2.isoformat() if dt2 else None,
+                "data_divulgacao": dt_div.isoformat(),
+                "amostra": None,
+                "cenario": "estimulado",
+                "base": "votos totais",
+                "Dilma Rousseff": dilma,
+                "José Serra": serra,
+                "Marina Silva": marina,
+                "brancos_nulos": None,
+                "indecisos": outros_ind,
+                "fonte": "Wikipédia",
+                "fonte_url": url,
+            }
+        )
     return pesquisas
 
 
@@ -640,8 +672,15 @@ def compilar_pesquisas_historicas() -> pd.DataFrame:
 
     # Ordena colunas
     colunas_meta = [
-        "eleicao", "instituto", "contratante", "data_inicio_campo", "data_fim_campo",
-        "data_divulgacao", "amostra", "cenario", "base"
+        "eleicao",
+        "instituto",
+        "contratante",
+        "data_inicio_campo",
+        "data_fim_campo",
+        "data_divulgacao",
+        "amostra",
+        "cenario",
+        "base",
     ]
     outras_cols = [c for c in df.columns if c not in colunas_meta]
     df = df[colunas_meta + outras_cols]

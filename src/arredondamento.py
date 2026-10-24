@@ -7,7 +7,7 @@ Implementa o metodo dos maiores restos para arredondar porcentagens para
 from __future__ import annotations
 
 import math
-from typing import Sequence
+from collections.abc import Sequence
 
 
 def maiores_restos(

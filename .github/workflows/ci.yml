@@ -2,31 +2,29 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, segundo-turno]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  test:
+  testes:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Instalar Python 3.12
+      - name: Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
-      - name: Instalar dependencias
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Dependencias
+        run: pip install -r requirements.txt
 
-      - name: Executar Ruff (lint e formatacao)
+      - name: Lint (ruff)
         run: |
           ruff check .
           ruff format --check .
 
-      - name: Executar Pytest
-        run: |
-          pytest -v
+      - name: Testes (pytest)
+        run: pytest -q

@@ -1,0 +1,150 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\IfFileExists{brazil.ldf}{\usepackage[brazil]{babel}}{}
+\usepackage{charter}
+\renewcommand{\ttdefault}{pcr}
+\usepackage[a4paper,top=1.1cm,bottom=1.3cm,left=1.5cm,right=1.5cm,footskip=0.65cm]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{xstring}
+\usepackage[font=small,labelfont=bf,labelsep=colon,skip=2pt]{caption}
+\captionsetup[figure]{name=Figura}
+\setlength{\abovedisplayskip}{2pt}\setlength{\belowdisplayskip}{2pt}
+\setlength{\abovedisplayshortskip}{1pt}\setlength{\belowdisplayshortskip}{1pt}
+\setlength{\textfloatsep}{5pt}\setlength{\floatsep}{5pt}\setlength{\intextsep}{4pt}
+
+\input{numeros_2t.tex}
+
+\definecolor{azul}{HTML}{1F3A5F}
+\definecolor{cinza}{HTML}{555555}
+\definecolor{vermelho}{HTML}{B03A2E}
+
+\titleformat{\section}{\normalfont\bfseries\color{azul}}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{3pt}{1pt}
+\setlist{nosep,leftmargin=1.2em,topsep=1pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\renewcommand{\arraystretch}{1.0}
+\setlength{\tabcolsep}{3.5pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\footnotesize\color{cinza}Desafio de Estatística e Econometria, FGV EPGE}
+\fancyfoot[R]{\footnotesize\color{cinza}\thepage/2}
+
+\StrSubstitute{\pFlavio}{,}{.}[\pFlavioDot]
+\StrSubstitute{\flavioDoisCand}{,}{.}[\flavioDoisCandDot]
+
+\begin{document}
+
+{\large\bfseries\color{azul} Previsão do 2º turno presidencial de 2026: nota metodológica}\\[1pt]
+{\small João Pedro Valuche de Andrade Pereira \textbullet\ Lethicia Manfioletti Possamai \textbullet\ Arthur Caron Lyra}\\[2pt]
+\colorbox{azul!8}{\parbox{\dimexpr\linewidth-2\fboxsep}{\small
+\textbf{Horário de corte dos dados: \horacorte{} (horário de Brasília).} Nenhuma pesquisa divulgada depois desse horário entrou na previsão. Status destes números: \statusprevisao{} (\nPesq{} pesquisas, a última divulgada em \dataUltimaPesq).}}
+
+\vspace{2pt}
+{\setlength{\tabcolsep}{0pt}\small
+\begin{tabularx}{\linewidth}{@{}*{5}{>{\centering\arraybackslash}X}@{}}
+\textcolor{azul}{\Large\bfseries \pFlavio\%} & \textcolor{azul}{\Large\bfseries \pLula\%} & \textcolor{cinza}{\Large\bfseries \pAbst\%} & \textcolor{cinza}{\Large\bfseries \pBrancos\%} & \textcolor{cinza}{\Large\bfseries \pNulos\%}\\
+\footnotesize Flávio Bolsonaro (PL) & \footnotesize Lula (PT) & \footnotesize Abstenção & \footnotesize Brancos & \footnotesize Nulos\\[-1pt]
+\multicolumn{2}{c}{\scriptsize\color{cinza}\% dos votos válidos} & \multicolumn{3}{c}{\scriptsize\color{cinza}\% do eleitorado apto (abstenção) e do comparecimento (brancos e nulos)}
+\end{tabularx}}
+
+\section{Objetivo e métrica}
+Com dois candidatos, os votos válidos somam 100 e o erro de um é o erro do outro com sinal trocado. O MAE da previsão é, portanto, o erro absoluto de um candidato, que é também metade do erro na margem:
+$\text{MAE}=\tfrac12\sum_{k=1}^{2}|\hat V_k-V_k|=|\hat V_{\text{Lula}}-V_{\text{Lula}}|$.
+Errar a margem em 2 pontos custa 1 ponto de MAE. Toda a modelagem se reduz a estimar bem uma única proporção.
+
+\section{Dados}
+\textbf{1º turno de 2026.} Resultado oficial do TSE por município e zona (arquivos do portal de dados abertos, com hash SHA-256): Flávio \flavioUmT\%, Lula \lulaUmT\%, demais candidatos \tercUmT\% dos válidos; abstenção \abstUmT\%, brancos \brancosUmT\% e nulos \nulosUmT\%.
+\textbf{Histórico.} Resultados de 1º e 2º turno de 2006 a 2022, por UF, e \nHist{} pesquisas nacionais de 2º turno divulgadas entre os dois turnos dessas eleições.
+\textbf{Pesquisas de 2026.} \nPesq{} pesquisas estimuladas de 2º turno de \nInst{} institutos, todas com registro no TSE e fonte anotada na base, divulgadas a partir de 05/10. Convertemos cada uma em votos válidos, $\hat v_{j}=P_{j,\text{Lula}}/(P_{j,\text{Lula}}+P_{j,\text{Flávio}})$, o que exclui brancos e nulos e distribui os indecisos na proporção dos decididos. De cada instituto usamos só a pesquisa mais recente, para que quem divulga com mais frequência não pese mais.
+
+\section{Modelos e validação}
+Testamos três agregadores. O M0 é a média simples das últimas pesquisas de cada instituto. O M1 usa todas as pesquisas da janela com peso $w_i=\sqrt{N_i}\,2^{-\Delta t_i/h}$, que favorece amostras maiores e pesquisas recentes ($h\in\{3,5,7\}$ dias). O M2 aproveita uma informação que só existe no 2º turno: o erro que cada instituto cometeu três semanas antes, no 1º turno da mesma eleição. Medimos o erro na margem entre os dois primeiros e o dividimos por dois, para que ele fique na mesma escala de uma proporção de 2º turno:
+\begin{equation}
+e_j=\tfrac12\big[(\hat v^{\,1T}_{j,\text{PT}}-\hat v^{\,1T}_{j,\text{Adv}})-(v^{\,1T}_{\text{PT}}-v^{\,1T}_{\text{Adv}})\big],\qquad
+w_j=\frac{1}{e_j^2+\sigma_0^2},\qquad \hat p_{\text{PT}}=\frac{\sum_j w_j\hat v_j}{\sum_j w_j}.
+\end{equation}
+O termo $\sigma_0$ impede que um instituto que acertou por sorte receba peso quase infinito. Institutos sem pesquisa de véspera no 1º turno recebem o erro mediano dos demais.
+
+Validamos com \emph{expanding window}: 2014 é previsto com 2006 e 2010, 2018 com 2006 a 2014 e 2022 com 2006 a 2018, de modo que nenhuma previsão usa informação posterior. Um modelo mais complexo só substitui o mais simples se reduzir o MAE médio em mais de um erro-padrão da diferença, $\bar\Delta>s_\Delta/\sqrt3$. Em empate, fica o mais simples. Escolhemos primeiro o agregador e depois testamos cada ajuste isoladamente.
+
+\begin{center}\small
+\textbf{Tabela 1:} Backtest do 2º turno (MAE em p.p.; $\bar\Delta>0$ indica redução do erro).\\[1pt]
+\input{tab_modelos.tex}\\[1pt]
+{\footnotesize O M2 erra menos que o M0 nas três eleições de teste e também em 2006 e 2010 (LOEO: \loeoVenc{} contra \loeoMZero). Fonte: elaboração própria com dados do TSE.}
+\end{center}
+
+O M2 com $\sigma_0=\sigmaZero$ reduziu o MAE de \maeMZero{} para \maeVenc{} ($\bar\Delta=\deltaVenc$, EP $=\seVenc$). Nenhum ajuste passou na regra. Corrigir cada pesquisa por uma fração do erro do seu instituto no 1º turno empatou com a base, e o viés comum histórico também: o erro de cada instituto no 1º turno não se repetiu de forma estável no 2º, possivelmente porque os institutos revisam suas ponderações entre os turnos. A previsão final é o M2 puro, arredondado a uma casa pelo método dos maiores restos, o que garante soma exata de 100,0.
+
+\section{Uso do 1º turno}
+O 1º turno entra de duas formas. A primeira é o peso de cada instituto no M2 (Figura 1b). Em 2026, todos os institutos com pesquisa de véspera superestimaram a vantagem de Lula, com erro mediano de \medErroUmT{} p.p. na metade da margem. A segunda é uma checagem independente pela transferência de votos. Definimos $\tau$ como a fração dos votos dos eliminados que o candidato do PT capturou entre os turnos:
+
+\begin{center}\small
+\textbf{Tabela 2:} Transferência aparente de votos do 1º para o 2º turno (\% dos válidos).\\[1pt]
+\input{tab_transferencia.tex}\\[1pt]
+{\footnotesize $\tau=(V^{2T}_{\text{PT}}-V^{1T}_{\text{PT}})/V^{1T}_{\text{demais}}$. Em 2006, $\tau>1$ porque Alckmin perdeu votos entre os turnos, e não houve só transferência. Fonte: elaboração própria com dados do TSE.}
+\end{center}
+
+Como 2006 distorce a média ($\bar\tau=\tauMedia$), usamos a mediana, $\tilde\tau=\tauMediana$. Aplicada ao 1º turno de 2026, ela leva Flávio a \priorMedianaFlavio\%, praticamente a previsão das pesquisas (\pFlavio\%). Lido ao contrário, nosso número supõe que Lula capture \tauImplLula\% dos \tercUmT{} p.p. dos eliminados e Flávio \tauImplFlavio\%, o padrão típico das eleições anteriores. Duas fontes independentes, as pesquisas de 2º turno e a transferência histórica sobre o 1º turno, chegam ao mesmo resultado. Não usamos a transferência como ajuste porque, misturada às pesquisas, ela piorou o backtest (Tabela 1): a dispersão de $\tau$ entre eleições é grande demais para servir de âncora.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  name=a, width=0.50\linewidth, height=4.8cm,
+  xmin=0, xmax=20, ymin=49, ymax=56,
+  xtick={0,5,10,15,20}, xticklabels={05/10,10/10,15/10,20/10,25/10},
+  ylabel={Flávio, \% dos válidos}, label style={font=\scriptsize}, tick label style={font=\scriptsize},
+  /pgf/number format/use comma, axis lines*=left, ymajorgrids, grid style={dashed,gray!30},
+  legend style={font=\tiny, draw=none, fill=none, at={(0.5,1.02)}, anchor=south, legend columns=3, /tikz/every even column/.append style={column sep=4pt}}]
+\addplot[only marks, mark=*, mark size=1.4pt, color=cinza!70] table[x=dia,y=flavio]{pesquisas_2026_2t.dat};
+\addplot[thick, color=azul, domain=0:20] {\pFlavioDot};
+\addplot[thick, dashed, color=vermelho, domain=0:20] {\flavioDoisCandDot};
+\legend{Pesquisas de 2026, Previsão (\pFlavio), 1º turno entre os dois (\flavioDoisCand)}
+\end{axis}
+\begin{axis}[
+  at={(a.east)}, anchor=west, xshift=2.3cm,
+  width=0.42\linewidth, height=5.1cm, xbar, bar width=3.2pt, bar shift=0pt,
+  xmin=0, ymin=-0.6, ymax=\nPesos.6,
+  ytick={0,...,\nPesos}, yticklabels/.expand once=\rotulosPesos,
+  xlabel={peso no M2 (\%)}, label style={font=\scriptsize}, tick label style={font=\tiny},
+  /pgf/number format/use comma, axis lines*=left, xmajorgrids, grid style={dashed,gray!30},
+  legend style={font=\tiny, draw=none, fill=none, at={(0.5,1.02)}, anchor=south, legend columns=2, /tikz/every even column/.append style={column sep=4pt}},
+  legend image code/.code={\draw[#1] (0cm,-0.06cm) rectangle (0.22cm,0.08cm);}]
+\addplot[fill=azul, draw=none] table[x=peso,y=y, restrict expr to domain={\thisrow{tem1t}}{1:1}]{pesos_2026.dat};
+\addplot[fill=cinza!40, draw=none] table[x=peso,y=y, restrict expr to domain={\thisrow{tem1t}}{0:0}]{pesos_2026.dat};
+\legend{com erro medido no 1º turno, erro mediano}
+\end{axis}
+\end{tikzpicture}
+\caption{(a) Pesquisas de 2º turno em votos válidos, previsão final e a fatia de Flávio entre os dois primeiros no 1º turno. (b) Peso de cada instituto no M2: quem errou menos no 1º turno pesa mais. Fonte: elaboração própria.}
+\end{figure}
+
+\section{Abstenção, brancos e nulos}
+No 2º turno já conhecemos esses valores no 1º turno da mesma eleição, e todos os métodos partem deles. Comparamos repetir o 1º turno com somar a variação entre turnos da eleição anterior ou a variação média, aplicar a razão média 2T/1T e decompor a abstenção por UF conforme haja 2º turno para governador. A validação e a regra são as mesmas da Tabela 1.
+
+\begin{center}\small
+\textbf{Tabela 3:} MAE médio (p.p.) em 2014, 2018 e 2022 e previsão.\\[1pt]
+\input{tab_aba2.tex}\\[1pt]
+{\footnotesize Abstenção sobre o eleitorado apto; brancos e nulos sobre o comparecimento. Fonte: elaboração própria com dados do TSE.}
+\end{center}
+
+Nenhum método superou repetir o 1º turno por mais de um erro-padrão. O caso mais próximo é o dos brancos: eles caíram entre os turnos nas cinco eleições, e a razão média tem o menor MAE. Ainda assim ela errou mais que a persistência em 2018 e 2022, as duas eleições com nível de brancos próximo do atual, e por isso mantivemos o valor do 1º turno.
+\textbf{Limitação.} Em 2026 só \govNVinteSeis{} UFs, com \govShareVinteSeis\% do eleitorado, têm 2º turno para governador, contra \govShareHist\% em média de 2006 a 2022. Sem campanha estadual, a abstenção pode subir mais que o histórico. O efeito medido foi pequeno (a abstenção subiu \deltaAbstCom{} p.p. nas UFs com disputa estadual e \deltaAbstSem{} nas demais), mas 2026 está fora da faixa observada.
+
+\section{Limitações e reprodutibilidade}
+Temos três eleições de teste, o que dá pouca potência à regra de decisão. Só \nInstUmT{} dos \nInst{} institutos de 2026 tinham pesquisa de véspera no 1º turno na nossa base, de modo que o M2 fica próximo da média simples (\sensMZero\%). Nas \nSens{} especificações alternativas que testamos, Flávio fica entre \sensMin\% e \sensMax\%. Essa faixa mostra quanto a previsão depende das escolhas de modelagem. Código, dados e testes: \url{https://github.com/pvaluche/trabalho-econometria-a1/tree/segundo-turno}.
+
+\end{document}

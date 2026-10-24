@@ -167,7 +167,9 @@ def validar_xlsx(caminho: str | Path) -> dict:
 
     for esperado in rotulos_esperados_aba2:
         if esperado not in labels_aba2:
-            erros.append(f"Linha '{esperado}' ausente na aba 2 (rotulo exato com acento requerido).")
+            erros.append(
+                f"Linha '{esperado}' ausente na aba 2 (rotulo exato com acento requerido)."
+            )
 
     # Plausibilidade: abstencao entre 10% e 40%, brancos/nulos entre 0% e 15%
     for label, val in valores_aba2.items():

@@ -1,21 +1,19 @@
 """
 src/backtest_2t.py
 Motor de modelagem econometrica e backtest (Expanding Window e LOEO) para o 2o Turno.
-Implementa estritamente o protocolo pre-registrado em PRE_REGISTRO_2T.md.
+Implementa estritamente o protocolo definido em protocolo/PRE_REGISTRO_2T.md.
 """
 
 from __future__ import annotations
 
-import json
-import math
 from datetime import date
+
 import numpy as np
 import pandas as pd
 
 from src.backtest import (
     BLOCOS_POLITICOS,
     HISTORICO_CANDIDATOS,
-    calcular_diferenca_e_se,
     converter_pesquisa_validos,
     obter_pesquisas_eleicao,
     padronizar_nome_instituto,
@@ -63,9 +61,11 @@ def carregar_pesquisas_2026_2t() -> pd.DataFrame:
     path = MANUAL_DIR / "pesquisas_2026_2t.csv"
     df = pd.read_csv(path)
     df["instituto"] = df["instituto"].apply(padronizar_nome_instituto)
-    df["pct_pt_validos"] = df["Luiz Inácio Lula da Silva"] / (
-        df["Luiz Inácio Lula da Silva"] + df["Flávio Bolsonaro"]
-    ) * 100.0
+    df["pct_pt_validos"] = (
+        df["Luiz Inácio Lula da Silva"]
+        / (df["Luiz Inácio Lula da Silva"] + df["Flávio Bolsonaro"])
+        * 100.0
+    )
     df["pct_adv_validos"] = 100.0 - df["pct_pt_validos"]
     return df
 
@@ -187,7 +187,9 @@ def aplicar_ajuste_persistencia_1t(
     media_erro_1t = float(np.mean(list(erros_1t.values()))) if erros_1t else 0.0
 
     df["pct_pt_validos"] = df.apply(
-        lambda r: float(r["pct_pt_validos"]) - float(rho) * float(erros_1t.get(r["inst"], media_erro_1t)),
+        lambda r: (
+            float(r["pct_pt_validos"]) - float(rho) * float(erros_1t.get(r["inst"], media_erro_1t))
+        ),
         axis=1,
     )
 
@@ -217,7 +219,7 @@ def estimar_rho_ols_treino(anos_treino: list[int]) -> float:
         return 0.0
     x = np.array(x_list)
     y = np.array(y_list)
-    denom = float(np.sum(x ** 2))
+    denom = float(np.sum(x**2))
     return float(np.sum(x * y) / denom) if denom > 0 else 0.0
 
 

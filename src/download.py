@@ -7,7 +7,7 @@ registro automatico no MANIFEST.csv.
 import csv
 import hashlib
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -109,7 +109,7 @@ def _registrar_manifest(
     nova_linha = {
         "arquivo": arquivo,
         "url": url,
-        "data_download": datetime.now(tz=timezone.utc).isoformat(),
+        "data_download": datetime.now(tz=UTC).isoformat(),
         "tamanho_bytes": str(tamanho),
         "sha256": sha256,
     }

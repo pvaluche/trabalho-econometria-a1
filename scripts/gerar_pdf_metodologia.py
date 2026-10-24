@@ -1,6 +1,6 @@
 """
 scripts/gerar_pdf_metodologia.py
-Gera o PDF oficial da nota metodologica (docs/metodologia.pdf) com ReportLab,
+Gera o PDF oficial da nota metodologica (docs/1t/metodologia.pdf) com ReportLab,
 garantindo exatamente 2 paginas, legendas padronizadas ("Tabela N" e "Fonte: elaboracao propria"),
 valores sincronizados com outputs/previsao_2026.xlsx em pt-BR (virgula),
 sem mencoes a Git, tags, auditoria ou IA, e sem a palavra PRELIMINAR.
@@ -9,8 +9,9 @@ Regra estrita: zero travessoes em todo o arquivo.
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import openpyxl
 import pandas as pd
 from reportlab.lib import colors
@@ -30,9 +31,9 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.config import CANDIDATOS_EDITAL, DOCS_DIR, MANUAL_DIR, OUTPUTS_DIR, PARTIDOS_EDITAL
 from src.arredondamento import maiores_restos
 from src.backtest import estimar_m0
+from src.config import CANDIDATOS_EDITAL, DOCS_DIR, MANUAL_DIR, OUTPUTS_DIR, PARTIDOS_EDITAL
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -58,9 +59,7 @@ class NumberedCanvas(canvas.Canvas):
         self.saveState()
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor("#555555"))
-        self.drawString(
-            48, 24, "Desafio de Estatística e Econometria, FGV EPGE"
-        )
+        self.drawString(48, 24, "Desafio de Estatística e Econometria, FGV EPGE")
         self.drawRightString(A4[0] - 48, 24, f"{self._pageNumber}/{page_count}")
         self.restoreState()
 
@@ -294,7 +293,14 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
         ["+ viés comum (k_mu=3)", "0,95", "1,45", "0,71", "1,04", "0,18 / 0,10"],
         ["+ voto útil (gamma=1)", "1,31", "1,43", "0,53", "1,09", "0,13 / 0,09"],
         ["+ histórico dos nanicos (w=0,5)", "1,31", "1,50", "0,84", "1,22", "0,00 / 0,01"],
-        ["Modelo final (M0 + viés comum + voto útil)", "0,92", "1,39", "0,58", "0,96", "0,26 / 0,04"],
+        [
+            "Modelo final (M0 + viés comum + voto útil)",
+            "0,92",
+            "1,39",
+            "0,58",
+            "0,96",
+            "0,26 / 0,04",
+        ],
     ]
 
     t1 = Table(
@@ -325,11 +331,17 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
     )
 
     elementos.append(
-        Paragraph("<b>Tabela 1:</b> Avaliação dos modelos e ajustes no backtest expanding window (MAE em p.p.).", estilo_legenda)
+        Paragraph(
+            "<b>Tabela 1:</b> Avaliação dos modelos e ajustes no backtest expanding window (MAE em p.p.).",
+            estilo_legenda,
+        )
     )
     elementos.append(t1)
     elementos.append(
-        Paragraph("MAE sobre todos os candidatos da urna (11 a 13). No LOEO, o modelo final tem MAE de 1,24 contra 1,45 do M0. Fonte: elaboração própria.", estilo_fonte)
+        Paragraph(
+            "MAE sobre todos os candidatos da urna (11 a 13). No LOEO, o modelo final tem MAE de 1,24 contra 1,45 do M0. Fonte: elaboração própria.",
+            estilo_fonte,
+        )
     )
 
     # QUEBRA DE PAGINA EXATA (PAGINA 1 TERMINA AQUI)
@@ -369,9 +381,7 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
         ("Wilson Grassi", PARTIDOS_EDITAL["Wilson Grassi"]),
     ]
 
-    dados_t2 = [
-        ["Candidato (Partido)", "Final", "M0", "Candidato (Partido)", "Final", "M0"]
-    ]
+    dados_t2 = [["Candidato (Partido)", "Final", "M0", "Candidato (Partido)", "Final", "M0"]]
     for (n1, p1), (n2, p2) in zip(c1, c2):
         v_fin1 = fmt_pct(cands_vals.get(n1, 0.0))
         v_m0_1 = fmt_pct(m0_dict.get(n1, 0.0)) if n1 in m0_dict else "-"
@@ -404,11 +414,17 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
     )
 
     elementos.append(
-        Paragraph("<b>Tabela 2:</b> Previsão de votos válidos para 2026 (modelo final e média simples M0).", estilo_legenda)
+        Paragraph(
+            "<b>Tabela 2:</b> Previsão de votos válidos para 2026 (modelo final e média simples M0).",
+            estilo_legenda,
+        )
     )
     elementos.append(t2)
     elementos.append(
-        Paragraph("Projeções em % de votos válidos. A coluna M0 é a média simples das pesquisas, mostrada para transparência. Fonte: elaboração própria.", estilo_fonte)
+        Paragraph(
+            "Projeções em % de votos válidos. A coluna M0 é a média simples das pesquisas, mostrada para transparência. Fonte: elaboração própria.",
+            estilo_fonte,
+        )
     )
 
     elementos.append(
@@ -436,7 +452,14 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
         ["Variável", "Persistência", "Média", "Tendência", "Previsão", "Decisão"],
         ["Abstenção", "0,94", "2,17", "0,40", val_abst, "tendência vence (Δ = -0,54; EP = 0,36)"],
         ["Votos brancos", "0,99", "1,00", "1,21", val_brancos, "empate, vence persistência"],
-        ["Votos nulos", "1,32", "1,21", "1,40", val_nulos, "empate (Δ = -0,10; EP = 0,14), persistência"],
+        [
+            "Votos nulos",
+            "1,32",
+            "1,21",
+            "1,40",
+            val_nulos,
+            "empate (Δ = -0,10; EP = 0,14), persistência",
+        ],
     ]
 
     t3 = Table(
@@ -461,11 +484,17 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
     )
 
     elementos.append(
-        Paragraph("<b>Tabela 3:</b> Backtest e seleção de método para agregados eleitorais (2014-2022).", estilo_legenda)
+        Paragraph(
+            "<b>Tabela 3:</b> Backtest e seleção de método para agregados eleitorais (2014-2022).",
+            estilo_legenda,
+        )
     )
     elementos.append(t3)
     elementos.append(
-        Paragraph("MAE médio em pontos percentuais nas eleições de 2014, 2018 e 2022. Fonte: elaboração própria.", estilo_fonte)
+        Paragraph(
+            "MAE médio em pontos percentuais nas eleições de 2014, 2018 e 2022. Fonte: elaboração própria.",
+            estilo_fonte,
+        )
     )
 
     # Secao 7
@@ -475,7 +504,7 @@ def gerar_pdf(caminho_saida: Path | str | None = None, status_texto: str | None 
             "Todo o pipeline é implementado em Python com testes automatizados, dados brutos com hash de integridade "
             "e decisões metodológicas pré-registradas. As tabelas deste documento e a planilha de entrega são geradas "
             "diretamente a partir dos dados pelo mesmo pipeline, e não digitadas. "
-            'Código, dados, pré-registro e testes disponíveis em '
+            "Código, dados, pré-registro e testes disponíveis em "
             '<a href="https://github.com/pvaluche/trabalho-econometria-a1/tree/entrega-final">'
             '<font color="#1F3A5F"><u>https://github.com/pvaluche/trabalho-econometria-a1/tree/entrega-final</u></font></a>.',
             estilo_corpo,

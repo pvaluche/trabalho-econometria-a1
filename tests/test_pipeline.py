@@ -9,8 +9,8 @@ Nenhuma logica de negocio e definida neste arquivo.
 from __future__ import annotations
 
 import io
-from pathlib import Path
 import re
+from pathlib import Path
 
 import numpy as np
 import openpyxl
@@ -26,7 +26,6 @@ from src.backtest import (
     estimar_m1,
     renormalizar_votos,
 )
-from src.entrega import gerar_planilha_entrega
 from src.config import (
     CANDIDATOS_EDITAL,
     DOCS_DIR,
@@ -40,11 +39,11 @@ from src.config import (
     verificar_sanidade_2022,
 )
 from src.conversao import converter_para_votos_validos
+from src.entrega import gerar_planilha_entrega
 from src.filtros import DIAS_ELEICAO, VESPERAS, filtrar_por_vespera
 from src.metricas import calcular_mae
 from src.pesquisas import agregar_institutos, carregar_pesquisas_historicas
 from src.tse import calcular_denominadores, calcular_votos_validos_candidatos
-
 
 # ============================================================
 # 1. Conversao para votos validos
@@ -101,7 +100,11 @@ class TestConversaoVotosValidos:
     def test_zero_e_nan_resultam_em_zero_pct(self):
         cands = ["Luiz Inácio Lula da Silva", "Flávio Bolsonaro", "Romeu Zema"]
         l_zero = {"Luiz Inácio Lula da Silva": 60.0, "Flávio Bolsonaro": 40.0, "Romeu Zema": 0.0}
-        l_nan = {"Luiz Inácio Lula da Silva": 60.0, "Flávio Bolsonaro": 40.0, "Romeu Zema": float("nan")}
+        l_nan = {
+            "Luiz Inácio Lula da Silva": 60.0,
+            "Flávio Bolsonaro": 40.0,
+            "Romeu Zema": float("nan"),
+        }
         r_zero = converter_para_votos_validos(l_zero, candidatos=cands)
         r_nan = converter_para_votos_validos(l_nan, candidatos=cands)
         assert abs(r_zero["Romeu Zema"] - 0.0) < 1e-9
@@ -193,8 +196,10 @@ def test_filtro_vespera_inclui_vespera(ano):
     vespera = VESPERAS[ano]
     dia_eleicao = DIAS_ELEICAO[ano]
     df = pd.DataFrame(
-        {"data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
-         "nota": ["antes", "vespera", "dia_eleicao"]}
+        {
+            "data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
+            "nota": ["antes", "vespera", "dia_eleicao"],
+        }
     )
     filtrado = filtrar_por_vespera(df, vespera)
     assert any(filtrado["nota"] == "vespera")
@@ -205,8 +210,10 @@ def test_filtro_vespera_exclui_dia_da_eleicao(ano):
     vespera = VESPERAS[ano]
     dia_eleicao = DIAS_ELEICAO[ano]
     df = pd.DataFrame(
-        {"data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
-         "nota": ["antes", "vespera", "dia_eleicao"]}
+        {
+            "data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
+            "nota": ["antes", "vespera", "dia_eleicao"],
+        }
     )
     filtrado = filtrar_por_vespera(df, vespera)
     assert not any(filtrado["nota"] == "dia_eleicao")
@@ -217,8 +224,10 @@ def test_filtro_vespera_inclui_pesquisa_anterior(ano):
     vespera = VESPERAS[ano]
     dia_eleicao = DIAS_ELEICAO[ano]
     df = pd.DataFrame(
-        {"data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
-         "nota": ["antes", "vespera", "dia_eleicao"]}
+        {
+            "data_divulgacao": [vespera - pd.Timedelta(days=1), vespera, dia_eleicao],
+            "nota": ["antes", "vespera", "dia_eleicao"],
+        }
     )
     filtrado = filtrar_por_vespera(df, vespera)
     assert any(filtrado["nota"] == "antes")
@@ -244,14 +253,16 @@ class TestDenominadores:
         votos_nulos=25_250,
     ) -> pd.DataFrame:
         abstencoes = aptos - comparecimento
-        return pd.DataFrame({
-            "QT_APTOS": [aptos],
-            "QT_COMPARECIMENTO": [comparecimento],
-            "QT_ABSTENCOES": [abstencoes],
-            "QT_VOTOS_VALIDOS": [votos_validos],
-            "QT_VOTOS_BRANCOS": [votos_brancos],
-            "QT_VOTOS_NULOS": [votos_nulos],
-        })
+        return pd.DataFrame(
+            {
+                "QT_APTOS": [aptos],
+                "QT_COMPARECIMENTO": [comparecimento],
+                "QT_ABSTENCOES": [abstencoes],
+                "QT_VOTOS_VALIDOS": [votos_validos],
+                "QT_VOTOS_BRANCOS": [votos_brancos],
+                "QT_VOTOS_NULOS": [votos_nulos],
+            }
+        )
 
     def test_abstencao_sobre_aptos(self):
         res = calcular_denominadores(self._df_urna())
@@ -268,18 +279,23 @@ class TestDenominadores:
     def test_validos_mais_brancos_mais_nulos_igual_comparecimento(self):
         df = self._df_urna()
         res = calcular_denominadores(df)
-        assert res["votos_validos"] + res["votos_brancos"] + res["votos_nulos"] == res["comparecimento"]
+        assert (
+            res["votos_validos"] + res["votos_brancos"] + res["votos_nulos"]
+            == res["comparecimento"]
+        )
 
     def test_multiplas_linhas_somadas(self):
         """Verifica que linhas de zonas/municipios sao somadas antes do calculo."""
-        df = pd.DataFrame({
-            "QT_APTOS": [500_000, 500_000],
-            "QT_COMPARECIMENTO": [395_250, 395_250],
-            "QT_ABSTENCOES": [104_750, 104_750],
-            "QT_VOTOS_VALIDOS": [370_000, 370_000],
-            "QT_VOTOS_BRANCOS": [12_625, 12_625],
-            "QT_VOTOS_NULOS": [12_625, 12_625],
-        })
+        df = pd.DataFrame(
+            {
+                "QT_APTOS": [500_000, 500_000],
+                "QT_COMPARECIMENTO": [395_250, 395_250],
+                "QT_ABSTENCOES": [104_750, 104_750],
+                "QT_VOTOS_VALIDOS": [370_000, 370_000],
+                "QT_VOTOS_BRANCOS": [12_625, 12_625],
+                "QT_VOTOS_NULOS": [12_625, 12_625],
+            }
+        )
         res = calcular_denominadores(df)
         assert res["aptos"] == 1_000_000
         assert abs(res["abstencao_pct"] - 20.95) < 0.01
@@ -290,10 +306,16 @@ class TestDenominadores:
             calcular_denominadores(df)
 
     def test_df_vazio_lanca_valueerror(self):
-        df = pd.DataFrame(columns=[
-            "QT_APTOS", "QT_COMPARECIMENTO", "QT_ABSTENCOES",
-            "QT_VOTOS_VALIDOS", "QT_VOTOS_BRANCOS", "QT_VOTOS_NULOS",
-        ])
+        df = pd.DataFrame(
+            columns=[
+                "QT_APTOS",
+                "QT_COMPARECIMENTO",
+                "QT_ABSTENCOES",
+                "QT_VOTOS_VALIDOS",
+                "QT_VOTOS_BRANCOS",
+                "QT_VOTOS_NULOS",
+            ]
+        )
         with pytest.raises(ValueError, match="vazio"):
             calcular_denominadores(df)
 
@@ -306,10 +328,12 @@ class TestDenominadores:
 class TestAgregacaoInstitutos:
     def test_nan_fica_fora_da_media(self):
         """NaN (ausente) nao conta no denominador da media."""
-        df = pd.DataFrame({
-            "Luiz Inácio Lula da Silva": [48.0, 50.0, float("nan")],
-            "Flávio Bolsonaro": [36.0, 38.0, 40.0],
-        })
+        df = pd.DataFrame(
+            {
+                "Luiz Inácio Lula da Silva": [48.0, 50.0, float("nan")],
+                "Flávio Bolsonaro": [36.0, 38.0, 40.0],
+            }
+        )
         res = agregar_institutos(df, candidatos=["Luiz Inácio Lula da Silva", "Flávio Bolsonaro"])
         # Lula: media de [48, 50] = 49; Bolsonaro: media de [36, 38, 40] = 38
         assert abs(res["Luiz Inácio Lula da Silva"] - 49.0) < 1e-9
@@ -317,9 +341,11 @@ class TestAgregacaoInstitutos:
 
     def test_zero_entra_como_zero(self):
         """0 (medido como zero) entra no denominador da media."""
-        df = pd.DataFrame({
-            "Augusto Cury": [1.0, 0.0],
-        })
+        df = pd.DataFrame(
+            {
+                "Augusto Cury": [1.0, 0.0],
+            }
+        )
         res = agregar_institutos(df, candidatos=["Augusto Cury"])
         assert abs(res["Augusto Cury"] - 0.5) < 1e-9  # media de [1, 0]
 
@@ -397,11 +423,16 @@ def test_integracao_sanidade_2022_do_parquet():
     bolsonaro_pct = res_candidatos["JAIR BOLSONARO"]
     abstencao_pct = res_denominadores["abstencao_pct"]
 
-    assert verificar_sanidade_2022({
-        "Luiz Inácio Lula da Silva": lula_pct,
-        "Jair Messias Bolsonaro": bolsonaro_pct,
-        "abstencao_pct": abstencao_pct,
-    }) is True
+    assert (
+        verificar_sanidade_2022(
+            {
+                "Luiz Inácio Lula da Silva": lula_pct,
+                "Jair Messias Bolsonaro": bolsonaro_pct,
+                "abstencao_pct": abstencao_pct,
+            }
+        )
+        is True
+    )
 
 
 # ============================================================
@@ -578,7 +609,7 @@ class TestValidacaoXLSX:
         ws1.title = "Candidatos"
         ws1.append(["Candidato(a)", "Partido", "Previsão de votos válidos (%)"])
         pcts = maiores_restos([100.0 / 12] * 12)
-        for i, (nome, pct) in enumerate(zip(CANDIDATOS_EDITAL, pcts), start=2):
+        for nome, pct in zip(CANDIDATOS_EDITAL, pcts):
             ws1.append([nome, PARTIDOS_EDITAL[nome], pct])
             # number_format padrao 'General', nao '0.0'
         ws1.append(["Total", "", 100.0])
@@ -600,13 +631,13 @@ class TestValidacaoXLSX:
 
     def test_valores_numeros_finais_latex_coincidem_com_xlsx(self):
         """
-        Garante que os valores em docs/numeros_finais.tex sao identicos
+        Garante que os valores em docs/1t/numeros_finais.tex sao identicos
         aos da Aba 1 (Candidatos) e Aba 2 (Adicionais) de outputs/previsao_2026.xlsx.
         """
         xlsx_path = OUTPUTS_DIR / "previsao_2026.xlsx"
         tex_path = DOCS_DIR / "numeros_finais.tex"
         assert xlsx_path.exists(), "outputs/previsao_2026.xlsx deve existir"
-        assert tex_path.exists(), "docs/numeros_finais.tex deve existir"
+        assert tex_path.exists(), "docs/1t/numeros_finais.tex deve existir"
 
         wb = openpyxl.load_workbook(xlsx_path, data_only=True)
         ws1 = wb["Candidatos"]
@@ -626,7 +657,7 @@ class TestValidacaoXLSX:
             if item:
                 aba2_xlsx[item.lower()] = round(float(row[1]), 1)
 
-        # Parse macros de docs/numeros_finais.tex
+        # Parse macros de docs/1t/numeros_finais.tex
         tex_content = tex_path.read_text(encoding="utf-8")
         macros = {}
         for match in re.finditer(r"\\newcommand\{\\([a-zA-Z0-9]+)\}\{([^}]+)\}", tex_content):
@@ -664,10 +695,15 @@ class TestValidacaoXLSX:
         p_brancos_xlsx = next(v for k, v in aba2_xlsx.items() if "branco" in k)
         p_nulos_xlsx = next(v for k, v in aba2_xlsx.items() if "nulo" in k)
 
-        assert p_abst_tex == p_abst_xlsx, f"Abstencao diverge: tex={p_abst_tex} vs xlsx={p_abst_xlsx}"
-        assert p_brancos_tex == p_brancos_xlsx, f"Brancos diverge: tex={p_brancos_tex} vs xlsx={p_brancos_xlsx}"
-        assert p_nulos_tex == p_nulos_xlsx, f"Nulos diverge: tex={p_nulos_tex} vs xlsx={p_nulos_xlsx}"
-
+        assert p_abst_tex == p_abst_xlsx, (
+            f"Abstencao diverge: tex={p_abst_tex} vs xlsx={p_abst_xlsx}"
+        )
+        assert p_brancos_tex == p_brancos_xlsx, (
+            f"Brancos diverge: tex={p_brancos_tex} vs xlsx={p_brancos_xlsx}"
+        )
+        assert p_nulos_tex == p_nulos_xlsx, (
+            f"Nulos diverge: tex={p_nulos_tex} vs xlsx={p_nulos_xlsx}"
+        )
 
 
 # ============================================================
@@ -726,11 +762,18 @@ class TestPesquisas2026Manual:
         """
         import csv
         import re
+
         from bs4 import BeautifulSoup
+
+        pasta_html = RAW_DIR / "pesquisas_2026"
+        if not pasta_html.exists():
+            pytest.skip(
+                "HTMLs originais ficam em data/raw (fora do Git); rode coletar_* localmente"
+            )
 
         assert MANIFEST_PATH.exists()
         manifest_map = {}
-        with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+        with open(MANIFEST_PATH, encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 manifest_map[row["url"]] = row["arquivo"]
 
@@ -751,7 +794,17 @@ class TestPesquisas2026Manual:
             "Samara Martins": ["samara martins", "samara"],
             "Wilson Grassi": ["wilson grassi", "wilson"],
             "brancos_nulos": ["branco", "brancos", "nulo", "nulos", "branco/nulo", "brancos/nulos"],
-            "indecisos": ["indeciso", "indecisos", "não sabe", "nao sabe", "não souberam", "nao souberam", "não responderam", "nao responderam", "ns/nr"],
+            "indecisos": [
+                "indeciso",
+                "indecisos",
+                "não sabe",
+                "nao sabe",
+                "não souberam",
+                "nao souberam",
+                "não responderam",
+                "nao responderam",
+                "ns/nr",
+            ],
             "outros_agregado": ["outros", "demais", "outros candidatos", "cada um"],
         }
 
@@ -762,15 +815,13 @@ class TestPesquisas2026Manual:
             html_path = RAW_DIR / rel_file
             assert html_path.exists(), f"Arquivo HTML {html_path} nao existe"
 
-            with open(html_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(html_path, encoding="utf-8", errors="ignore") as f:
                 raw_text = BeautifulSoup(f.read(), "html.parser").get_text()
 
             # Normaliza espacos
             text_norm = re.sub(r"\s+", " ", raw_text).lower()
 
-            colunas_a_testar = [
-                c for c in aliases_map.keys() if c in df.columns
-            ]
+            colunas_a_testar = [c for c in aliases_map.keys() if c in df.columns]
             for col in colunas_a_testar:
                 val = row[col]
                 if pd.isna(val) or val == "":
@@ -794,13 +845,27 @@ class TestPesquisas2026Manual:
                 num_int = int(round(num)) if abs(num - round(num)) < 1e-6 else None
                 if num == 0.0:
                     padroes = [
-                        "0%", "0 %", "0,0%", "0.0%", "não pontuou", "nao pontuou",
-                        "não pontuam", "nao pontuam", "não pontuaram", "nao pontuaram", "zero"
+                        "0%",
+                        "0 %",
+                        "0,0%",
+                        "0.0%",
+                        "não pontuou",
+                        "nao pontuou",
+                        "não pontuam",
+                        "nao pontuam",
+                        "não pontuaram",
+                        "nao pontuaram",
+                        "zero",
                     ]
                 elif num_int is not None:
                     padroes = [
-                        f"{num_int}%", f"{num_int} %", f"{num_int},", f"{num_int}.",
-                        f" {num_int} ", f"{num_int} ponto", f"{num_int} pontos"
+                        f"{num_int}%",
+                        f"{num_int} %",
+                        f"{num_int},",
+                        f"{num_int}.",
+                        f" {num_int} ",
+                        f"{num_int} ponto",
+                        f"{num_int} pontos",
                     ]
                 else:
                     s_virg = f"{num:.1f}".replace(".", ",")
@@ -878,7 +943,9 @@ class TestPesquisasHistoricas:
         assert len(dups) == 0, f"Encontradas {len(dups)} linhas duplicadas: {dups[cols_id]}"
 
         # 2. Tracking Vox Populi 2010: rodadas consecutivas espacadas em pelo menos 4 dias
-        vp_2010 = df[(df["eleicao"] == 2010) & (df["instituto"] == "Vox Populi")].sort_values("data_divulgacao")
+        vp_2010 = df[(df["eleicao"] == 2010) & (df["instituto"] == "Vox Populi")].sort_values(
+            "data_divulgacao"
+        )
         datas_vp = pd.to_datetime(vp_2010["data_divulgacao"]).tolist()
         for i in range(len(datas_vp) - 1):
             dias_diff = (datas_vp[i + 1] - datas_vp[i]).days
@@ -903,35 +970,74 @@ class TestSanidadeVesperasDatafolha:
 
     def test_vespera_datafolha_2022_votos_validos(self):
         df = carregar_pesquisas_historicas(2022)
-        vespera = df[(df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2022-10-01")].iloc[0]
-        cands = ["Luiz Inácio Lula da Silva", "Jair Bolsonaro", "Ciro Gomes", "Simone Tebet", "Soraya Thronicke", "Felipe D'Avila"]
+        vespera = df[
+            (df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2022-10-01")
+        ].iloc[0]
+        cands = [
+            "Luiz Inácio Lula da Silva",
+            "Jair Bolsonaro",
+            "Ciro Gomes",
+            "Simone Tebet",
+            "Soraya Thronicke",
+            "Felipe D'Avila",
+        ]
         soma = sum(vespera[c] for c in cands if pd.notna(vespera[c]))
         lula_val = (vespera["Luiz Inácio Lula da Silva"] / soma) * 100
         bols_val = (vespera["Jair Bolsonaro"] / soma) * 100
         assert abs(lula_val - 50.0) <= 1.0, f"Lula 2022 vespera esperado ~50, obtido {lula_val:.2f}"
-        assert abs(bols_val - 36.0) <= 1.0, f"Bolsonaro 2022 vespera esperado ~36, obtido {bols_val:.2f}"
+        assert abs(bols_val - 36.0) <= 1.0, (
+            f"Bolsonaro 2022 vespera esperado ~36, obtido {bols_val:.2f}"
+        )
 
     def test_vespera_datafolha_2018_votos_validos(self):
         df = carregar_pesquisas_historicas(2018)
-        vespera = df[(df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2018-10-06")].iloc[0]
-        cands = ["Jair Bolsonaro", "Fernando Haddad", "Ciro Gomes", "Geraldo Alckmin", "Marina Silva", "João Amoêdo", "Henrique Meirelles", "Alvaro Dias"]
+        vespera = df[
+            (df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2018-10-06")
+        ].iloc[0]
+        cands = [
+            "Jair Bolsonaro",
+            "Fernando Haddad",
+            "Ciro Gomes",
+            "Geraldo Alckmin",
+            "Marina Silva",
+            "João Amoêdo",
+            "Henrique Meirelles",
+            "Alvaro Dias",
+        ]
         soma = sum(vespera[c] for c in cands if pd.notna(vespera[c]))
         bols_val = (vespera["Jair Bolsonaro"] / soma) * 100
         had_val = (vespera["Fernando Haddad"] / soma) * 100
-        assert abs(bols_val - 40.0) <= 1.0, f"Bolsonaro 2018 vespera esperado ~40, obtido {bols_val:.2f}"
+        assert abs(bols_val - 40.0) <= 1.0, (
+            f"Bolsonaro 2018 vespera esperado ~40, obtido {bols_val:.2f}"
+        )
         assert abs(had_val - 25.0) <= 1.0, f"Haddad 2018 vespera esperado ~25, obtido {had_val:.2f}"
 
     def test_vespera_datafolha_2014_votos_validos(self):
         df = carregar_pesquisas_historicas(2014)
-        vespera = df[(df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2014-10-04")].iloc[0]
-        cands = ["Dilma Rousseff", "Aécio Neves", "Marina Silva", "Luciana Genro", "Pastor Everaldo", "Eduardo Jorge"]
+        vespera = df[
+            (df["instituto"] == "Datafolha") & (df["data_divulgacao"] == "2014-10-04")
+        ].iloc[0]
+        cands = [
+            "Dilma Rousseff",
+            "Aécio Neves",
+            "Marina Silva",
+            "Luciana Genro",
+            "Pastor Everaldo",
+            "Eduardo Jorge",
+        ]
         soma = sum(vespera[c] for c in cands if pd.notna(vespera[c]))
         dilma_val = (vespera["Dilma Rousseff"] / soma) * 100
         aecio_val = (vespera["Aécio Neves"] / soma) * 100
         marina_val = (vespera["Marina Silva"] / soma) * 100
-        assert abs(dilma_val - 44.0) <= 1.0, f"Dilma 2014 vespera esperado ~44, obtido {dilma_val:.2f}"
-        assert abs(aecio_val - 26.0) <= 1.0, f"Aecio 2014 vespera esperado ~26, obtido {aecio_val:.2f}"
-        assert abs(marina_val - 24.0) <= 1.0, f"Marina 2014 vespera esperado ~24, obtido {marina_val:.2f}"
+        assert abs(dilma_val - 44.0) <= 1.0, (
+            f"Dilma 2014 vespera esperado ~44, obtido {dilma_val:.2f}"
+        )
+        assert abs(aecio_val - 26.0) <= 1.0, (
+            f"Aecio 2014 vespera esperado ~26, obtido {aecio_val:.2f}"
+        )
+        assert abs(marina_val - 24.0) <= 1.0, (
+            f"Marina 2014 vespera esperado ~24, obtido {marina_val:.2f}"
+        )
 
 
 # ============================================================
@@ -1081,6 +1187,7 @@ class TestBacktestHistorico:
         absolutos (|erro|) da tabela candidato a candidato com tolerancia menor que 0.001.
         """
         import re
+
         from src.config import REPORTS_DIR
 
         relatorio_path = REPORTS_DIR / "checkpoint_3.md"
@@ -1093,16 +1200,24 @@ class TestBacktestHistorico:
             assert match is not None, f"Secao da eleicao {ano} deve existir no relatorio"
             bloco = match.group(1)
 
-            linhas = [linha.strip() for linha in bloco.strip().splitlines() if linha.startswith("|")]
+            linhas = [
+                linha.strip() for linha in bloco.strip().splitlines() if linha.startswith("|")
+            ]
             assert len(linhas) >= 4, f"Tabela de {ano} deve conter cabecalho e candidatos"
 
             linhas_cands = [
-                linha for linha in linhas[2:] if "MAE da Eleição" not in linha and "MAE da Eleicao" not in linha
+                linha
+                for linha in linhas[2:]
+                if "MAE da Eleição" not in linha and "MAE da Eleicao" not in linha
             ]
             linha_rodape = [
-                linha for linha in linhas[2:] if "MAE da Eleição" in linha or "MAE da Eleicao" in linha
+                linha
+                for linha in linhas[2:]
+                if "MAE da Eleição" in linha or "MAE da Eleicao" in linha
             ]
-            assert len(linha_rodape) == 1, f"Tabela de {ano} deve conter exatamente 1 linha de rodape com MAE"
+            assert len(linha_rodape) == 1, (
+                f"Tabela de {ano} deve conter exatamente 1 linha de rodape com MAE"
+            )
 
             erros_m0 = []
             erros_ofic = []
@@ -1129,20 +1244,24 @@ class TestBacktestHistorico:
 
 
 class TestMetodologiaPDF:
-    """Testes de conformidade estrita para o PDF oficial docs/metodologia.pdf."""
+    """Testes de conformidade estrita para o PDF oficial docs/1t/metodologia.pdf."""
 
     def test_metodologia_pdf_existe_e_tem_exatamente_duas_paginas(self):
         import pypdf
+
         from src.config import DOCS_DIR
 
         pdf_path = DOCS_DIR / "metodologia.pdf"
-        assert pdf_path.exists(), "docs/metodologia.pdf deve existir"
+        assert pdf_path.exists(), "docs/1t/metodologia.pdf deve existir"
         reader = pypdf.PdfReader(pdf_path)
-        assert len(reader.pages) == 2, f"docs/metodologia.pdf deve ter exatamente 2 paginas, tem {len(reader.pages)}"
+        assert len(reader.pages) == 2, (
+            f"docs/1t/metodologia.pdf deve ter exatamente 2 paginas, tem {len(reader.pages)}"
+        )
 
     def test_metodologia_pdf_contem_todos_percentuais_com_virgula_e_sem_preliminar(self):
         import openpyxl
         import pypdf
+
         from src.config import DOCS_DIR, OUTPUTS_DIR
 
         pdf_path = DOCS_DIR / "metodologia.pdf"
@@ -1151,7 +1270,9 @@ class TestMetodologiaPDF:
         texto = "\n".join(p.extract_text() for p in reader.pages)
 
         # Regra: palavra PRELIMINAR proibida no PDF final
-        assert "PRELIMINAR" not in texto.upper(), "A palavra PRELIMINAR nao pode aparecer no PDF final"
+        assert "PRELIMINAR" not in texto.upper(), (
+            "A palavra PRELIMINAR nao pode aparecer no PDF final"
+        )
 
         # Regra: todos os percentuais do xlsx devem constar com virgula no PDF
         xlsx_path = OUTPUTS_DIR / "previsao_2026.xlsx"
@@ -1165,7 +1286,7 @@ class TestMetodologiaPDF:
             nome = str(row[0] or "").strip()
             if nome and nome.lower() != "total":
                 val = float(row[2])
-                v_str = f"{val:.1f}%".replace(".", ",")
+                v_str = f"{val:.1f}".replace(".", ",")
                 if v_str not in texto:
                     faltantes.append(f"Aba 1 ({nome}): {v_str}")
 
@@ -1173,9 +1294,8 @@ class TestMetodologiaPDF:
             lbl = str(row[0] or "").strip()
             if lbl:
                 val = float(row[1])
-                v_str = f"{val:.1f}%".replace(".", ",")
+                v_str = f"{val:.1f}".replace(".", ",")
                 if v_str not in texto:
                     faltantes.append(f"Aba 2 ({lbl}): {v_str}")
 
         assert not faltantes, f"Percentuais do XLSX nao encontrados no PDF: {faltantes}"
-

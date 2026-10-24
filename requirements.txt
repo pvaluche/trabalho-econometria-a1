@@ -1,25 +1,20 @@
-# Manipulacao e leitura de dados
+# Dados
 pandas>=2.2.0
-polars>=1.0.0
-pyarrow>=15.0.0
-requests>=2.31.0
-openpyxl>=3.1.2
-
-# Modelagem e computacao cientifica
 numpy>=1.26.0
+pyarrow>=15.0.0
+openpyxl>=3.1.2
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# Modelos
 scikit-learn>=1.4.0
-statsmodels>=0.14.0
 
-# Visualizacao
+# Documentos e figuras
+reportlab>=4.0.0
+pypdf>=4.0.0
 matplotlib>=3.8.0
-plotly>=5.20.0
 
-# Notebooks e execucao reproduzivel
-jupyter>=1.0.0
-papermill>=2.5.0
-nbstripout>=0.7.1
-
-# Qualidade e testes
+# Qualidade
 pytest>=8.0.0
-ruff>=0.3.0
+ruff>=0.6.0
 pre-commit>=3.6.0

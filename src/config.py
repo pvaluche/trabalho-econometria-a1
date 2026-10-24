@@ -25,14 +25,13 @@ MANIFEST_PATH = DATA_DIR / "MANIFEST.csv"
 
 OUTPUTS_DIR = ROOT / "outputs"
 REPORTS_DIR = ROOT / "reports"
-DOCS_DIR = ROOT / "docs"
-INTERFACE_DIR = ROOT / "interface"
+DOCS_DIR = ROOT / "docs" / "1t"
 NOTEBOOKS_DIR = ROOT / "notebooks"
 
 # --------------------------------------------------------------------------- #
 # Horario de corte (a ser confirmado pelo usuario antes do pre-registro)
 # --------------------------------------------------------------------------- #
-# Sabado 03/10/2026 -- horario exato a definir e registrar em PRE_REGISTRO.md.
+# Sabado 03/10/2026 -- horario exato a definir e registrar em protocolo/PRE_REGISTRO_1T.md.
 # Formato ISO 8601 com fuso -03:00.
 HORARIO_CORTE = "2026-10-03T20:00:00-03:00"
 
@@ -97,7 +96,7 @@ CANDIDATOS_NANICOS = [
 RANDOM_SEED = 42
 
 # --------------------------------------------------------------------------- #
-# Parametros dos modelos (grades declaradas; alteracoes devem ir em DECISOES.md)
+# Parametros dos modelos (grades declaradas; alteracoes devem ir em protocolo/DECISOES.md)
 # --------------------------------------------------------------------------- #
 
 # M1: meia-vida para ponderacao por recencia (em dias)
@@ -121,20 +120,14 @@ TSE_BASE_URL = "https://cdn.tse.jus.br/estatistica/sead/odsele"
 TSE_URLS = {
     ano: {
         "votacao": (
-            f"{TSE_BASE_URL}/votacao_candidato_munzona/"
-            f"votacao_candidato_munzona_{ano}.zip"
+            f"{TSE_BASE_URL}/votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip"
         ),
-        "detalhe": (
-            f"{TSE_BASE_URL}/detalhe_votacao_munzona/"
-            f"detalhe_votacao_munzona_{ano}.zip"
-        ),
+        "detalhe": (f"{TSE_BASE_URL}/detalhe_votacao_munzona/detalhe_votacao_munzona_{ano}.zip"),
     }
     for ano in ANOS_HISTORICO
 }
 
-TSE_CANDIDATOS_2026_URL = (
-    f"{TSE_BASE_URL}/consulta_cand/consulta_cand_2026.zip"
-)
+TSE_CANDIDATOS_2026_URL = f"{TSE_BASE_URL}/consulta_cand/consulta_cand_2026.zip"
 
 # --------------------------------------------------------------------------- #
 # Schema do arquivo de pesquisas manuais de 2026

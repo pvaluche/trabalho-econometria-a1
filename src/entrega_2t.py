@@ -6,6 +6,7 @@ Gera a planilha XLSX oficial de previsoes para o 2o Turno do Desafio FGV EPGE 20
 from __future__ import annotations
 
 from pathlib import Path
+
 import openpyxl
 
 from src.arredondamento import maiores_restos
@@ -31,8 +32,7 @@ def _obter_valor_adicional(
         if ch in adicionais and adicionais[ch] is not None:
             return float(adicionais[ch])
     raise ValueError(
-        f"Valor obrigatorio ausente em `adicionais` para '{nome_campo}'. "
-        f"Chaves aceitas: {chaves}."
+        f"Valor obrigatorio ausente em `adicionais` para '{nome_campo}'. Chaves aceitas: {chaves}."
     )
 
 

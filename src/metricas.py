@@ -55,7 +55,7 @@ def calcular_mae_por_candidato(
     realizados: dict[str, float],
 ) -> dict[str, float]:
     """
-    Retorna o erro absoluto por candidato (util para ablation e interface).
+    Retorna o erro absoluto por candidato.
 
     Parameters
     ----------

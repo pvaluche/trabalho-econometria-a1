@@ -1,0 +1,17 @@
+\begin{tabular}{lcccccl}
+\toprule
+\textbf{Etapa 1: agregador} & \textbf{2014} & \textbf{2018} & \textbf{2022} & \textbf{Média} & \textbf{$\bar\Delta$ / EP} & \textbf{Decisão} \\
+\midrule
+M0 média simples & 0,63 & 1,82 & 0,29 & 0,92 &  & referência \\
+M1 recência e amostra ($h$=3) & 0,77 & 0,96 & 0,45 & 0,72 & +0,19 / 0,34 & não supera M0 \\
+M2 peso pelo erro no 1º turno ($\sigma_0$=1,5) & 0,56 & 1,29 & 0,10 & 0,65 & +0,27 / 0,14 & \textbf{escolhido} \\
+M2 peso pelo erro no 1º turno ($\sigma_0$=2,5) & 0,56 & 1,27 & 0,11 & 0,65 & +0,27 / 0,15 & supera, MAE maior \\
+\midrule
+\textbf{Etapa 2: ajustes sobre o M2} & & & & & & \\
+\midrule
++ correção pelo erro do 1º turno ($\hat\rho$ MQO) & 0,29 & 1,40 & 0,01 & 0,57 & +0,08 / 0,11 & empate: fica a base \\
++ correção pelo erro do 1º turno ($\rho=0{,}2$) & 0,51 & 1,44 & 0,34 & 0,77 & $-$0,12 / 0,09 & piora \\
++ viés comum histórico do 2º turno ($k_\mu=3$) & 0,48 & 1,45 & 0,05 & 0,66 & $-$0,01 / 0,08 & empate: fica a base \\
++ 10\% do prior de transferência ($\tilde\tau$) & 1,61 & 1,62 & 0,12 & 1,12 & $-$0,47 / 0,31 & piora \\
+\bottomrule
+\end{tabular}

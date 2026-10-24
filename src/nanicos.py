@@ -4,7 +4,9 @@ a partir dos microdados de votacao do TSE (2006-2022).
 """
 
 from pathlib import Path
+
 import pandas as pd
+
 from src.config import PROCESSED_DIR
 
 

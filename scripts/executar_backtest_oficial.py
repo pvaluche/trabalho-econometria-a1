@@ -9,8 +9,9 @@ e geracao da tabela de sensibilidade de 2026.
 from __future__ import annotations
 
 import math
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
@@ -62,7 +63,9 @@ def rodar_etapa_1_modelos_base():
     configs["M0"] = lambda df, t, tr: estimar_m0(df, t)
 
     for h in [7.0, 14.0, 21.0]:
-        configs[f"M1 (h={int(h)})"] = (lambda h_val: lambda df, t, tr: estimar_m1(df, t, meia_vida=h_val))(h)
+        configs[f"M1 (h={int(h)})"] = (
+            lambda h_val: lambda df, t, tr: estimar_m1(df, t, meia_vida=h_val)
+        )(h)
 
     # Determina melhor h preliminarmente
     maes_m1 = {}
@@ -79,7 +82,9 @@ def rodar_etapa_1_modelos_base():
 
     for k in [1.0, 3.0, 10.0]:
         configs[f"M2 (h={int(best_h)}, k={int(k)})"] = (
-            lambda k_val: lambda df, t, tr: estimar_m2(df, t, tr, meia_vida=best_h, k_shrinkage=k_val)
+            lambda k_val: (
+                lambda df, t, tr: estimar_m2(df, t, tr, meia_vida=best_h, k_shrinkage=k_val)
+            )
         )(k)
 
     for alpha in [0.01, 0.1, 1.0, 10.0]:
@@ -104,15 +109,17 @@ def rodar_etapa_1_modelos_base():
         mae_med = float(np.mean(mae_vals))
         mae_se = float(np.std(mae_vals, ddof=1) / math.sqrt(len(mae_vals)))
 
-        tabela_base.append({
-            "modelo": nome,
-            "2014": maes_ano[2014],
-            "2018": maes_ano[2018],
-            "2022": maes_ano[2022],
-            "mae_medio": mae_med,
-            "se": mae_se,
-            "maes_ano": mae_vals,
-        })
+        tabela_base.append(
+            {
+                "modelo": nome,
+                "2014": maes_ano[2014],
+                "2018": maes_ano[2018],
+                "2022": maes_ano[2022],
+                "mae_medio": mae_med,
+                "se": mae_se,
+                "maes_ano": mae_vals,
+            }
+        )
 
     df_base = pd.DataFrame(tabela_base).sort_values("mae_medio")
     print(df_base[["modelo", "2014", "2018", "2022", "mae_medio", "se"]].to_string(index=False))
@@ -147,17 +154,19 @@ def rodar_etapa_2_ajustes(base_nome, base_func, preds_base, best_h):
         calcular_mae_eleicao(preds_base[(base_nome, t)], carregar_resultado_tse(t))
         for t in ANOS_TESTE_EXPANDING
     ]
-    tabela_ajustes.append({
-        "ajuste": f"{base_nome} (Base Puro)",
-        "2014": mae_base_vals[0],
-        "2018": mae_base_vals[1],
-        "2022": mae_base_vals[2],
-        "mae_medio": np.mean(mae_base_vals),
-        "se": np.std(mae_base_vals, ddof=1) / math.sqrt(len(mae_base_vals)),
-        "delta_vs_base": 0.0,
-        "se_delta": 0.0,
-        "aprovado": True,
-    })
+    tabela_ajustes.append(
+        {
+            "ajuste": f"{base_nome} (Base Puro)",
+            "2014": mae_base_vals[0],
+            "2018": mae_base_vals[1],
+            "2022": mae_base_vals[2],
+            "mae_medio": np.mean(mae_base_vals),
+            "se": np.std(mae_base_vals, ddof=1) / math.sqrt(len(mae_base_vals)),
+            "delta_vs_base": 0.0,
+            "se_delta": 0.0,
+            "aprovado": True,
+        }
+    )
 
     for a_nome, a_func in ajustes.items():
         maes_ano = {}
@@ -175,20 +184,26 @@ def rodar_etapa_2_ajustes(base_nome, base_func, preds_base, best_h):
         delta_bar, se_delta = calcular_diferenca_e_se(mae_vals, mae_base_vals)
         aprovado = bool(delta_bar < -se_delta)
 
-        tabela_ajustes.append({
-            "ajuste": a_nome,
-            "2014": maes_ano[2014],
-            "2018": maes_ano[2018],
-            "2022": maes_ano[2022],
-            "mae_medio": mae_med,
-            "se": mae_se,
-            "delta_vs_base": delta_bar,
-            "se_delta": se_delta,
-            "aprovado": aprovado,
-        })
+        tabela_ajustes.append(
+            {
+                "ajuste": a_nome,
+                "2014": maes_ano[2014],
+                "2018": maes_ano[2018],
+                "2022": maes_ano[2022],
+                "mae_medio": mae_med,
+                "se": mae_se,
+                "delta_vs_base": delta_bar,
+                "se_delta": se_delta,
+                "aprovado": aprovado,
+            }
+        )
 
     df_aj = pd.DataFrame(tabela_ajustes)
-    print(df_aj[["ajuste", "2014", "2018", "2022", "mae_medio", "delta_vs_base", "se_delta", "aprovado"]].to_string(index=False))
+    print(
+        df_aj[
+            ["ajuste", "2014", "2018", "2022", "mae_medio", "delta_vs_base", "se_delta", "aprovado"]
+        ].to_string(index=False)
+    )
     return df_aj
 
 
@@ -201,7 +216,9 @@ def rodar_loeo_completo(base_func, best_h):
     configs_loeo = {
         "M0": lambda df, t, tr: estimar_m0(df, t),
         f"M1 (h={int(best_h)})": lambda df, t, tr: estimar_m1(df, t, meia_vida=best_h),
-        f"M2 (h={int(best_h)}, k=3)": lambda df, t, tr: estimar_m2(df, t, tr, meia_vida=best_h, k_shrinkage=3.0),
+        f"M2 (h={int(best_h)}, k=3)": lambda df, t, tr: estimar_m2(
+            df, t, tr, meia_vida=best_h, k_shrinkage=3.0
+        ),
         "M3 (alpha=1.0)": lambda df, t, tr: estimar_m3(df, t, tr, meia_vida=best_h, alpha=1.0),
     }
 
@@ -216,19 +233,25 @@ def rodar_loeo_completo(base_func, best_h):
             maes_ano[t] = calcular_mae_eleicao(p, res_tse)
 
         vals = [maes_ano[y] for y in TODOS_ANOS_LOEO]
-        tabela_loeo.append({
-            "modelo": nome,
-            "2006": maes_ano[2006],
-            "2010": maes_ano[2010],
-            "2014": maes_ano[2014],
-            "2018": maes_ano[2018],
-            "2022": maes_ano[2022],
-            "mae_medio": np.mean(vals),
-            "se": np.std(vals, ddof=1) / math.sqrt(len(vals)),
-        })
+        tabela_loeo.append(
+            {
+                "modelo": nome,
+                "2006": maes_ano[2006],
+                "2010": maes_ano[2010],
+                "2014": maes_ano[2014],
+                "2018": maes_ano[2018],
+                "2022": maes_ano[2022],
+                "mae_medio": np.mean(vals),
+                "se": np.std(vals, ddof=1) / math.sqrt(len(vals)),
+            }
+        )
 
     df_loeo = pd.DataFrame(tabela_loeo)
-    print(df_loeo[["modelo", "2006", "2010", "2014", "2018", "2022", "mae_medio", "se"]].to_string(index=False))
+    print(
+        df_loeo[["modelo", "2006", "2010", "2014", "2018", "2022", "mae_medio", "se"]].to_string(
+            index=False
+        )
+    )
     return df_loeo
 
 
@@ -271,7 +294,9 @@ def rodar_backtest_adicionais_com_contas():
 
                 erros.append(abs(pred - y_real))
             erros_por_metodo[met] = erros
-            print(f"  {met:30s}: 2014={erros[0]:.3f}, 2018={erros[1]:.3f}, 2022={erros[2]:.3f} | MAE={np.mean(erros):.4f}")
+            print(
+                f"  {met:30s}: 2014={erros[0]:.3f}, 2018={erros[1]:.3f}, 2022={erros[2]:.3f} | MAE={np.mean(erros):.4f}"
+            )
 
         # Compara pares
         e_lin = erros_por_metodo["Tendência Linear"]
@@ -283,9 +308,15 @@ def rodar_backtest_adicionais_com_contas():
         d_lin_med, se_lin_med = calcular_diferenca_e_se(e_lin, e_med)
 
         print("  Contas de Desempate:")
-        print(f"    Linear vs Persistência: Delta={d_lin_pers:+.4f}, SE={se_lin_pers:.4f} -> Empate? {abs(d_lin_pers) < se_lin_pers}")
-        print(f"    Média vs Persistência:  Delta={d_med_pers:+.4f}, SE={se_med_pers:.4f} -> Empate? {abs(d_med_pers) < se_med_pers}")
-        print(f"    Linear vs Média:        Delta={d_lin_med:+.4f}, SE={se_lin_med:.4f} -> Empate? {abs(d_lin_med) < se_lin_med}")
+        print(
+            f"    Linear vs Persistência: Delta={d_lin_pers:+.4f}, SE={se_lin_pers:.4f} -> Empate? {abs(d_lin_pers) < se_lin_pers}"
+        )
+        print(
+            f"    Média vs Persistência:  Delta={d_med_pers:+.4f}, SE={se_med_pers:.4f} -> Empate? {abs(d_med_pers) < se_med_pers}"
+        )
+        print(
+            f"    Linear vs Média:        Delta={d_lin_med:+.4f}, SE={se_lin_med:.4f} -> Empate? {abs(d_lin_med) < se_lin_med}"
+        )
 
         resultados[var] = erros_por_metodo
 
@@ -342,13 +373,23 @@ def calcular_estatisticas_margem_top2_e_p80():
                 erros_demais.append(err)
 
     print("\nResumo da Margem do Top-2:")
-    print(f"  Erro Margem M0:    Media = {np.mean(erros_margem_m0):.2f} p.p., Max = {np.max(erros_margem_m0):.2f} p.p., P80 = {np.percentile(erros_margem_m0, 80):.2f} p.p.")
-    print(f"  Erro Margem Final: Media = {np.mean(erros_margem_final):.2f} p.p., Max = {np.max(erros_margem_final):.2f} p.p., P80 = {np.percentile(erros_margem_final, 80):.2f} p.p.")
+    print(
+        f"  Erro Margem M0:    Media = {np.mean(erros_margem_m0):.2f} p.p., Max = {np.max(erros_margem_m0):.2f} p.p., P80 = {np.percentile(erros_margem_m0, 80):.2f} p.p."
+    )
+    print(
+        f"  Erro Margem Final: Media = {np.mean(erros_margem_final):.2f} p.p., Max = {np.max(erros_margem_final):.2f} p.p., P80 = {np.percentile(erros_margem_final, 80):.2f} p.p."
+    )
 
     print("\nFaixas Empiricas de Incerteza do Backtest:")
-    print(f"  Grupo 1 (Top-2):   Media = {np.mean(erros_top2):.2f} p.p., P80 = {np.percentile(erros_top2, 80):.2f} p.p.")
-    print(f"  Grupo 2 (3º e 4º): Media = {np.mean(erros_34):.2f} p.p., P80 = {np.percentile(erros_34, 80):.2f} p.p.")
-    print(f"  Grupo 3 (Demais):  Media = {np.mean(erros_demais):.2f} p.p., P80 = {np.percentile(erros_demais, 80):.2f} p.p.")
+    print(
+        f"  Grupo 1 (Top-2):   Media = {np.mean(erros_top2):.2f} p.p., P80 = {np.percentile(erros_top2, 80):.2f} p.p."
+    )
+    print(
+        f"  Grupo 2 (3º e 4º): Media = {np.mean(erros_34):.2f} p.p., P80 = {np.percentile(erros_34, 80):.2f} p.p."
+    )
+    print(
+        f"  Grupo 3 (Demais):  Media = {np.mean(erros_demais):.2f} p.p., P80 = {np.percentile(erros_demais, 80):.2f} p.p."
+    )
 
 
 def gerar_tabela_sensibilidade_2026(df_2026):
@@ -384,7 +425,14 @@ def gerar_tabela_sensibilidade_2026(df_2026):
 
     df_sens = pd.DataFrame(configs)
     df_sens["Partido"] = [PARTIDOS_EDITAL[c] for c in df_sens.index]
-    cols_order = ["Partido", "M0 Puro", "M0 + Viés (k=3)", "M0 + Útil (g=1.0)", "Modelo Oficial (w=0)", "Sensibilidade (w=0.5)"]
+    cols_order = [
+        "Partido",
+        "M0 Puro",
+        "M0 + Viés (k=3)",
+        "M0 + Útil (g=1.0)",
+        "Modelo Oficial (w=0)",
+        "Sensibilidade (w=0.5)",
+    ]
     print(df_sens[cols_order].to_string())
 
     return p_final_oficial, configs
