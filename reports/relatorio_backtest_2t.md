@@ -131,17 +131,17 @@ Em 2026, apenas **6 Unidades da Federação** (`AC, AM, DF, ES, RN, TO`) têm di
 
 ---
 
-## 6. Tabela de Sensibilidade para o 2º Turno de 2026 (Corte Parcial: 21/10/2026)
+## 6. Tabela de Sensibilidade para o 2º Turno de 2026 (Corte Final: 24/10/2026, 20h00)
 
 | Especificação | Flávio Bolsonaro (Contínuo %) | Lula (Contínuo %) | **Flávio (Arred 1 casa)** | **Lula (Arred 1 casa)** |
 | :--- | :---: | :---: | :---: | :---: |
-| M0_2T (Média Simples Última de cada Instituto) | 51,32% | 48,68% | **51,3%** | **48,7%** |
-| M1_2T (h=3 dias, Recência + Raiz Amostra) | 51,09% | 48,91% | **51,1%** | **48,9%** |
-| M1_2T (h=5 dias, Recência + Raiz Amostra) | 51,16% | 48,84% | **51,2%** | **48,8%** |
-| M1_2T (h=7 dias, Recência + Raiz Amostra) | 51,20% | 48,80% | **51,2%** | **48,8%** |
+| M0_2T (Média Simples Última de cada Instituto) | 51,31% | 48,69% | **51,3%** | **48,7%** |
+| M1_2T (h=3 dias, Recência + Raiz Amostra) | 51,04% | 48,96% | **51,0%** | **49,0%** |
+| M1_2T (h=5 dias, Recência + Raiz Amostra) | 51,09% | 48,91% | **51,1%** | **48,9%** |
+| M1_2T (h=7 dias, Recência + Raiz Amostra) | 51,12% | 48,88% | **51,1%** | **48,9%** |
 | M2_2T (sigma0=1.5, Peso Inverso Erro 1T) | 51,29% | 48,71% | **51,3%** | **48,7%** |
-| M2_2T (sigma0=2.5, Peso Inverso Erro 1T) | 51,31% | 48,69% | **51,3%** | **48,7%** |
-| M0_2T + Persistência 1T (rho=0.20) | 51,83% | 48,17% | **51,8%** | **48,2%** |
+| M2_2T (sigma0=2.5, Peso Inverso Erro 1T) | 51,30% | 48,70% | **51,3%** | **48,7%** |
+| M0_2T + Persistência 1T (rho=0.20) | 51,82% | 48,18% | **51,8%** | **48,2%** |
 | M2_2T (sigma0=1.5) + Persistência 1T (rho=0.20) | 51,78% | 48,22% | **51,8%** | **48,2%** |
 | M2_2T (sigma0=1.5) + Persistência 1T (rho_OLS=0.15) | 51,67% | 48,33% | **51,7%** | **48,3%** |
 | Prior transferência com tau médio (tau=0.6061) | 50,10% | 49,90% | **50,1%** | **49,9%** |

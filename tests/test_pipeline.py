@@ -782,7 +782,7 @@ class TestPesquisas2026Manual:
 
         aliases_map = {
             "Luiz Inácio Lula da Silva": ["lula da silva", "lula"],
-            "Flávio Bolsonaro": ["flávio bolsonaro", "flavio bolsonaro", "flávio", "flavio"],
+            "Flávio Bolsonaro": ["flávio bolsonaro", "flavio bolsonaro", "flávio", "flavio", "bolsonaro"],
             "Augusto Cury": ["augusto cury", "cury"],
             "Renan Santos": ["renan santos", "renan"],
             "Ronaldo Caiado": ["ronaldo caiado", "caiado"],

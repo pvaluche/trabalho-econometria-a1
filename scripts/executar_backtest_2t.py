@@ -503,7 +503,7 @@ def projetar_2026_2t(
     df_taus: pd.DataFrame,
 ):
     print("\n" + "=" * 85)
-    print("PROJECOES E TABELA DE SENSIBILIDADE PARA O 2o TURNO DE 2026 (CORTE PARCIAL 21/10)")
+    print("PROJECOES E TABELA DE SENSIBILIDADE PARA O 2o TURNO DE 2026 (CORTE FINAL 24/10/2026, 20h00)")
     print("=" * 85)
 
     df_2026_2t = carregar_pesquisas_2026_2t()
@@ -921,7 +921,7 @@ def gerar_relatorio_markdown_2t(
     md.append("")
 
     # 6. Tabela de Sensibilidade 2026
-    md.append("## 6. Tabela de Sensibilidade para o 2º Turno de 2026 (Corte Parcial: 21/10/2026)")
+    md.append("## 6. Tabela de Sensibilidade para o 2º Turno de 2026 (Corte Final: 24/10/2026, 20h00)")
     md.append("")
     md.append(
         "| Especificação | Flávio Bolsonaro (Contínuo %) | Lula (Contínuo %) | **Flávio (Arred 1 casa)** | **Lula (Arred 1 casa)** |"
