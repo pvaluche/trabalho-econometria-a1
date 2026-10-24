@@ -104,7 +104,7 @@ flowchart LR
 |---|---|---|
 | Nota metodológica (2 páginas, entregue) | [PDF](docs/1t/metodologia.pdf) | [PDF](docs/2t/metodologia_2t.pdf) |
 | Planilha de previsão (entregue) | [xlsx](outputs/previsao_2026.xlsx) | [xlsx](outputs/previsao_2026_2t.xlsx) |
-| Relatório técnico completo | [PDF](docs/1t/relatorio_tecnico.pdf) | [relatório do backtest](reports/relatorio_backtest_2t.md) |
+| Relatório técnico completo | [PDF](docs/1t/relatorio_tecnico.pdf) | [PDF](docs/2t/relatorio_tecnico_2t.pdf) |
 | Protocolo definido antes do backtest | [pré-registro](protocolo/PRE_REGISTRO_1T.md) | [protocolo](protocolo/PRE_REGISTRO_2T.md) |
 
 ---
@@ -133,8 +133,8 @@ python scripts/gerar_numeros_latex.py           # números da nota em docs/1t/
 
 ```bash
 python scripts/executar_backtest_2t.py          # backtest, relatório e outputs/previsao_2026_2t.xlsx
-python scripts/gerar_numeros_latex_2t.py        # números, tabelas e figuras da nota em docs/2t/
-cd docs/2t && pdflatex metodologia_2t.tex
+python scripts/gerar_numeros_latex_2t.py        # números, tabelas e figuras em docs/2t/
+cd docs/2t && pdflatex metodologia_2t.tex && pdflatex relatorio_tecnico_2t.tex
 ```
 
 **Figuras deste README:** `python scripts/gerar_figuras_readme.py`

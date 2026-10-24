@@ -1,0 +1,389 @@
+\documentclass[10.5pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\IfFileExists{brazil.ldf}{\usepackage[brazil]{babel}}{}
+\IfFileExists{charter.sty}{\usepackage{charter}}{\usepackage{lmodern}}
+\IfFileExists{charter.sty}{\renewcommand{\ttdefault}{pcr}}{}
+\usepackage[a4paper,top=2cm,bottom=2cm,left=2.2cm,right=2.2cm]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{xstring}
+\usepackage[font=small,labelfont=bf,labelsep=colon]{caption}
+\captionsetup[figure]{name=Figura}
+\captionsetup[table]{name=Tabela}
+\usepackage{xurl}
+\usepackage[colorlinks=true,linkcolor=azul,urlcolor=azul,citecolor=azul]{hyperref}
+
+\input{numeros_2t.tex}
+
+\definecolor{azul}{HTML}{1F3A5F}
+\definecolor{azulclaro}{HTML}{E8EEF5}
+\definecolor{cinza}{HTML}{555555}
+\definecolor{cinzaclaro}{HTML}{B5B5B5}
+\definecolor{vermelho}{HTML}{B03A2E}
+\definecolor{verde}{HTML}{2E7D4F}
+\definecolor{codebg}{HTML}{F6F8FA}
+
+\titleformat{\section}{\normalfont\Large\bfseries\color{azul}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{azul!85!black}}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlist{itemsep=2pt,topsep=3pt,leftmargin=1.4em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[R]{\footnotesize\color{cinza}Relatório técnico: previsão do 2º turno de 2026}
+\fancyfoot[L]{\footnotesize\color{cinza}Valuche, Possamai e Lyra}
+\fancyfoot[R]{\footnotesize\color{cinza}\thepage}
+
+\lstdefinestyle{py}{
+  language=Python, basicstyle=\ttfamily\footnotesize, backgroundcolor=\color{codebg},
+  keywordstyle=\color{azul}\bfseries, commentstyle=\color{cinza}, stringstyle=\color{verde},
+  showstringspaces=false, frame=single, rulecolor=\color{black!12}, framesep=4pt,
+  xleftmargin=6pt, xrightmargin=6pt, breaklines=true, columns=fullflexible, keepspaces=true,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ã}{{\~a}}1 {õ}{{\~o}}1 {ç}{{\c{c}}}1 {Í}{{\'I}}1
+}
+\lstset{style=py}
+
+\newtcolorbox{destaque}[1][]{colback=azulclaro,colframe=azul,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt,#1}
+
+\begin{document}
+
+%================= CAPA =================
+\begin{tcolorbox}[colback=azul,colframe=azul,arc=0pt,left=14pt,right=14pt,top=14pt,bottom=14pt]
+\color{white}
+{\small DESAFIO DE ESTATÍSTICA E ECONOMETRIA \textbullet\ FGV EPGE}\\[6pt]
+{\huge\bfseries Previsão do 2º turno presidencial de 2026}\\[4pt]
+{\Large Relatório técnico completo de modelagem econométrica}\\[10pt]
+{\normalsize João Pedro Valuche de Andrade Pereira \textbullet\ Lethicia Manfioletti Possamai \textbullet\ Arthur Caron Lyra}
+\end{tcolorbox}
+
+\vspace{4pt}
+\begin{destaque}
+\textbf{Horário de corte dos dados: \horacorte{} (horário de Brasília).} Status da previsão: \textbf{\statusprevisao}.
+
+Este relatório documenta integralmente a modelagem econométrica, a formulação analítica, o motor computacional, o backtest prospectivo e os testes de sensibilidade para a previsão do 2º turno da eleição presidencial brasileira de 2026 (Flávio Bolsonaro vs. Luiz Inácio Lula da Silva). Todos os números, gráficos e tabelas são reproduzidos de forma determinística pelo pipeline automatizado do repositório.
+\end{destaque}
+
+\vspace{6pt}
+{\setlength{\tabcolsep}{0pt}
+\begin{tabularx}{\linewidth}{@{}*{5}{>{\centering\arraybackslash}X}@{}}
+\textcolor{azul}{\huge\bfseries \pFlavio\%} & \textcolor{azul}{\huge\bfseries \pLula\%} & \textcolor{cinza}{\huge\bfseries \pAbst\%} & \textcolor{cinza}{\huge\bfseries \pBrancos\%} & \textcolor{cinza}{\huge\bfseries \pNulos\%}\\[2pt]
+\small Flávio Bolsonaro (PL) & \small Lula (PT) & \small Abstenção & \small Brancos & \small Nulos\\[-1pt]
+\multicolumn{2}{c}{\footnotesize\color{cinza}\% dos votos válidos (Aba 1)} & \multicolumn{3}{c}{\footnotesize\color{cinza}\% do eleitorado apto (abstenção) e do comparecimento (brancos e nulos) (Aba 2)}
+\end{tabularx}}
+
+\vspace{8pt}
+\setcounter{tocdepth}{2}
+{\small\tableofcontents}
+
+\newpage
+%================= SEÇÃO 1 =================
+\section{O problema do 2º turno e propriedades analíticas da métrica}
+
+O Desafio de Estatística e Econometria da FGV EPGE exige duas previsões pontuais para o 2º turno presidencial de 25 de outubro de 2026:
+\begin{enumerate}
+    \item \textbf{Aba 1 (\texttt{Candidatos}):} Votos válidos (\%) para os dois candidatos finalistas, somando exatamente $100{,}0\%$ com uma casa decimal: Flávio Bolsonaro (PL) e Luiz Inácio Lula da Silva (PT).
+    \item \textbf{Aba 2 (\texttt{Adicionais}):} Três agregados com uma casa decimal: a abstenção (como percentual do eleitorado apto total) e os votos brancos e nulos (como percentual do comparecimento às urnas).
+\end{enumerate}
+
+\subsection{Identidades da função objetivo no 2º turno \texorpdfstring{($K = 2$)}{(K = 2)}}
+
+No 1º turno, com $K=12$ candidatos, a função perda dependia criticamente do tratamento de candidatos pequenos e da dispersão entre vários nomes. No 2º turno, como $K=2$ e os votos válidos somam $100\%$, ocorrem identidades matemáticas fundamentais que simplificam a estrutura da perda:
+
+\begin{equation}
+\hat{V}_{\text{Flávio}} + \hat{V}_{\text{Lula}} = 100\%, \qquad V_{\text{Flávio}} + V_{\text{Lula}} = 100\%.
+\end{equation}
+
+Disso decorre que o erro cometido em relação a um candidato é identicamente o erro do adversário com sinal oposto:
+\begin{equation}
+\hat{V}_{\text{Flávio}} - V_{\text{Flávio}} = - (\hat{V}_{\text{Lula}} - V_{\text{Lula}}).
+\end{equation}
+
+Assim, o Erro Absoluto Médio (MAE) da previsão de votos válidos reduz-se exatamente ao erro absoluto de um único candidato e a exatamente metade do erro na margem bipartidária:
+\begin{equation}
+\text{MAE}_{2T} = \frac{1}{2} \sum_{k=1}^{2} |\hat{V}_k - V_k| = |\hat{V}_{\text{Lula}} - V_{\text{Lula}}| = |\hat{V}_{\text{Flávio}} - V_{\text{Flávio}}| = \frac{1}{2} \left| (\hat{V}_{\text{Flávio}} - \hat{V}_{\text{Lula}}) - (V_{\text{Flávio}} - V_{\text{Lula}}) \right|.
+\label{eq:mae_identidade}
+\end{equation}
+
+Essa propriedade implica que:
+\begin{itemize}
+    \item Errar a margem entre os finalistas em 2,0 pontos percentuais custa exatamente 1,0 ponto de MAE.
+    \item Não há distorções provocadas por candidatos nanicos ou transferências parciais de terceiros na métrica de avaliação final: toda a estimação econométrica se resume a estimar com a maior acurácia possível uma única proporção escalar, $p \in [0, 1]$.
+\end{itemize}
+
+%================= SEÇÃO 2 =================
+\section{Base de dados e auditoria}
+
+\subsection{Resultados oficiais do 1º turno de 2026}
+Diferentemente do 1º turno, no 2º turno dispõe-se de uma âncora empírica extraordinária: a apuração oficial do TSE do 1º turno, realizado 21 dias antes, em 04/10/2026. A base municipal e de zonas eleitorais do TSE foi processada com validação criptográfica (hash SHA-256):
+\begin{itemize}
+    \item \textbf{Votação válida no 1º turno:} Flávio Bolsonaro obteve \flavioUmT\% dos votos válidos, Lula obteve \lulaUmT\%, e os 10 candidatos eliminados somaram conjuntamente \tercUmT\% dos votos válidos. Na soma restrita aos dois primeiros, Flávio teve \flavioDoisCand\% e Lula teve \lulaDoisCand\%.
+    \item \textbf{Comparecimento e agregados no 1º turno:} Abstenção de \abstUmT\% (sobre 158.745.079 eleitores aptos), votos brancos de \brancosUmT\% e votos nulos de \nulosUmT\% (sobre 125.275.835 votos totais apurados na urna).
+\end{itemize}
+
+\subsection{Séries históricas de 2º turno (2006 a 2022)}
+Compilamos os microdados oficiais do TSE para todas as cinco eleições presidenciais com 2º turno na história recente (2006, 2010, 2014, 2018 e 2022). A base histórica contém:
+\begin{itemize}
+    \item Os percentuais oficiais de votos válidos dos finalistas, abstenção, brancos e nulos no 1º e no 2º turno, em nível nacional e por Unidade da Federação.
+    \item \nHist{} pesquisas nacionais de intenção de voto estimuladas de 2º turno divulgadas entre o 1º e o 2º turno daquelas eleições pelos principais institutos do país.
+    \item A relação das eleições estaduais para Governador com disputa de 2º turno ativa em cada ano.
+\end{itemize}
+
+\subsection{Pesquisas eleitorais do 2º turno de 2026}
+Foram catalogadas \nPesq{} pesquisas estimuladas de 2º turno divulgadas por \nInst{} institutos de opinião pública entre 05/10/2026 e o horário de corte de 24/10/2026 às 20h00 BRT. Todas as pesquisas possuem registro auditável no sistema PesqEle do Tribunal Superior Eleitoral (TSE) e URLs canônicas verificadas.
+
+Cada pesquisa é convertida em votos válidos descartando os votos brancos, nulos e indecisos:
+\begin{equation}
+\hat{v}_{j, \text{Lula}} = \frac{P_{j, \text{Lula}}}{P_{j, \text{Lula}} + P_{j, \text{Flávio}}}, \qquad \hat{v}_{j, \text{Flávio}} = 100\% - \hat{v}_{j, \text{Lula}}.
+\end{equation}
+
+Essa conversão distribui os eleitores indecisos proporcionalmente entre os decididos, hipótese operacional padrão equivalente à apuração de votos válidos pelo TSE.
+
+%================= SEÇÃO 3 =================
+\section{Pipeline e arquitetura computacional}
+
+A Figura~\ref{fig:pipe2t} apresenta o fluxo completo de processamento de dados e geração dos entregáveis.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=0.45cm,
+  caixa/.style={rectangle,rounded corners=3pt,draw=azul,fill=azul!8,text=azul!90!black,align=center,font=\scriptsize\bfseries,inner sep=4pt,minimum height=1.1cm},
+  seta/.style={-{Stealth[length=5pt]},thick,azul},
+  faixa/.style={rectangle,rounded corners=2pt,draw=vermelho!80,fill=vermelho!6,text=vermelho!80!black,align=center,font=\scriptsize\bfseries,inner sep=4pt}]
+\node[caixa,text width=2.4cm] (a) {TSE 2026 (1º Turno)\\+ PesqEle 2º Turno};
+\node[caixa,text width=2.1cm,right=of a] (b) {Conversão em\\votos válidos};
+\node[caixa,text width=2.3cm,right=of b] (c) {Última pesquisa\\por instituto};
+\node[caixa,text width=2.4cm,right=of c] (d) {Ponderação M2\\$w_j = \frac{1}{e_{j,1T}^2 + \sigma_0^2}$};
+\node[caixa,text width=2.0cm,right=of d] (e) {Aba 2 Ancorada\\Zero\_Delta};
+\node[caixa,text width=1.8cm,right=of e] (f) {Maiores\\restos};
+\foreach \x/\y in {a/b,b/c,c/d,d/e,e/f} \draw[seta] (\x)--(\y);
+\node[faixa,below=0.45cm of c,text width=8.5cm] (v) {Protocolo pré-registrado de validação prospectiva em Expanding Window\\(2014 treinado em 2006--2010; 2018 em 2006--2014; 2022 em 2006--2018)};
+\draw[seta,vermelho] (v.north -| d) -- (d);
+\end{tikzpicture}
+\caption{Diagrama do pipeline do 2º turno. Em vermelho, a etapa de validação temporal.}
+\label{fig:pipe2t}
+\end{figure}
+
+O código a seguir exemplifica o cálculo dos pesos $w_j$ no modelo M2 com base no erro observado no 1º turno:
+
+\begin{lstlisting}
+def estimar_m2_2t(df_pesquisas_2t, erros_1t_map, sigma0=1.5):
+    """
+    Agregador M2: pondera a pesquisa de 2o turno de cada instituto pelo inverso
+    do erro quadratico cometido no 1o turno da mesma eleicao, regularizado por sigma0^2.
+    """
+    ultimas = (df_pesquisas_2t.sort_values("data_divulgacao", ascending=False)
+                              .drop_duplicates(subset=["instituto_clean"]))
+    mediana_erro_1t = np.median([abs(e) for e in erros_1t_map.values()])
+    
+    pesos, valores_pt = [], []
+    for _, linha in ultimas.iterrows():
+        inst = linha["instituto_clean"]
+        erro_1t = erros_1t_map.get(inst, mediana_erro_1t)
+        peso = 1.0 / (erro_1t**2 + sigma0**2)
+        v_pt = linha["pct_pt_validos"]
+        pesos.append(peso)
+        valores_pt.append(v_pt)
+        
+    p_pt_estimado = np.average(valores_pt, weights=pesos)
+    return p_pt_estimado, 100.0 - p_pt_estimado
+\end{lstlisting}
+
+%================= SEÇÃO 4 =================
+\section{Modelos candidatos e formulação econométrica}
+
+\subsection{Etapa 1: Agregadores base}
+
+\paragraph{M0\_2T (Média Simples):}
+Média aritmética simples da última pesquisa de 2º turno de cada instituto:
+\begin{equation}
+\hat{p}_{\text{PT}}^{\text{M0}} = \frac{1}{J} \sum_{j=1}^{J} \hat{v}_{j, \text{PT}}.
+\end{equation}
+Não possui hiperparâmetros livres e serve como referência estrita de parcimônia.
+
+\paragraph{M1\_2T (Recência e Amostra):}
+Pondera todas as pesquisas divulgadas na janela do 2º turno pelo tamanho da amostra e por decaimento exponencial temporal com meia-vida $h \in \{3, 5, 7\}$ dias:
+\begin{equation}
+w_i = \sqrt{N_i} \cdot 2^{-\Delta t_i / h}, \qquad \hat{p}_{\text{PT}}^{\text{M1}} = \frac{\sum_i w_i \hat{v}_{i, \text{PT}}}{\sum_i w_i}.
+\end{equation}
+
+\paragraph{M2\_2T (Ponderação pela Precisão Empírica no 1º Turno):}
+Aproveita a observabilidade do erro amostral intra-ciclo. Definimos o semi-erro da margem entre os dois primeiros colocados no 1º turno:
+\begin{equation}
+e_{j, 1T} = \frac{1}{2}\left[ (\hat{v}_{j, \text{PT}}^{\,1T} - \hat{v}_{j, \text{Adv}}^{\,1T}) - (v_{\text{PT}}^{\,1T} - v_{\text{Adv}}^{\,1T}) \right].
+\end{equation}
+O peso de cada instituto no 2º turno é dado por:
+\begin{equation}
+w_j = \frac{1}{e_{j, 1T}^2 + \sigma_0^2}, \qquad \hat{p}_{\text{PT}}^{\text{M2}} = \frac{\sum_j w_j \hat{v}_{j, \text{PT}}}{\sum_j w_j}, \qquad \sigma_0 \in \{1{,}5; \, 2{,}5\}\text{ p.p.}
+\end{equation}
+O parâmetro de regularização $\sigma_0$ impede que institutos que acertaram a urna por pura variância amostral recebam peso infinito. Institutos sem pesquisa de véspera no 1º turno recebem a mediana do erro absoluto dos demais institutos daquela eleição.
+
+\subsection{Etapa 2: Ajustes avaliados sobre o agregador base}
+
+\paragraph{Ajuste 1 --- Persistência parcial intra-ciclo ($\rho$):}
+Subtrai de cada pesquisa de 2º turno uma fração $\rho$ do erro cometido pelo mesmo instituto no 1º turno:
+\begin{equation}
+\hat{v}_{j, \text{PT}}^{\text{corr}} = \hat{v}_{j, \text{PT}} - \rho \cdot e_{j, 1T}, \qquad \rho \in \{0{,}20; \, 0{,}35; \, \hat{\rho}_{\text{OLS}}\}.
+\end{equation}
+
+\paragraph{Ajuste 2 --- Viés comum histórico com shrinkage ($k_\mu$):}
+Desconta o erro médio histórico cometido pelos institutos nos 2ºs turnos passados com amortecimento empírico:
+\begin{equation}
+\hat{\mu}_{\text{PT}, 2T} = \frac{N_{\text{treino}}}{N_{\text{treino}} + k_\mu} \cdot \bar{e}_{\text{PT}, 2T}^{\text{treino}}, \qquad k_\mu \in \{1, 3\}.
+\end{equation}
+
+\paragraph{Ajuste 3 --- Shrinkage com prior estrutural de transferência do 1º turno ($\lambda$):}
+Combina a estimativa das pesquisas com a projeção estrutural decorrente da matriz de transferência dos votos do 1º turno:
+\begin{equation}
+\hat{p}_{\text{PT}} = (1 - \lambda) \hat{p}_{\text{PT}}^{\text{pesq}} + \lambda \, p_{\text{PT}}^{\text{prior}}, \qquad \lambda \in \{0{,}10; \, 0{,}25\}.
+\end{equation}
+
+%================= SEÇÃO 5 =================
+\section{Protocolo de validação prospectiva e resultados}
+
+A regra formal pré-registrada exige que qualquer modelo ou ajuste candidato reduza o MAE médio da janela crescente (\emph{Expanding Window}) em mais de um erro-padrão da diferença em relação ao modelo base:
+\begin{equation}
+\bar{\Delta} = \text{MAE}_{\text{cand}} - \text{MAE}_{\text{base}} < -\text{SE}(\Delta).
+\end{equation}
+Caso contrário, o modelo mais simples é retido por parcimônia.
+
+\subsection{Resultados da Etapa 1 e Etapa 2}
+
+A Tabela~\ref{tab:modelos} reporta o desempenho prospectivo de todos os modelos e ajustes testados.
+
+\begin{table}[h]
+\centering\small
+\caption{Validação temporal do 2º turno em Expanding Window (MAE em p.p.).}
+\label{tab:modelos}
+\input{tab_modelos.tex}
+\end{table}
+
+\textbf{Conclusões centrais da validação:}
+\begin{itemize}
+    \item O modelo \textbf{M2\_2T ($\sigma_0=1{,}5$)} foi o vencedor inequívoco da Etapa 1. Ele reduziu o erro médio de 0,92 p.p. (M0) para 0,65 p.p., superando a média simples por expressivos \textbf{1,95 erro-padrão} ($\bar{\Delta} = -0{,}27$, $\text{EP} = 0{,}14$).
+    \item Na validação complementar LOEO (Tabela~\ref{tab:loeo}), o M2 superou a média simples em \emph{todas} as cinco eleições avaliadas (2006, 2010, 2014, 2018 e 2022), obtendo MAE médio global de 0,48 p.p. contra 0,77 p.p. do M0.
+    \item Nenhum ajuste da Etapa 2 foi aprovado. A persistência intra-ciclo ($\rho$) piorou ou empatou tecnicamente com o modelo puro, demonstrando que os institutos tendem a recalibrar suas ponderações e cotas amostrais entre os turnos, evitando a repetição estrita do erro pontual do 1º turno.
+    \item O modelo final oficial selecionado para a Aba 1 é, portanto, o \textbf{M2\_2T ($\sigma_0=1{,}5$) Puro}.
+\end{itemize}
+
+\begin{table}[h]
+\centering\small
+\caption{Validação complementar Leave-One-Election-Out (LOEO, 2006 a 2022).}
+\label{tab:loeo}
+\input{tab_loeo.tex}
+\end{table}
+
+\subsection{Pesos atribuídos a cada instituto em 2026}
+
+A Tabela~\ref{tab:pesos} detalha o semi-erro na margem do 1º turno e o peso resultante de cada instituto na agregação final do 2º turno de 2026.
+
+\begin{table}[h]
+\centering\small
+\caption{Calibração dos pesos no modelo M2\_2T para as pesquisas de 2026.}
+\label{tab:pesos}
+\input{tab_pesos_institutos.tex}
+\end{table}
+
+%================= SEÇÃO 6 =================
+\section{Transferência de votos e checagem independente de plausibilidade}
+
+O resultado oficial do 1º turno permite realizar uma verificação estrutural independente da previsão das pesquisas. Definimos $\tau_t$ como a fração dos votos dos candidatos eliminados no 1º turno que migrou para o candidato do PT no 2º turno:
+\begin{equation}
+\tau_t = \frac{V_{\text{PT}, 2T, t} - V_{\text{PT}, 1T, t}}{100 - V_{\text{PT}, 1T, t} - V_{\text{Adv}, 1T, t}}.
+\end{equation}
+
+A Tabela~\ref{tab:transf} apresenta a série histórica de transferência em todas as eleições com 2º turno.
+
+\begin{table}[h]
+\centering\small
+\caption{Transferência aparente de votos do 1º para o 2º turno (\% dos válidos).}
+\label{tab:transf}
+\input{tab_transferencia.tex}
+\end{table}
+
+\subsection{O outlier de 2006 e a superioridade da mediana}
+A eleição de 2006 apresenta $\tau_{2006} = 1{,}2530 > 1$. Isso ocorreu porque Geraldo Alckmin (PSDB) teve uma queda anômala de votação entre os turnos: obteve 41,64\% no 1º turno e caiu para 39,17\% no 2º turno (perda nominal de mais de 2 milhões de votos). Nesse caso, Lula não capturou apenas votos de terceiros candidatos, mas absorveu eleitores que haviam votado no próprio adversário no 1º turno.
+
+Por essa razão, a média histórica ($\bar{\tau} = 0{,}61$) é severamente inflada. O estimador estatisticamente robusto para a transferência típica é a \textbf{mediana histórica}, $\tilde{\tau} = \mathbf{0{,}45}$ (44,6\%).
+
+\subsection{Convergência estrutural com a previsão das pesquisas}
+Aplicando a taxa mediana histórica de transferência ($\tilde{\tau} = 0{,}4464$) sobre os votos dos candidatos eliminados no 1º turno de 2026 (7,81\% dos votos válidos):
+\begin{equation}
+\hat{V}_{\text{Lula}}^{\text{prior}} = 45{,}16\% + 0{,}4464 \times 7{,}81\% = 45{,}16\% + 3{,}49\% = \mathbf{48{,}65\%} \implies \mathbf{48{,}6\%}.
+\end{equation}
+\begin{equation}
+\hat{V}_{\text{Flávio}}^{\text{prior}} = 100\% - 48{,}65\% = \mathbf{51{,}35\%} \implies \mathbf{51{,}4\%}.
+\end{equation}
+
+Essa verificação independente corrobora com impressionante precisão a estimativa agregada das pesquisas (\pFlavio\% para Flávio Bolsonaro vs. \pLula\% para Lula), confirmando a robustez fundamental do modelo.
+
+%================= SEÇÃO 7 =================
+\section{Modelagem da Aba 2 (Abstenção, brancos e nulos)}
+
+No 1º turno, a projeção da abstenção por tendência linear histórica superestimou a abstenção real em 1,22 p.p. No 2º turno, a presença do resultado oficial do 1º turno ancorou cinco famílias de modelos prospectivos no Expanding Window (Tabela~\ref{tab:aba2}):
+\begin{itemize}
+    \item \texttt{Zero\_Delta}: $\hat{y}_{2T} = y_{1T}$ (parcimônia estrita: repetir o valor observado 21 dias antes).
+    \item \texttt{Persistencia\_Delta}: $\hat{y}_{2T} = y_{1T} + \Delta y_{t-1}$.
+    \item \texttt{Media\_Delta}: $\hat{y}_{2T} = y_{1T} + \bar{\Delta}_{\text{treino}}$.
+    \item \texttt{Ratio\_Media}: $\hat{y}_{2T} = y_{1T} \times \bar{r}_{\text{treino}}$.
+    \item \texttt{BottomUp\_UF\_Gov2T}: Projeção estado por estado discriminando a presença de 2º turno estadual para Governador.
+\end{itemize}
+
+\begin{table}[h]
+\centering\small
+\caption{Backtest da Aba 2 no Expanding Window (2014, 2018, 2022) e previsão final.}
+\label{tab:aba2}
+\input{tab_aba2.tex}
+\end{table}
+
+Pela regra pré-registrada de parcimônia, nenhum modelo concorrente superou \texttt{Zero\_Delta} por mais de 1 erro-padrão. Assim, a previsão oficial para a Aba 2 é a repetição dos percentuais apurados no 1º turno de 2026:
+\textbf{Abstenção: \pAbst\%}, \textbf{Votos Brancos: \pBrancos\%} e \textbf{Votos Nulos: \pNulos\%}.
+
+\subsection{Limitação estrutural documentada: 2º turno para Governador}
+Em 2026, apenas 6 Unidades da Federação (AC, AM, DF, ES, RN e TO) realizam 2º turno para Governador. Esses estados representam somente \textbf{\govShareVinteSeis\%} do eleitorado nacional apto. No período 2006--2022, a média histórica de eleitores com disputa estadual ativa de 2º turno foi de \textbf{\govShareHist\%}. 
+
+Historicamente, nos estados sem disputa estadual, a abstenção subiu em média $+0{,}12$ p.p. a mais do que nos estados com disputa. Embora o modelo de decomposição não tenha superado o baseline por mais de um erro-padrão no backtest ($n=3$), a quase ausência de campanhas estaduais ativas no 2º turno de 2026 constitui uma limitação estrutural documentada.
+
+%================= SEÇÃO 8 =================
+\section{Análise de sensibilidade}
+
+A Tabela~\ref{tab:sens} compara a previsão oficial com todas as especificações alternativas avaliadas.
+
+\begin{table}[h]
+\centering\small
+\caption{Grade de sensibilidade para a eleição presidencial de 2026 (2º turno).}
+\label{tab:sens}
+\input{tab_sensibilidade.tex}
+\end{table}
+
+Em todas as especificações plausíveis, a liderança numérica de Flávio Bolsonaro oscila em uma faixa muito estreita, entre 51,0\% e 51,8\%, com Lula entre 48,2\% e 49,0\%, atestando a estabilidade da previsão frente a escolhas metodológicas alternativas.
+
+\newpage
+%================= APÊNDICE =================
+\appendix
+\section{Relação completa de pesquisas de 2º turno catalogadas no TSE}
+
+A Tabela~\ref{tab:todas_pesquisas} lista todas as pesquisas nacionais de 2º turno cadastradas em nossa base de dados até o corte de \horacorte.
+
+{\scriptsize\setlength{\tabcolsep}{3.5pt}
+\input{tab_pesquisas_todas.tex}}
+
+\end{document}

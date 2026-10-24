@@ -2,8 +2,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \IfFileExists{brazil.ldf}{\usepackage[brazil]{babel}}{}
-\usepackage{charter}
-\renewcommand{\ttdefault}{pcr}
+\IfFileExists{charter.sty}{\usepackage{charter}}{\usepackage{lmodern}}
+\IfFileExists{charter.sty}{\renewcommand{\ttdefault}{pcr}}{}
 \usepackage[a4paper,top=1.1cm,bottom=1.3cm,left=1.5cm,right=1.5cm,footskip=0.65cm]{geometry}
 \usepackage{microtype}
 \usepackage{amsmath}

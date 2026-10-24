@@ -179,6 +179,7 @@ def main() -> None:
     m += macro("flavioUmT", f(flav1t, 2))
     m += macro("tercUmT", f(terc1t, 2))
     m += macro("flavioDoisCand", f(flav1t / (flav1t + lula1t) * 100.0, 1))
+    m += macro("lulaDoisCand", f(lula1t / (flav1t + lula1t) * 100.0, 1))
     m += macro("tauMediana", f(tau_med, 2))
     m += macro("tauMedia", f(tau_mean, 2))
     m += macro("tauImplFlavio", f(tau_impl_flav * 100.0, 0))
@@ -318,6 +319,84 @@ def main() -> None:
     )
     t3 += "\\bottomrule\n\\end{tabular}\n"
     (OUT / "tab_aba2.tex").write_text(t3, encoding="utf-8")
+
+    # ---------- Tabela 4: LOEO ----------
+    t_loeo = "\\begin{tabular}{lcccccc}\n\\toprule\n"
+    t_loeo += "\\textbf{Modelo} & \\textbf{2006} & \\textbf{2010} & \\textbf{2014} & \\textbf{2018} & \\textbf{2022} & \\textbf{Média LOEO (EP)} \\\\\n\\midrule\n"
+    for _, r in df_loeo.iterrows():
+        mod = str(r["modelo"]).replace("_", "\\_")
+        is_w = r["modelo"] == venc
+        b = "\\textbf{" if is_w else ""
+        eb = "}" if is_w else ""
+        t_loeo += (
+            f"{b}{mod}{eb} & {f(r['2006'], 2)} & {f(r['2010'], 2)} & {f(r['2014'], 2)} & "
+            f"{f(r['2018'], 2)} & {f(r['2022'], 2)} & {b}{f(r['mae_loeo'], 2)}{eb} ({f(r['se_loeo'], 2)}) \\\\\n"
+        )
+    t_loeo += "\\bottomrule\n\\end{tabular}\n"
+    (OUT / "tab_loeo.tex").write_text(t_loeo, encoding="utf-8")
+
+    # ---------- Tabela 5: Sensibilidade ----------
+    t_sens = "\\begin{tabular}{lccc}\n\\toprule\n"
+    t_sens += "\\textbf{Especificação / Modelo Alternativo} & \\textbf{Flávio Cont.} & \\textbf{Flávio (1 casa)} & \\textbf{Lula (1 casa)} \\\\\n\\midrule\n"
+    for _, r in df_sens.iterrows():
+        esp = str(r["Especificação"])
+        is_ofic = esp.startswith(">>>")
+        clean_esp = esp.replace(">>> MODELO OFICIAL SELECIONADO (", "\\textbf{Modelo Oficial: ").replace("))", ")}") if is_ofic else esp
+        clean_esp = clean_esp.replace("_", "\\_").replace("&", "\\&")
+        fl_c = f(float(r["Flávio Bolsonaro (Contínuo %)"]), 2)
+        fl_a = f(float(r["Flávio (Arred 1 casa)"]), 1)
+        lu_a = f(float(r["Lula (Arred 1 casa)"]), 1)
+        if is_ofic:
+            t_sens += f"\\textbf{{{clean_esp}}} & \\textbf{{{fl_c}\\%}} & \\textbf{{{fl_a}\\%}} & \\textbf{{{lu_a}\\%}} \\\\\n"
+        else:
+            t_sens += f"{clean_esp} & {fl_c}\\% & {fl_a}\\% & {lu_a}\\% \\\\\n"
+    t_sens += "\\bottomrule\n\\end{tabular}\n"
+    (OUT / "tab_sensibilidade.tex").write_text(t_sens, encoding="utf-8")
+
+    # ---------- Tabela 6: Pesos dos Institutos no M2 ----------
+    t_pesos = "\\begin{tabular}{lcccc}\n\\toprule\n"
+    t_pesos += "\\textbf{Instituto} & \\textbf{Semi-Erro 1T ($e_{j,1T}$)} & \\textbf{Origem do Erro} & \\textbf{Peso Absoluto ($w_j$)} & \\textbf{Participação Relativa (\\%)} \\\\\n\\midrule\n"
+    for _, r in ultima.sort_values("peso_rel", ascending=False).iterrows():
+        inst = str(r["inst"]).replace("&", "\\&").replace("_", "\\_")
+        err_val = float(r["e1t"]) if pd.notna(r["e1t"]) else med
+        err = f(err_val, 2)
+        orig = "Pesquisa de véspera 1T" if bool(r["tem_1t"]) else "Mediana histórica"
+        w_abs = f(float(r["peso"]), 3)
+        w_rel = f(float(r["peso_rel"]), 1)
+        t_pesos += f"{inst} & {err} p.p. & {orig} & {w_abs} & {w_rel}\\% \\\\\n"
+    t_pesos += "\\bottomrule\n\\end{tabular}\n"
+    (OUT / "tab_pesos_institutos.tex").write_text(t_pesos, encoding="utf-8")
+
+    # ---------- Tabela 7: Todas as Pesquisas de 2026 2T ----------
+    t_pesq = "\\begin{longtable}{llccccccc}\n"
+    t_pesq += "\\caption{Pesquisas nacionais de 2º turno da eleição presidencial de 2026 registradas no TSE.}\\label{tab:todas_pesquisas}\\\\\n"
+    t_pesq += "\\toprule\n"
+    t_pesq += "\\textbf{Instituto} & \\textbf{Registro TSE} & \\textbf{Campo} & \\textbf{$N$} & \\textbf{Método} & \\textbf{Flávio} & \\textbf{Lula} & \\textbf{Vál. Flávio} & \\textbf{Vál. Lula} \\\\\n\\midrule\n"
+    t_pesq += "\\endfirsthead\n"
+    t_pesq += "\\multicolumn{9}{c}{\\footnotesize\\color{cinza}\\tablename\\ \\thetable\\ -- continuação da página anterior}\\\\\n\\toprule\n"
+    t_pesq += "\\textbf{Instituto} & \\textbf{Registro TSE} & \\textbf{Campo} & \\textbf{$N$} & \\textbf{Método} & \\textbf{Flávio} & \\textbf{Lula} & \\textbf{Vál. Flávio} & \\textbf{Vál. Lula} \\\\\n\\midrule\n"
+    t_pesq += "\\endhead\n"
+    t_pesq += "\\midrule\n"
+    t_pesq += "\\multicolumn{9}{r}{\\footnotesize\\color{cinza}continua na próxima página\\dots}\\\\\n"
+    t_pesq += "\\endfoot\n"
+    t_pesq += "\\bottomrule\n"
+    t_pesq += "\\endlastfoot\n"
+    df26_sorted = df26.sort_values(["data_divulgacao", "data_fim_campo"], ascending=[False, False])
+    for _, r in df26_sorted.iterrows():
+        inst_label = str(r["instituto"]).replace("&", "\\&").replace("_", "\\_")
+        reg = str(r["registro_tse"]).replace("_", "\\_")
+        d_ini = pd.to_datetime(r["data_inicio_campo"]).strftime("%d/%m")
+        d_fim = pd.to_datetime(r["data_fim_campo"]).strftime("%d/%m")
+        campo_str = f"{d_ini}--{d_fim}"
+        n_str = f"{int(r['amostra']):,}".replace(",", ".")
+        met_str = str(r["metodo_coleta"]).capitalize()
+        fl_tot = f(float(r["Flávio Bolsonaro"])) if pd.notna(r["Flávio Bolsonaro"]) else "--"
+        lu_tot = f(float(r["Luiz Inácio Lula da Silva"])) if pd.notna(r["Luiz Inácio Lula da Silva"]) else "--"
+        fl_val = f(float(r["Flávio Bolsonaro_validos"])) if pd.notna(r["Flávio Bolsonaro_validos"]) else "--"
+        lu_val = f(float(r["Luiz Inácio Lula da Silva_validos"])) if pd.notna(r["Luiz Inácio Lula da Silva_validos"]) else "--"
+        t_pesq += f"{inst_label} & {reg} & {campo_str} & {n_str} & {met_str} & {fl_tot} & {lu_tot} & {fl_val}\\% & {lu_val}\\% \\\\\n"
+    t_pesq += "\\end{longtable}\n"
+    (OUT / "tab_pesquisas_todas.tex").write_text(t_pesq, encoding="utf-8")
 
     print(
         f"OK: {OUT}/numeros_2t.tex | Flávio {f(fl)} Lula {f(lu)} | "

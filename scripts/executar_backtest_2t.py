@@ -696,11 +696,11 @@ def gerar_relatorio_markdown_2t(
     md.append("")
     md.append(
         "Avaliação prospectiva nas 3 eleições de teste (`2014`, `2018`, `2022`), onde "
-        "$\\text{MAE}_{2T} = |\\hat{V}_{\\text{PT}} - V_{\\text{PT}}| = |\\hat{V}_{\\text{Adv}} - V_{\\text{Adv}}|$:"
+        "$\\text{MAE}_{2T} = \\lvert \\hat{V}_{\\text{PT}} - V_{\\text{PT}} \\rvert = \\lvert \\hat{V}_{\\text{Adv}} - V_{\\text{Adv}} \\rvert$:"
     )
     md.append("")
     md.append(
-        "| Modelo Base | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio Expanding (p.p.)** | EP (p.p.) | $\\bar{\\Delta}$ vs. `M0_2T` | $\\text{EP}(\\Delta)$ | Supera `M0_2T` ($> 1\\text{ EP}$)? |"
+        "| Modelo Base | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio Expanding (p.p.)** | EP (p.p.) | Diferença vs. M0_2T (p.p.) | EP(Diferença) | Supera M0_2T (> 1 EP)? |"
     )
     md.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     for _, r in df_e1.iterrows():
@@ -735,7 +735,7 @@ def gerar_relatorio_markdown_2t(
     md.append(f"## 2. Etapa 2 (Aba 1): Avaliação Isolada de Ajustes sobre `{vencedor_e1}`")
     md.append("")
     md.append(
-        "| Configuração / Ajuste | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | $\\bar{\\Delta}$ vs. Base | $\\text{EP}(\\Delta)$ | Aprovado ($> 1\\text{ EP}$)? |"
+        "| Configuração / Ajuste | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | Diferença vs. Base (p.p.) | EP(Diferença) | Aprovado (> 1 EP)? |"
     )
     md.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     for _, r in df_e2.iterrows():
@@ -832,7 +832,7 @@ def gerar_relatorio_markdown_2t(
         md.append(f"### {titulos_aba2[var]}")
         md.append("")
         md.append(
-            "| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | $\\bar{\\Delta}$ vs. `Zero_Delta` | $\\text{EP}(\\Delta)$ | Supera `Zero_Delta` ($> 1\\text{ EP}$)? |"
+            "| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | Diferença vs. Zero_Delta (p.p.) | EP(Diferença) | Supera Zero_Delta (> 1 EP)? |"
         )
         md.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
         df_v = tabelas_aba2[var]

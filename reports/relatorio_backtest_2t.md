@@ -10,9 +10,9 @@
 
 ## 1. Etapa 1 (Aba 1 — Votos Válidos, $K=2$): Seleção do Modelo Base no Expanding Window
 
-Avaliação prospectiva nas 3 eleições de teste (`2014`, `2018`, `2022`), onde $\text{MAE}_{2T} = |\hat{V}_{\text{PT}} - V_{\text{PT}}| = |\hat{V}_{\text{Adv}} - V_{\text{Adv}}|$:
+Avaliação prospectiva nas 3 eleições de teste (`2014`, `2018`, `2022`), onde $\text{MAE}_{2T} = \lvert \hat{V}_{\text{PT}} - V_{\text{PT}} \rvert = \lvert \hat{V}_{\text{Adv}} - V_{\text{Adv}} \rvert$:
 
-| Modelo Base | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio Expanding (p.p.)** | EP (p.p.) | $\bar{\Delta}$ vs. `M0_2T` | $\text{EP}(\Delta)$ | Supera `M0_2T` ($> 1\text{ EP}$)? |
+| Modelo Base | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio Expanding (p.p.)** | EP (p.p.) | Diferença vs. M0_2T (p.p.) | EP(Diferença) | Supera M0_2T (> 1 EP)? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | `M0_2T` | 0,6315 | 1,8217 | 0,2920 | 0,9151 | 0,4638 | 0,0000 | 0,0000 | Baseline |
 | `M1_2T (h=3)` | 0,7660 | 0,9567 | 0,4509 | 0,7245 | 0,1475 | -0,1905 | 0,3373 | Não |
@@ -27,7 +27,7 @@ Avaliação prospectiva nas 3 eleições de teste (`2014`, `2018`, `2022`), onde
 
 ## 2. Etapa 2 (Aba 1): Avaliação Isolada de Ajustes sobre `M2_2T (sigma0=1.5)`
 
-| Configuração / Ajuste | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | $\bar{\Delta}$ vs. Base | $\text{EP}(\Delta)$ | Aprovado ($> 1\text{ EP}$)? |
+| Configuração / Ajuste | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | Diferença vs. Base (p.p.) | EP(Diferença) | Aprovado (> 1 EP)? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **`M2_2T (sigma0=1.5) (Base Puro)`** | **0,5588** | **1,2912** | **0,0965** | **0,6489** | **0,3478** | **0,0000** | **0,0000** | **Vencedor (Base)** |
 | `+ Persistência 1T (rho=0.20)` | 0,5131 | 1,4427 | 0,3396 | 0,7651 | 0,3425 | +0,1163 | 0,0852 | Não |
@@ -82,7 +82,7 @@ Fração aparente dos votos de terceiros colocados no 1º turno capturada pelo c
 
 ### 5.1. Abstenção (% do Eleitorado Apto)
 
-| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | $\bar{\Delta}$ vs. `Zero_Delta` | $\text{EP}(\Delta)$ | Supera `Zero_Delta` ($> 1\text{ EP}$)? |
+| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | Diferença vs. Zero_Delta (p.p.) | EP(Diferença) | Supera Zero_Delta (> 1 EP)? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **`Zero_Delta (y2=y1)`** | **1,7077** | **0,9716** | **0,3646** | **1,0146** | **0,3883** | **0,0000** | **0,0000** | **Vencedor (Parcimônia)** |
 | `Persistencia_Delta` | 1,6698 | 0,7361 | 1,3362 | 1,2474 | 0,2732 | +0,2327 | 0,3738 | Não |
@@ -94,7 +94,7 @@ Fração aparente dos votos de terceiros colocados no 1º turno capturada pelo c
 
 ### 5.2. Votos Brancos (% dos Votos Totais)
 
-| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | $\bar{\Delta}$ vs. `Zero_Delta` | $\text{EP}(\Delta)$ | Supera `Zero_Delta` ($> 1\text{ EP}$)? |
+| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | Diferença vs. Zero_Delta (p.p.) | EP(Diferença) | Supera Zero_Delta (> 1 EP)? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **`Zero_Delta (y2=y1)`** | **2,1343** | **0,5024** | **0,1643** | **0,9337** | **0,6082** | **0,0000** | **0,0000** | **Vencedor (Parcimônia)** |
 | `Persistencia_Delta` | 1,3058 | 1,6319 | 0,3381 | 1,0919 | 0,3885 | +0,1583 | 0,5653 | Não |
@@ -105,7 +105,7 @@ Fração aparente dos votos de terceiros colocados no 1º turno capturada pelo c
 
 ### 5.3. Votos Nulos (% dos Votos Totais)
 
-| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | $\bar{\Delta}$ vs. `Zero_Delta` | $\text{EP}(\Delta)$ | Supera `Zero_Delta` ($> 1\text{ EP}$)? |
+| Método | MAE 2014 (p.p.) | MAE 2018 (p.p.) | MAE 2022 (p.p.) | **MAE Médio (p.p.)** | EP (p.p.) | Diferença vs. Zero_Delta (p.p.) | EP(Diferença) | Supera Zero_Delta (> 1 EP)? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **`Zero_Delta (y2=y1)`** | **1,1690** | **1,2850** | **0,3435** | **0,9325** | **0,2964** | **0,0000** | **0,0000** | **Vencedor (Parcimônia)** |
 | `Persistencia_Delta` | 0,0601 | 2,4540 | 0,9415 | 1,1519 | 0,6990 | +0,2194 | 0,6843 | Não |
